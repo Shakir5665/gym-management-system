@@ -29,6 +29,13 @@ export const checkIn = async (req, res) => {
       reason = "Pending fine";
     }
 
+    const now = new Date();
+
+    if (!member.subscriptionEnd || member.subscriptionEnd < now) {
+       status = "BLOCKED";
+       reason = "Subscription expired";
+    }
+
     // Save attendance
     const record = await Attendance.create({
       memberId,

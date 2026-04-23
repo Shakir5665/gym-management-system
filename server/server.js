@@ -4,6 +4,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import memberRoutes from "./routes/memberRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import "./corn/reminder.js";
 
 dotenv.config();
 
@@ -21,6 +23,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/members", memberRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/payments", paymentRoutes);
 
 
 
