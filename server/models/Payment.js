@@ -1,20 +1,12 @@
 import mongoose from "mongoose";
 
-const paymentSchema = new mongoose.Schema({
-  memberId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Member"
-  },
+const schema = new mongoose.Schema({
+  memberId: mongoose.Schema.Types.ObjectId,
+  gymId: mongoose.Schema.Types.ObjectId,
   amount: Number,
-  type: {
-    type: String,
-    enum: ["ADMISSION", "MONTHLY"]
-  },
-  date: {
-    type: Date,
-    default: Date.now
-  },
+  type: String,
+  date: { type: Date, default: Date.now },
   nextDueDate: Date
 });
 
-export default mongoose.model("Payment", paymentSchema);
+export default mongoose.model("Payment", schema);

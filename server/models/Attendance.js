@@ -1,24 +1,14 @@
 import mongoose from "mongoose";
 
-const attendanceSchema = new mongoose.Schema({
-  memberId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Member"
-  },
-  date: {
-    type: Date,
-    default: Date.now
-  },
-  checkInTime: {
-    type: Date,
-    default: Date.now
-  },
-  status: {
-    type: String,
-    enum: ["SUCCESS", "BLOCKED"],
-    default: "SUCCESS"
-  },
+const schema = new mongoose.Schema({
+  memberId: { type: mongoose.Schema.Types.ObjectId, ref: "Member" },
+  gymId: mongoose.Schema.Types.ObjectId,
+  date: { type: Date, default: Date.now },
+  checkInTime: { type: Date, default: Date.now },
+  status: String,
   reason: String
 });
 
-export default mongoose.model("Attendance", attendanceSchema);
+schema.index({ memberId: 1, date: -1 });
+
+export default mongoose.model("Attendance", schema);
