@@ -23,6 +23,8 @@ export default function Scanner() {
     }
   };
 
+  const isProcessingRef = useRef(false);
+
   const stop = async () => {
     try {
       if (scannerRef.current) {
@@ -33,6 +35,7 @@ export default function Scanner() {
       // ignore
     } finally {
       setRunning(false);
+      isProcessingRef.current = false;
     }
   };
 
@@ -63,6 +66,7 @@ export default function Scanner() {
     try {
       setError("");
       setResult("");
+      isProcessingRef.current = false;
 
       if (!scannerRef.current) scannerRef.current = new Html5Qrcode(regionId);
       const config = { fps: 10, qrbox: { width: 260, height: 260 } };
@@ -72,13 +76,35 @@ export default function Scanner() {
         { facingMode: "environment" },
         config,
         async (decodedText) => {
+          if (isProcessingRef.current) return;
+          isProcessingRef.current = true;
+
           try {
             playBeep(); // Play sound immediately on successful read
+            
+            // Pause camera temporarily
+            if (scannerRef.current && typeof scannerRef.current.pause === "function") {
+              scannerRef.current.pause(true);
+            }
+
             const memberId = parseMemberId(decodedText);
             const res = await API.post("/attendance/checkin", { memberId });
             setResult(`${res.data?.status || "OK"} — ${res.data?.reason || "Checked in"}`);
           } catch (err) {
             setResult(`Error — ${err.response?.data?.message || err.message}`);
+          } finally {
+            // Wait 2 seconds, then resume
+            setTimeout(() => {
+              isProcessingRef.current = false;
+              try {
+                if (scannerRef.current && typeof scannerRef.current.resume === "function") {
+                  scannerRef.current.resume();
+                  setResult(""); // Clear result for next scan
+                }
+              } catch (e) {
+                // Ignore if already stopped
+              }
+            }, 2000);
           }
         },
         () => {},
