@@ -1,28 +1,52 @@
+// controllers/paymentController.js
 import Payment from "../models/Payment.js";
 import Member from "../models/Member.js";
 
-export const makePayment = async (req, res) => {
-  const { memberId, amount } = req.body;
+export const createPayment = async (req, res) => {
+  try {
+    const { memberId, amount } = req.body;
+    const gymId = req.user.gymId;
 
-  const next = new Date();
-  next.setMonth(next.getMonth() + 1);
+    const member = await Member.findOne({ _id: memberId, gymId });
 
-  await Payment.create({
-    memberId,
-    amount,
-    type: "MONTHLY",
-    nextDueDate: next
-  });
+    if (!member) {
+      return res.status(404).json({ message: "Member not found" });
+    }
 
-  const member = await Member.findById(memberId);
-  member.subscriptionEnd = next;
-  await member.save();
+    const now = new Date();
 
-  res.json({ message: "Payment success" });
+    // 📅 Extend subscription
+    const newDate =
+      member.subscriptionEnd && member.subscriptionEnd > now
+        ? new Date(member.subscriptionEnd)
+        : now;
 
-  const io = req.app.get("io");
+    newDate.setMonth(newDate.getMonth() + 1);
 
-  io.emit("payment:update", {
-    memberId
-  });
+    member.subscriptionEnd = newDate;
+    await member.save();
+
+    // 💳 Save payment
+    await Payment.create({
+      memberId,
+      gymId,
+      amount,
+      nextDueDate: newDate
+    });
+
+    // 🔔 SOCKET
+    const io = req.app.get("io");
+
+    io.emit("payment:update", {
+      memberId,
+      gymId,
+      nextDueDate: newDate
+    });
+
+    res.json({ message: "Payment successful", nextDueDate: newDate });
+
+  } catch (err) {
+    console.error("Payment error:", err);
+    res.status(500).json({ message: err.message });
+  }
 };

@@ -1,8 +1,9 @@
 import express from "express";
-import { checkIn } from "../controllers/attendanceController.js";
+import { createGym } from "../controllers/gymController.js";
 import auth from "../middleware/auth.js";
 
 const router = express.Router();
-router.post("/checkin", auth, checkIn);
+
+router.post("/create", auth, createGym);
 
 export default router;

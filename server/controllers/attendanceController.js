@@ -1,3 +1,4 @@
+// controllers/attendanceController.js
 import Attendance from "../models/Attendance.js";
 import Member from "../models/Member.js";
 import Gamification from "../models/Gamification.js";
@@ -5,8 +6,9 @@ import Gamification from "../models/Gamification.js";
 export const checkIn = async (req, res) => {
   try {
     const { memberId } = req.body;
+    const gymId = req.user.gymId;
 
-    const member = await Member.findById(memberId);
+    const member = await Member.findOne({ _id: memberId, gymId });
 
     if (!member) {
       return res.status(404).json({ message: "Member not found" });
@@ -16,7 +18,7 @@ export const checkIn = async (req, res) => {
     let reason = "";
     const now = new Date();
 
-    // RULE ENGINE
+    // 🚫 Rules
     if (member.isBanned) {
       status = "BLOCKED";
       reason = "User is banned";
@@ -28,55 +30,50 @@ export const checkIn = async (req, res) => {
       reason = "Subscription expired";
     }
 
-    // SAVE ATTENDANCE
+    // ✅ Save attendance
     const record = await Attendance.create({
       memberId,
+      gymId,
       status,
       reason
     });
 
-    const io = req.app.get("io"); // 🔥 get socket instance
-
-    // GAMIFICATION
+    // 🎮 GAMIFICATION
     if (status === "SUCCESS") {
-      let game = await Gamification.findOne({ memberId });
+      let game = await Gamification.findOne({ memberId, gymId });
 
       if (!game) {
         game = await Gamification.create({
           memberId,
+          gymId,
           points: 10,
           streak: 1,
-          lastCheckIn: new Date()
+          lastCheckIn: now
         });
       } else {
-        const today = new Date();
-        const last = new Date(game.lastCheckIn);
-
         const diff = Math.floor(
-          (today - last) / (1000 * 60 * 60 * 24)
+          (now - new Date(game.lastCheckIn)) / (1000 * 60 * 60 * 24)
         );
 
         if (diff === 1) game.streak++;
         else if (diff > 1) game.streak = 1;
 
         game.points += 10;
-        game.lastCheckIn = today;
+        game.lastCheckIn = now;
 
         await game.save();
       }
-
-      // EMIT GAMIFICATION EVENT
-      io.emit("gamification:update", { memberId });
     }
 
-    // EMIT ATTENDANCE EVENT
-    io.emit("attendance:new", {
-      memberId,
-      status,
-      time: new Date()
-    });
+    // 🔔 SOCKET
+    const io = req.app.get("io");
 
-    // RESPONSE LAST
+    io.emit("attendance:new", { memberId, gymId, status });
+
+    if (status === "SUCCESS") {
+      io.emit("gamification:update", { memberId, gymId });
+    }
+
     res.json({ status, reason, record });
 
   } catch (err) {

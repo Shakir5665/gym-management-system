@@ -1,0 +1,61 @@
+import Gym from "../models/Gym.js";
+import User from "../models/User.js";
+import jwt from "jsonwebtoken";
+
+export const createGym = async (req, res) => {
+  try {
+    const { gymName } = req.body;
+    const userId = req.user?.userId;
+
+    console.log("🔧 Creating gym - userId:", userId, "gymName:", gymName);
+
+    if (!gymName || !gymName.trim()) {
+      return res.status(400).json({ message: "Gym name is required" });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    // Create gym
+    const gym = await Gym.create({
+      name: gymName.trim(),
+      ownerId: userId
+    });
+
+    console.log("✅ Gym created:", gym._id);
+
+    // Update user with gym ID
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { gymId: gym._id },
+      { new: true }
+    );
+
+    console.log("✅ User updated with gymId:", gym._id);
+
+    // 🔑 Generate NEW token with updated gymId
+    const newToken = jwt.sign(
+      { userId: updatedUser._id, gymId: gym._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({ 
+      token: newToken,
+      gymId: gym._id,
+      hasGym: true,
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        gymId: gym._id
+      },
+      message: "Gym created successfully"
+    });
+
+  } catch (err) {
+    console.error("❌ Gym creation error:", err);
+    res.status(500).json({ message: err.message || "Failed to create gym" });
+  }
+};

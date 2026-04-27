@@ -8,8 +8,9 @@ const memberSchema = new mongoose.Schema({
   hasFine: { type: Boolean, default: false },
   subscriptionEnd: Date,
   qrCode: String,
-  gymId: mongoose.Schema.Types.ObjectId,
+  gymId: { type: mongoose.Schema.Types.ObjectId, ref: "Gym" },
   createdAt: { type: Date, default: Date.now }
+
 });
 
 export default mongoose.model("Member", memberSchema);

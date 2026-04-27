@@ -1,11 +1,10 @@
+// models/Payment.js
 import mongoose from "mongoose";
 
 const schema = new mongoose.Schema({
-  memberId: mongoose.Schema.Types.ObjectId,
-  gymId: mongoose.Schema.Types.ObjectId,
+  memberId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  gymId: { type: mongoose.Schema.Types.ObjectId, required: true },
   amount: Number,
-  type: String,
-  date: { type: Date, default: Date.now },
   nextDueDate: Date
 });
 
