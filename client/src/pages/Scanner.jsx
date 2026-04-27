@@ -36,6 +36,29 @@ export default function Scanner() {
     }
   };
 
+  const playBeep = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // 880 Hz
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // volume
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.start();
+      setTimeout(() => {
+        oscillator.stop();
+        audioCtx.close();
+      }, 150); // Beep duration
+    } catch (e) {
+      console.warn("Audio not supported or blocked:", e);
+    }
+  };
+
   const start = async () => {
     try {
       setError("");
@@ -50,6 +73,7 @@ export default function Scanner() {
         config,
         async (decodedText) => {
           try {
+            playBeep(); // Play sound immediately on successful read
             const memberId = parseMemberId(decodedText);
             const res = await API.post("/attendance/checkin", { memberId });
             setResult(`${res.data?.status || "OK"} — ${res.data?.reason || "Checked in"}`);
