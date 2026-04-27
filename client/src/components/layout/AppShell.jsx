@@ -1,12 +1,14 @@
 import { Outlet, useLocation } from "react-router-dom";
 import Topbar from "./Topbar";
 import Sidebar from "./Sidebar";
+import BottomNav from "./BottomNav";
 
 const titles = [
   { match: "/app/dashboard", title: "Dashboard", subtitle: "Real-time analytics & gym health" },
   { match: "/app/members", title: "Members", subtitle: "Search, manage, and generate QR codes" },
   { match: "/app/scanner", title: "Scanner", subtitle: "Fast check-ins with QR" },
   { match: "/app/payments", title: "Payments", subtitle: "Track and accept membership payments" },
+  { match: "/app/accounting", title: "Accounting", subtitle: "Manage expenses and print revenue reports" },
   { match: "/app/notifications", title: "Notifications", subtitle: "Live updates across the system" },
 ];
 
@@ -20,8 +22,8 @@ export default function AppShell() {
   const { title, subtitle } = getTitle(pathname);
 
   return (
-    <div className="min-h-screen">
-      <div className="mx-auto max-w-[1400px] flex">
+    <div className="min-h-screen bg-[color:var(--bg)]">
+      <div className="mx-auto max-w-[1400px] flex pb-20 md:pb-0">
         <Sidebar />
         <div className="min-w-0 flex-1">
           <Topbar title={title} subtitle={subtitle} />
@@ -30,6 +32,7 @@ export default function AppShell() {
           </main>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

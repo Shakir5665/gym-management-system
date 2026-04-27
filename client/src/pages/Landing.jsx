@@ -19,16 +19,16 @@ export default function Landing() {
             <div className="absolute -bottom-40 -right-24 h-80 w-80 rounded-full bg-accent-500/18 blur-3xl" />
 
             <div className="relative">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-[11px] font-semibold text-white/70">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-1 text-[11px] font-semibold text-[color:var(--muted)]">
                 Premium SaaS UI • Dark glass theme
               </div>
-              <h1 className="mt-5 text-5xl font-black tracking-tight text-white leading-[1.05]">
+              <h1 className="mt-5 text-5xl font-black tracking-tight text-[color:var(--text)] leading-[1.05]">
                 Gym Management{" "}
                 <span className="bg-gradient-to-r from-brand-200 to-accent-400 bg-clip-text text-transparent">
                   SaaS
                 </span>
               </h1>
-              <p className="mt-4 text-base text-white/60 leading-relaxed max-w-lg">
+              <p className="mt-4 text-base text-[color:var(--muted)] leading-relaxed max-w-lg">
                 A modern system for member management, QR check-ins, gamification, and real-time
                 notifications—built for speed and clarity.
               </p>
@@ -42,10 +42,12 @@ export default function Landing() {
                 ].map((t) => (
                   <div
                     key={t}
-                    className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-white/75"
+                    className="rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-4 py-3 text-[color:var(--muted)]"
                   >
-                    <div className="text-xs font-bold text-white/85">{t}</div>
-                    <div className="mt-1 text-[11px] text-white/45">Fast, minimal, high-contrast</div>
+                    <div className="text-xs font-bold text-[color:var(--text)]">{t}</div>
+                    <div className="mt-1 text-[11px] text-[color:var(--subtle)]">
+                      Fast, minimal, high-contrast
+                    </div>
                   </div>
                 ))}
               </div>
@@ -57,10 +59,10 @@ export default function Landing() {
         <div className="flex items-center justify-center">
           <div className="glass-strong w-full max-w-md p-6 md:p-8">
             <div className="text-center">
-              <div className="text-2xl font-black tracking-tight text-white">
+              <div className="text-2xl font-black tracking-tight text-[color:var(--text)]">
                 {mode === "login" ? "Welcome back" : "Create your account"}
               </div>
-              <div className="mt-1 text-sm text-white/55">
+              <div className="mt-1 text-sm text-[color:var(--muted)]">
                 {mode === "login"
                   ? "Sign in to manage your gym in seconds."
                   : "Set up your gym and start tracking members."}
@@ -69,13 +71,13 @@ export default function Landing() {
 
             <div className="mt-6">{mode === "login" ? <Login /> : <Register onSuccess={() => setMode("login")} />}</div>
 
-            <div className="mt-6 text-center text-sm text-white/55">
+            <div className="mt-6 text-center text-sm text-[color:var(--muted)]">
               {mode === "login" ? (
                 <>
                   Don&apos;t have an account?{" "}
                   <button
                     onClick={() => setMode("register")}
-                    className="text-brand-200 hover:text-white font-semibold transition"
+                    className="text-[color:var(--brand-ink)] hover:text-[color:var(--text)] font-semibold transition"
                   >
                     Sign up
                   </button>
@@ -85,7 +87,7 @@ export default function Landing() {
                   Already have an account?{" "}
                   <button
                     onClick={() => setMode("login")}
-                    className="text-brand-200 hover:text-white font-semibold transition"
+                    className="text-[color:var(--brand-ink)] hover:text-[color:var(--text)] font-semibold transition"
                   >
                     Login
                   </button>
@@ -93,7 +95,7 @@ export default function Landing() {
               )}
             </div>
 
-            <div className="mt-6 text-center text-[11px] text-white/35">
+            <div className="mt-6 text-center text-[11px] text-[color:var(--subtle)]">
               By continuing, you agree to secure authentication and real-time updates.
             </div>
           </div>

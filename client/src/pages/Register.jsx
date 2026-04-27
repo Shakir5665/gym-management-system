@@ -56,6 +56,9 @@ export default function Register({ onSuccess }) {
       setMessage("✅ Registered successfully. Redirecting...");
       setMessageType("success");
 
+      // Persist gym name for header immediately (server doesn't return it)
+      localStorage.setItem("gymName", gymName);
+
       setTimeout(() => {
         onSuccess();
       }, 1200);
@@ -187,7 +190,7 @@ export default function Register({ onSuccess }) {
 
       <Input
         label="Full name"
-        placeholder="Your name"
+        placeholder="Mohamed"
         value={form.name}
         onChange={(e) => setForm({ ...form, name: e.target.value })}
         onKeyDown={handleKeyPress}
@@ -233,9 +236,9 @@ export default function Register({ onSuccess }) {
       </Button>
 
       <div className="flex items-center gap-3 py-1">
-        <div className="h-px flex-1 bg-white/10" />
-        <div className="text-[11px] text-white/45">or use Google</div>
-        <div className="h-px flex-1 bg-white/10" />
+        <div className="h-px flex-1 bg-[color:var(--control-border)]" />
+        <div className="text-[11px] text-[color:var(--subtle)]">or use Google</div>
+        <div className="h-px flex-1 bg-[color:var(--control-border)]" />
       </div>
 
       <div className="flex justify-center">
@@ -251,9 +254,11 @@ export default function Register({ onSuccess }) {
             width="320"
           />
         ) : (
-          <div className="w-full rounded-xl border border-white/10 bg-white/6 px-3 py-3 text-xs text-white/55 text-center">
-            Add <span className="text-white/80 font-semibold">VITE_GOOGLE_CLIENT_ID</span> in{" "}
-            <span className="text-white/80 font-semibold">client/.env</span> to enable Google signup.
+          <div className="w-full rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-3 text-xs text-[color:var(--muted)] text-center">
+            Add{" "}
+            <span className="text-[color:var(--text)] font-semibold">VITE_GOOGLE_CLIENT_ID</span> in{" "}
+            <span className="text-[color:var(--text)] font-semibold">client/.env</span> to enable
+            Google signup.
           </div>
         )}
       </div>

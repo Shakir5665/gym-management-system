@@ -6,6 +6,6 @@ const schema = new mongoose.Schema({
   gymId: { type: mongoose.Schema.Types.ObjectId, required: true },
   amount: Number,
   nextDueDate: Date
-});
+}, { timestamps: true });
 
 export default mongoose.model("Payment", schema);

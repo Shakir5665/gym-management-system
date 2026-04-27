@@ -5,7 +5,7 @@ import auth from "../middleware/auth.js";
 const router = express.Router();
 
 router.get("/:id", auth, async (req, res) => {
-  const risk = await getUserRisk(req.params.id);
+  const risk = await getUserRisk(req.params.id, req.user?.gymId);
   res.json({ risk });
 });
 

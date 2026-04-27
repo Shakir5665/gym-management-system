@@ -1,60 +1,184 @@
-import { Bell, LogOut, Search } from "lucide-react";
+import { Bell, LogOut, Moon, Search, Sun, Menu } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationsContext";
 import Button from "../ui/Button";
+import { useTheme } from "../../context/ThemeContext";
+import API from "../../api/api";
+import MobileMenu from "./MobileMenu";
 
 export default function Topbar({ title, subtitle }) {
-  const { user, logout } = useAuth();
+  const { user, gymName, logout } = useAuth();
   const { unreadCount } = useNotifications();
   const navigate = useNavigate();
+  const { theme, toggle } = useTheme();
+
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const wrapRef = useRef(null);
+
+  const trimmed = useMemo(() => q.trim(), [q]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      if (!trimmed) {
+        setResults([]);
+        setSearching(false);
+        return;
+      }
+      try {
+        setSearching(true);
+        const res = await API.get(`/members?query=${encodeURIComponent(trimmed)}&limit=6`);
+        if (cancelled) return;
+        setResults(Array.isArray(res.data) ? res.data : []);
+      } catch {
+        if (!cancelled) setResults([]);
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }
+
+    const t = setTimeout(run, 200);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [trimmed]);
+
+  useEffect(() => {
+    function onDoc(e) {
+      if (!wrapRef.current) return;
+      if (!wrapRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
 
   return (
     <header className="sticky top-0 z-20">
       <div className="mx-auto max-w-7xl px-4 md:px-8 pt-4">
         <div className="glass px-4 py-3 md:px-5 md:py-3">
           <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 flex items-center gap-3">
+            <div className="min-w-0 flex items-center gap-2 md:gap-3">
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(true)}
+                className="md:hidden inline-flex flex-shrink-0 items-center justify-center rounded-xl bg-[color:var(--control-bg)] border border-[color:var(--control-border)] p-2 text-[color:var(--muted)] hover:text-[color:var(--text)] transition"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
               <button
                 type="button"
                 onClick={() => navigate("/app/dashboard")}
-                className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-white/6 transition"
+                className="flex items-center gap-2 rounded-xl px-1.5 md:px-2 py-1.5 hover:bg-[color:var(--control-bg)] transition"
                 aria-label="Go to dashboard"
               >
                 <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-brand-400/35 to-accent-500/25 border border-white/10 shadow-glow" />
                 <div className="hidden sm:block">
-                  <div className="text-sm font-black tracking-tight text-white leading-tight">
-                    Gym Pro
+                  <div className="text-sm font-black tracking-tight text-[color:var(--text)] leading-tight truncate max-w-[240px]">
+                    {gymName || "Gym Pro"}
                   </div>
-                  <div className="text-[11px] text-white/45 leading-tight">SaaS</div>
+                  <div className="text-[11px] text-[color:var(--subtle)] leading-tight truncate max-w-[240px]">
+                    {gymName ? "Your gym" : "Premium Gym OS"}
+                  </div>
                 </div>
               </button>
 
               <div className="hidden md:block min-w-0">
-                <div className="text-sm font-bold text-white truncate">{title}</div>
-                {subtitle ? <div className="text-xs text-white/50 mt-0.5">{subtitle}</div> : null}
+                <div className="text-sm font-bold text-[color:var(--text)] truncate">{title}</div>
+                {subtitle ? (
+                  <div className="text-xs text-[color:var(--muted)] mt-0.5 truncate">
+                    {subtitle}
+                  </div>
+                ) : null}
               </div>
             </div>
 
             <div className="flex items-center gap-2">
+              <div className="hidden md:block relative" ref={wrapRef}>
+                <div className="flex items-center gap-2 rounded-xl bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] border border-[color:var(--control-border)] px-3 py-2 text-xs text-[color:var(--muted)] transition">
+                  <Search className="h-4 w-4" />
+                  <input
+                    value={q}
+                    onChange={(e) => {
+                      setQ(e.target.value);
+                      setOpen(true);
+                    }}
+                    onFocus={() => setOpen(true)}
+                    placeholder="Search members…"
+                    className="w-[220px] bg-transparent outline-none text-[color:var(--text)] placeholder:text-[color:var(--subtle)]"
+                  />
+                </div>
+
+                {open && trimmed ? (
+                  <div className="absolute right-0 mt-2 w-[340px] glass-strong p-2">
+                    {searching ? (
+                      <div className="px-3 py-2 text-xs text-[color:var(--muted)]">Searching…</div>
+                    ) : results.length === 0 ? (
+                      <div className="px-3 py-2 text-xs text-[color:var(--muted)]">
+                        No members found
+                      </div>
+                    ) : (
+                      <div className="grid gap-1">
+                        {results.map((m) => (
+                          <button
+                            key={m._id}
+                            type="button"
+                            onClick={() => {
+                              setOpen(false);
+                              setQ("");
+                              navigate(`/app/member/${m._id}`);
+                            }}
+                            className="text-left rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-3 py-2 transition"
+                          >
+                            <div className="text-xs font-semibold text-[color:var(--text)] truncate">
+                              {m.name}
+                            </div>
+                            <div className="text-[11px] text-[color:var(--muted)] truncate">
+                              {m.phone || " "}
+                            </div>
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpen(false);
+                            navigate("/app/members");
+                          }}
+                          className="mt-1 text-xs font-semibold text-[color:var(--brand-ink)] hover:text-[color:var(--text)] px-3 py-2 text-left transition"
+                        >
+                          Open Members page →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+
               <button
                 type="button"
-                onClick={() => navigate("/app/members")}
-                className="hidden md:flex items-center gap-2 rounded-xl bg-white/6 hover:bg-white/10 border border-white/10 px-3 py-2 text-xs text-white/70 transition"
+                onClick={toggle}
+                className="inline-flex items-center justify-center rounded-xl bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] border border-[color:var(--control-border)] px-3 py-2 text-[color:var(--muted)] transition"
+                aria-label="Toggle theme"
+                title="Toggle theme"
               >
-                <Search className="h-4 w-4" />
-                Search members
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </button>
 
               <button
                 type="button"
                 onClick={() => navigate("/app/notifications")}
-                className="relative inline-flex items-center justify-center rounded-xl bg-white/6 hover:bg-white/10 border border-white/10 px-3 py-2 text-white/80 transition"
+                className="relative inline-flex items-center justify-center rounded-xl bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] border border-[color:var(--control-border)] px-3 py-2 text-[color:var(--muted)] transition"
                 aria-label="Open notifications"
               >
                 <Bell className="h-4 w-4" />
                 {unreadCount > 0 ? (
-                  <span className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full bg-brand-400/20 border border-brand-400/30 px-1 text-[11px] font-bold text-brand-200 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full bg-[color:var(--brand-soft-bg)] border border-[color:var(--brand-soft-border)] px-1 text-[11px] font-bold text-[color:var(--brand-ink)] flex items-center justify-center">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 ) : null}
@@ -62,10 +186,11 @@ export default function Topbar({ title, subtitle }) {
 
               <div className="hidden md:flex items-center gap-3 pl-2">
                 <div className="text-right">
-                  <div className="text-xs font-semibold text-white/80 leading-tight">
+                  <div className="text-xs font-semibold text-[color:var(--text)] leading-tight">
                     {user?.name || "Account"}
                   </div>
-                  <div className="text-[11px] text-white/45 leading-tight truncate max-w-[180px]">
+                  <div className="text-[11px] text-[color:var(--subtle)] leading-tight truncate max-w-[220px]">
+                    {gymName ? `${gymName} • ` : ""}
                     {user?.email || " "}
                   </div>
                 </div>
@@ -88,6 +213,7 @@ export default function Topbar({ title, subtitle }) {
           </div>
         </div>
       </div>
+      <MobileMenu open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
     </header>
   );
 }

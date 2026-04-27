@@ -29,6 +29,9 @@ export default function SetupGym() {
       // 🔑 Update auth with NEW token that includes gymId
       login(res.data.token, res.data.hasGym, res.data.user);
 
+      // Persist gym name for header
+      localStorage.setItem("gymName", gymName.trim());
+
       // ProtectedRoute will handle redirect to Dashboard
     } catch (err) {
       console.error("Gym creation error:", err);
@@ -46,14 +49,16 @@ export default function SetupGym() {
     <div className="min-h-screen flex items-center justify-center px-4 py-10">
       <Card className="w-full max-w-md p-6 md:p-8">
         <div className="mb-6">
-          <div className="text-3xl font-black tracking-tight text-white">Create your gym</div>
-          <div className="mt-1 text-sm text-white/55">
+          <div className="text-3xl font-black tracking-tight text-[color:var(--text)]">
+            Create your gym
+          </div>
+          <div className="mt-1 text-sm text-[color:var(--muted)]">
             One quick step—then you’re ready to manage members.
           </div>
         </div>
 
         {error ? (
-          <div className="mb-4 rounded-xl border border-danger-500/25 bg-danger-500/10 px-3 py-2 text-xs font-semibold text-red-200">
+          <div className="mb-4 rounded-xl border border-[color:var(--danger-soft-border)] bg-[color:var(--danger-soft-bg)] px-3 py-2 text-xs font-semibold text-[color:var(--danger-ink)]">
             {error}
           </div>
         ) : null}

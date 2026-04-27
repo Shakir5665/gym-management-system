@@ -5,7 +5,10 @@ import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Badge from "../components/ui/Badge";
 import Modal from "../components/ui/Modal";
-import { QrCode, Search, UserPlus } from "lucide-react";
+import Select from "../components/ui/Select";
+import { CreditCard, QrCode, Search, UserPlus, ChevronDown } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { socket } from "../socket";
 
 function memberStatusVariant(status) {
   const s = String(status || "ACTIVE").toUpperCase();
@@ -16,6 +19,8 @@ function memberStatusVariant(status) {
 }
 
 export default function MembersPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -24,8 +29,15 @@ export default function MembersPage() {
   const [status, setStatus] = useState("ALL");
 
   const [addOpen, setAddOpen] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newPhone, setNewPhone] = useState("");
+  const [form, setForm] = useState({
+    fullLegalName: "",
+    dateOfBirth: "",
+    gender: "",
+    email: "",
+    phone: "",
+    emergencyPhone: "",
+    homeAddress: "",
+  });
   const [adding, setAdding] = useState(false);
 
   const [qrMember, setQrMember] = useState(null);
@@ -34,8 +46,32 @@ export default function MembersPage() {
     try {
       setLoading(true);
       setError("");
-      const res = await API.get("/members");
-      setMembers(Array.isArray(res.data) ? res.data : []);
+      const [membersRes, listsRes] = await Promise.all([
+        API.get("/members"),
+        API.get("/dashboard/lists?limit=50"),
+      ]);
+
+      const all = Array.isArray(membersRes.data) ? membersRes.data : [];
+      const lists = listsRes.data || {};
+
+      const riskSet = new Set(
+        (lists.atRiskMembers || []).map((x) => String(x.memberId)),
+      );
+      const dueSet = new Set(
+        (lists.paymentsDueMembers || []).map((x) => String(x.memberId)),
+      );
+      const newSet = new Set(
+        (lists.newMembers || []).map((x) => String(x.memberId)),
+      );
+
+      setMembers(
+        all.map((m) => ({
+          ...m,
+          risk: riskSet.has(String(m._id)) ? "HIGH" : m.risk,
+          paymentDue: dueSet.has(String(m._id)),
+          isNew: newSet.has(String(m._id)),
+        })),
+      );
     } catch {
       setError("Failed to load members");
     } finally {
@@ -45,32 +81,82 @@ export default function MembersPage() {
 
   useEffect(() => {
     fetchMembers();
+
+    // Listen for updates
+    socket.on("attendance:new", fetchMembers);
+    socket.on("gamification:update", fetchMembers);
+    socket.on("payment:update", fetchMembers);
+
+    return () => {
+      socket.off("attendance:new", fetchMembers);
+      socket.off("gamification:update", fetchMembers);
+      socket.off("payment:update", fetchMembers);
+    };
   }, []);
 
   const filtered = useMemo(() => {
+    const view = String(searchParams.get("view") || "");
+    const riskLevel = String(searchParams.get("level") || "");
     const q = query.trim().toLowerCase();
     return members.filter((m) => {
-      const name = String(m?.name || "").toLowerCase();
+      const name = String(m?.fullLegalName || m?.name || "").toLowerCase();
       const phone = String(m?.phone || "").toLowerCase();
-      const matchesQuery = !q || name.includes(q) || phone.includes(q);
+      const email = String(m?.email || "").toLowerCase();
+      const matchesQuery =
+        !q || name.includes(q) || phone.includes(q) || email.includes(q);
 
       const s = String(m?.status || "ACTIVE").toUpperCase();
       const matchesStatus = status === "ALL" || s === status;
+      if (view === "risk" && riskLevel) {
+        return (
+          matchesQuery &&
+          matchesStatus &&
+          String(m?.risk || "").toUpperCase() === riskLevel.toUpperCase()
+        );
+      }
+      if (view === "atrisk") {
+        return (
+          matchesQuery &&
+          matchesStatus &&
+          String(m?.risk || "").toUpperCase() === "HIGH"
+        );
+      }
+      if (view === "paymentsdue") {
+        return matchesQuery && matchesStatus && Boolean(m?.paymentDue);
+      }
+      if (view === "new") {
+        return matchesQuery && matchesStatus && Boolean(m?.isNew);
+      }
       return matchesQuery && matchesStatus;
     });
-  }, [members, query, status]);
+  }, [members, query, searchParams, status]);
 
   const handleAdd = async () => {
-    if (!newName.trim() || !newPhone.trim()) {
-      setError("Name and phone are required");
+    if (!form.fullLegalName.trim() || !form.phone.trim()) {
+      setError("Full legal name and primary phone are required");
       return;
     }
     try {
       setAdding(true);
       setError("");
-      await API.post("/members", { name: newName.trim(), phone: newPhone.trim() });
-      setNewName("");
-      setNewPhone("");
+      await API.post("/members", {
+        fullLegalName: form.fullLegalName.trim(),
+        dateOfBirth: form.dateOfBirth || undefined,
+        gender: form.gender || undefined,
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        emergencyPhone: form.emergencyPhone.trim(),
+        homeAddress: form.homeAddress.trim(),
+      });
+      setForm({
+        fullLegalName: "",
+        dateOfBirth: "",
+        gender: "",
+        email: "",
+        phone: "",
+        emergencyPhone: "",
+        homeAddress: "",
+      });
       setAddOpen(false);
       await fetchMembers();
     } catch (err) {
@@ -88,16 +174,52 @@ export default function MembersPage() {
         </Card>
       ) : null}
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button
+          type="button"
+          onClick={() => navigate("/app/members/top")}
+          className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition"
+        >
+          <div className="text-xs font-semibold text-[color:var(--muted)]">
+            Top members
+          </div>
+          <div className="mt-2 text-sm font-bold text-[color:var(--text)]">
+            View by streak
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/app/members/at-risk")}
+          className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition"
+        >
+          <div className="text-xs font-semibold text-[color:var(--muted)]">
+            At-risk members
+          </div>
+          <div className="mt-2 text-sm font-bold text-[color:var(--text)]">
+            Low activity members
+          </div>
+        </button>
+      </div>
+
       <Card className="p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <div className="text-sm font-bold text-white">Members</div>
-            <div className="text-xs text-white/50 mt-0.5">
+            <div className="text-sm font-bold text-[color:var(--text)]">
+              Members
+            </div>
+            <div className="text-xs text-[color:var(--muted)] mt-0.5">
               Search, filter, and manage member QR codes.
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="primary" onClick={() => setAddOpen(true)} className="gap-2">
+            <Button variant="ghost" onClick={fetchMembers} disabled={loading}>
+              Refresh
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => setAddOpen(true)}
+              className="gap-2"
+            >
               <UserPlus className="h-4 w-4" />
               Add member
             </Button>
@@ -113,32 +235,28 @@ export default function MembersPage() {
             left={<Search className="h-4 w-4" />}
           />
 
-          <label className="block">
-            <div className="mb-1.5 text-xs font-semibold text-white/80">Status</div>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full rounded-xl bg-white/[0.06] border border-white/10 hover:border-white/14 px-3 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-[var(--ring)]"
-            >
-              <option value="ALL" className="bg-bg-2">
-                All
-              </option>
-              <option value="ACTIVE" className="bg-bg-2">
-                Active
-              </option>
-              <option value="PAUSED" className="bg-bg-2">
-                Paused
-              </option>
-              <option value="INACTIVE" className="bg-bg-2">
-                Inactive
-              </option>
-            </select>
-          </label>
+          <Select
+            label="Status"
+            value={status}
+            onChange={(val) => setStatus(val)}
+            options={[
+              { value: "ALL", label: "All" },
+              { value: "ACTIVE", label: "Active" },
+              { value: "PAUSED", label: "Paused" },
+              { value: "INACTIVE", label: "Inactive" },
+            ]}
+          />
 
           <div className="flex items-end justify-between gap-3">
-            <div className="text-xs text-white/50">
-              Showing <span className="text-white/80 font-semibold">{filtered.length}</span> of{" "}
-              <span className="text-white/80 font-semibold">{members.length}</span>
+            <div className="text-xs text-[color:var(--muted)]">
+              Showing{" "}
+              <span className="text-[color:var(--text)] font-semibold">
+                {filtered.length}
+              </span>{" "}
+              of{" "}
+              <span className="text-[color:var(--text)] font-semibold">
+                {members.length}
+              </span>
             </div>
             <Button variant="ghost" onClick={fetchMembers}>
               Refresh
@@ -150,27 +268,36 @@ export default function MembersPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
         {loading ? (
           Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="h-[170px] bg-white/[0.05] animate-pulse" />
+            <Card
+              key={i}
+              className="h-[170px] bg-[color:var(--control-bg)] animate-pulse"
+            />
           ))
         ) : filtered.length === 0 ? (
           <Card className="p-10 text-center">
-            <div className="text-sm font-semibold text-white">No members found</div>
-            <div className="mt-1 text-xs text-white/50">Try adjusting your search or filters.</div>
+            <div className="text-sm font-semibold text-[color:var(--text)]">
+              No members found
+            </div>
+            <div className="mt-1 text-xs text-[color:var(--muted)]">
+              Try adjusting your search or filters.
+            </div>
           </Card>
         ) : (
           filtered.map((m) => (
             <button
               type="button"
               key={m._id}
-              className="text-left glass p-5 transition hover:bg-white/[0.08] hover:border-white/16 hover:-translate-y-[1px] focus:outline-none focus-visible:focus-ring"
-              onClick={() => {
-                localStorage.setItem("selectedMemberId", m._id);
-              }}
+              className="text-left glass p-5 transition hover:bg-[color:var(--control-bg)] hover:border-[color:var(--glass-border-strong)] hover:-translate-y-[1px] focus:outline-none focus-visible:focus-ring"
+              onClick={() => navigate(`/app/member/${m._id}`)}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-sm font-bold text-white truncate">{m.name}</div>
-                  <div className="mt-0.5 text-xs text-white/50 truncate">{m.phone}</div>
+                  <div className="text-sm font-bold text-[color:var(--text)] truncate">
+                    {m.fullLegalName || m.name}
+                  </div>
+                  <div className="mt-0.5 text-xs text-[color:var(--muted)] truncate">
+                    {m.phone}
+                  </div>
                 </div>
                 <Badge variant={memberStatusVariant(m.status)}>
                   {String(m.status || "ACTIVE").toUpperCase()}
@@ -178,47 +305,116 @@ export default function MembersPage() {
               </div>
 
               <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs text-white/50">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/6 border border-white/10">
+                <div className="flex items-center gap-2 text-xs text-[color:var(--muted)]">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[color:var(--control-bg)] border border-[color:var(--control-border)]">
                     {m.name?.slice?.(0, 1)?.toUpperCase?.() || "M"}
                   </span>
                   <span>Tap to set as active</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setQrMember(m);
-                  }}
-                  className="gap-2"
-                >
-                  <QrCode className="h-4 w-4" />
-                  QR
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(
+                        `/app/payments?action=pay&memberId=${encodeURIComponent(m._id)}&memberName=${encodeURIComponent(m.fullLegalName || m.name || "")}`,
+                      );
+                    }}
+                    className="gap-2"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    Make payment
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setQrMember(m);
+                    }}
+                    className="gap-2"
+                  >
+                    <QrCode className="h-4 w-4" />
+                    QR
+                  </Button>
+                </div>
               </div>
             </button>
           ))
         )}
       </div>
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add member">
+      <Modal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title="Add member"
+      >
         <div className="grid gap-3">
           <Input
-            label="Full name"
-            placeholder="e.g., Ayesha Khan"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
+            label="Full legal name"
+            placeholder="e.g., Mohamed"
+            value={form.fullLegalName}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, fullLegalName: e.target.value }))
+            }
             autoFocus
           />
           <Input
-            label="Phone"
-            placeholder="e.g., +91 98xxxxxxx"
-            value={newPhone}
-            onChange={(e) => setNewPhone(e.target.value)}
+            label="Date of birth"
+            type="date"
+            value={form.dateOfBirth}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, dateOfBirth: e.target.value }))
+            }
+          />
+          <Select
+            label="Gender"
+            value={form.gender}
+            onChange={(val) => setForm((p) => ({ ...p, gender: val }))}
+            options={[
+              { value: "", label: "Select" },
+              { value: "MALE", label: "Male" },
+              { value: "FEMALE", label: "Female" },
+              { value: "OTHER", label: "Other" },
+              { value: "PREFER_NOT_TO_SAY", label: "Prefer not to say" },
+            ]}
+          />
+          <Input
+            label="Email"
+            type="email"
+            placeholder="name@example.com"
+            value={form.email}
+            onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+          />
+          <Input
+            label="Primary phone"
+            placeholder="e.g., +94 7x xxx xxxx"
+            value={form.phone}
+            onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+          />
+          <Input
+            label="Emergency phone"
+            placeholder="e.g., +94 7x xxx xxxx"
+            value={form.emergencyPhone}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, emergencyPhone: e.target.value }))
+            }
+          />
+          <Input
+            label="Home address"
+            placeholder="Street, City, State"
+            value={form.homeAddress}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, homeAddress: e.target.value }))
+            }
           />
           <div className="flex items-center justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setAddOpen(false)} disabled={adding}>
+            <Button
+              variant="ghost"
+              onClick={() => setAddOpen(false)}
+              disabled={adding}
+            >
               Cancel
             </Button>
             <Button variant="primary" onClick={handleAdd} disabled={adding}>
@@ -243,12 +439,12 @@ export default function MembersPage() {
                 className="h-52 w-52 object-contain"
               />
             </div>
-            <div className="text-xs text-white/50 text-center">
+            <div className="text-xs text-[color:var(--muted)] text-center">
               Show this at the scanner for instant check-in.
             </div>
           </div>
         ) : (
-          <div className="text-sm text-white/70">
+          <div className="text-sm text-[color:var(--muted)]">
             No QR code available for this member yet.
           </div>
         )}
@@ -256,4 +452,3 @@ export default function MembersPage() {
     </div>
   );
 }
-

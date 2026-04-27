@@ -1,11 +1,16 @@
 import { cn } from "../../lib/cn";
 
 const variants = {
-  neutral: "bg-white/8 text-white/75 border-white/10",
-  brand: "bg-brand-400/12 text-brand-200 border-brand-400/20",
-  success: "bg-success-500/12 text-green-200 border-success-500/20",
-  warning: "bg-warning-500/12 text-yellow-200 border-warning-500/20",
-  danger: "bg-danger-500/12 text-red-200 border-danger-500/20",
+  neutral:
+    "bg-[color:var(--control-bg)] text-[color:var(--muted)] border-[color:var(--control-border)]",
+  brand:
+    "bg-[color:var(--brand-soft-bg)] text-[color:var(--brand-ink)] border-[color:var(--brand-soft-border)]",
+  success:
+    "bg-[color:var(--success-soft-bg)] text-[color:var(--success-ink)] border-[color:var(--success-soft-border)]",
+  warning:
+    "bg-[color:var(--warning-soft-bg)] text-[color:var(--warning-ink)] border-[color:var(--warning-soft-border)]",
+  danger:
+    "bg-[color:var(--danger-soft-bg)] text-[color:var(--danger-ink)] border-[color:var(--danger-soft-border)]",
 };
 
 export default function Badge({ className, variant = "neutral", children }) {

@@ -2,12 +2,92 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
     --radius: 18px;
-    --ring: rgba(34, 211, 238, 0.35);
-    --text: rgba(255, 255, 255, 0.86);
-    --muted: rgba(255, 255, 255, 0.62);
-    --subtle: rgba(255, 255, 255, 0.46);
+    --ring: rgba(34, 211, 238, 0.32);
+
+    --bg: #070a12;
+    --bg2: #090f1f;
+    --text: rgba(255, 255, 255, 0.90);
+    --muted: rgba(255, 255, 255, 0.66);
+    --subtle: rgba(255, 255, 255, 0.48);
+
+    --glass-bg: rgba(255, 255, 255, 0.045);
+    --glass-bg-strong: rgba(255, 255, 255, 0.075);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-strong: rgba(255, 255, 255, 0.10);
+
+    --overlay: rgba(0, 0, 0, 0.55);
+
+    --control-bg: rgba(255, 255, 255, 0.06);
+    --control-bg-hover: rgba(255, 255, 255, 0.10);
+    --control-border: var(--glass-border);
+
+    --elev-inset: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    --elev-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+    --elev-shadow-strong: 0 18px 65px rgba(0, 0, 0, 0.60);
+
+    --brand-ink: rgba(186, 230, 253, 0.95);
+    --brand-soft-bg: rgba(34, 211, 238, 0.12);
+    --brand-soft-border: rgba(34, 211, 238, 0.22);
+
+    --success-ink: rgba(187, 247, 208, 0.95);
+    --success-soft-bg: rgba(34, 197, 94, 0.14);
+    --success-soft-border: rgba(34, 197, 94, 0.22);
+
+    --warning-ink: rgba(254, 240, 138, 0.95);
+    --warning-soft-bg: rgba(234, 179, 8, 0.14);
+    --warning-soft-border: rgba(234, 179, 8, 0.22);
+
+    --danger-ink: rgba(254, 202, 202, 0.95);
+    --danger-soft-bg: rgba(239, 68, 68, 0.14);
+    --danger-soft-border: rgba(239, 68, 68, 0.22);
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --ring: rgba(2, 132, 199, 0.28);
+
+    /* Palette A — Slate + Ice */
+    --bg: #f5f7fb;
+    --bg2: #eef2f7;
+    --text: #0f172a;
+    --muted: #475569;
+    --subtle: #64748b;
+
+    --glass-bg: rgba(255, 255, 255, 0.62);
+    --glass-bg-strong: rgba(255, 255, 255, 0.74);
+    --glass-border: rgba(15, 23, 42, 0.10);
+    --glass-border-strong: rgba(15, 23, 42, 0.14);
+
+    --overlay: rgba(2, 6, 23, 0.22);
+
+    --control-bg: rgba(2, 6, 23, 0.04);
+    --control-bg-hover: rgba(2, 6, 23, 0.07);
+    --control-border: rgba(15, 23, 42, 0.12);
+
+    --elev-inset: 0 1px 0 rgba(255, 255, 255, 0.75) inset;
+    --elev-shadow: 0 18px 55px rgba(2, 6, 23, 0.12);
+    --elev-shadow-strong: 0 22px 70px rgba(2, 6, 23, 0.14);
+
+    --brand-ink: #1d4ed8;
+    --brand-soft-bg: rgba(37, 99, 235, 0.10);
+    --brand-soft-border: rgba(37, 99, 235, 0.20);
+
+    --success-ink: #166534;
+    --success-soft-bg: rgba(22, 163, 74, 0.10);
+    --success-soft-border: rgba(22, 163, 74, 0.20);
+
+    --warning-ink: #92400e;
+    --warning-soft-bg: rgba(234, 179, 8, 0.12);
+    --warning-soft-border: rgba(234, 179, 8, 0.22);
+
+    --danger-ink: #b91c1c;
+    --danger-soft-bg: rgba(239, 68, 68, 0.10);
+    --danger-soft-border: rgba(239, 68, 68, 0.20);
   }
 
   html,
@@ -19,9 +99,8 @@
     margin: 0;
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
       "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-    background: radial-gradient(900px 650px at 10% 0%, rgba(6, 182, 212, 0.16), transparent 58%),
-      radial-gradient(900px 650px at 90% 10%, rgba(139, 92, 246, 0.14), transparent 60%),
-      linear-gradient(180deg, #070a12 0%, #070a12 100%);
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 100%);
+    background-color: var(--bg);
     color: var(--text);
     overflow-x: hidden;
   }
@@ -37,20 +116,18 @@
 
 @layer components {
   .glass {
-    background: rgba(255, 255, 255, 0.045);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset,
-      0 18px 60px rgba(0, 0, 0, 0.55);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--elev-inset), var(--elev-shadow);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: var(--radius);
   }
 
   .glass-strong {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07) inset,
-      0 18px 65px rgba(0, 0, 0, 0.6);
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border-strong);
+    box-shadow: var(--elev-inset), var(--elev-shadow-strong);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: var(--radius);

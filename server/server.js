@@ -12,6 +12,9 @@ import attendanceRoutes from "./routes/attendanceRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import gamificationRoutes from "./routes/gamificationRoutes.js";
 import gymRoutes from "./routes/gymRoutes.js";
+import retentionRoutes from "./routes/retentionRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import accountingRoutes from "./routes/accountingRoutes.js";
 
 
 // 🔹 Middleware
@@ -51,6 +54,9 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/gamification", gamificationRoutes);
 app.use("/api/gym", gymRoutes);
+app.use("/api/retention", retentionRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/accounting", accountingRoutes);
 
 // 🔹 Error handler
 app.use(errorHandler);
@@ -78,10 +84,12 @@ io.on("connection", (socket) => {
 });
 
 // 🔹 MongoDB Connection
+const mongoDbName = process.env.MONGO_DB_NAME || "gymsystem";
+
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI, { dbName: mongoDbName })
   .then(() => {
-    console.log("✅ MongoDB Connected");
+    console.log(`✅ MongoDB Connected (db: ${mongoDbName})`);
 
     server.listen(process.env.PORT || 5000, () => {
       console.log(`🚀 Server running on port ${process.env.PORT || 5000}`);

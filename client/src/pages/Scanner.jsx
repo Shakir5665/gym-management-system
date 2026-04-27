@@ -76,8 +76,10 @@ export default function Scanner() {
       <Card className="p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <div className="text-sm font-bold text-white">QR Scanner</div>
-            <div className="text-xs text-white/50 mt-0.5">Fast check-ins with camera scanning</div>
+            <div className="text-sm font-bold text-[color:var(--text)]">QR Scanner</div>
+            <div className="text-xs text-[color:var(--muted)] mt-0.5">
+              Fast check-ins with camera scanning
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {running ? (
@@ -101,7 +103,7 @@ export default function Scanner() {
         <div className="grid gap-3">
           <div
             id={regionId}
-            className="w-full overflow-hidden rounded-2xl border border-white/10 bg-black/40"
+            className="w-full overflow-hidden rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)]"
           />
           {error ? <div className="text-sm text-danger-500 font-semibold">{error}</div> : null}
           {result ? (
@@ -109,10 +111,10 @@ export default function Scanner() {
               <Badge variant={String(result).startsWith("Error") ? "danger" : "success"}>
                 {String(result).startsWith("Error") ? "Error" : "Success"}
               </Badge>
-              <div className="text-xs text-white/60">{result}</div>
+              <div className="text-xs text-[color:var(--muted)]">{result}</div>
             </div>
           ) : (
-            <div className="text-xs text-white/50">
+            <div className="text-xs text-[color:var(--muted)]">
               Aim the camera at a member’s QR code to check them in.
             </div>
           )}

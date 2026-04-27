@@ -8,14 +8,14 @@ const styles = {
     "active:translate-y-px",
   variants: {
     primary:
-      "bg-gradient-to-b from-brand-400/25 to-brand-600/25 text-white border border-brand-400/25 shadow-glow " +
+      "bg-gradient-to-b from-brand-400/25 to-brand-600/25 text-[color:var(--text)] border border-brand-400/25 shadow-glow " +
       "hover:from-brand-400/32 hover:to-brand-600/32",
     solid:
-      "bg-white/10 text-white border border-white/10 hover:bg-white/14 hover:border-white/14",
+      "bg-[color:var(--control-bg)] text-[color:var(--text)] border border-[color:var(--control-border)] hover:bg-[color:var(--control-bg-hover)] hover:border-[color:var(--glass-border-strong)]",
     ghost:
-      "bg-transparent text-white/80 hover:text-white hover:bg-white/6 border border-transparent",
+      "bg-transparent text-[color:var(--muted)] hover:text-[color:var(--text)] hover:bg-[color:var(--control-bg)] border border-transparent",
     danger:
-      "bg-gradient-to-b from-danger-500/22 to-danger-600/22 text-white border border-danger-500/25 " +
+      "bg-gradient-to-b from-danger-500/22 to-danger-600/22 text-[color:var(--text)] border border-danger-500/25 " +
       "hover:from-danger-500/30 hover:to-danger-600/30",
   },
   sizes: {

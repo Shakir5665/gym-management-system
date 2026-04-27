@@ -77,8 +77,8 @@ export default function Login() {
         <div
           className={`rounded-xl border px-3 py-2 text-xs font-semibold ${
             messageType === "success"
-              ? "bg-success-500/10 text-green-200 border-success-500/25"
-              : "bg-danger-500/10 text-red-200 border-danger-500/25"
+              ? "bg-[color:var(--success-soft-bg)] text-[color:var(--success-ink)] border-[color:var(--success-soft-border)]"
+              : "bg-[color:var(--danger-soft-bg)] text-[color:var(--danger-ink)] border-[color:var(--danger-soft-border)]"
           }`}
         >
           {message}
@@ -87,8 +87,10 @@ export default function Login() {
 
       {/* GOOGLE (PRIMARY) */}
       {googleEnabled ? (
-        <div className="rounded-xl border border-white/10 bg-white/6 px-3 py-3">
-          <div className="text-[11px] text-white/50 mb-2 font-semibold">Continue with</div>
+        <div className="rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-3">
+          <div className="text-[11px] text-[color:var(--muted)] mb-2 font-semibold">
+            Continue with
+          </div>
           <div className="flex justify-center">
             <GoogleLogin
               onSuccess={async (credentialResponse) => {
@@ -117,19 +119,23 @@ export default function Login() {
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-white/10 bg-white/6 px-3 py-3">
-          <div className="text-[11px] text-white/50 mb-2 font-semibold">Google login</div>
-          <div className="text-xs text-white/55">
-            Add <span className="text-white/80 font-semibold">VITE_GOOGLE_CLIENT_ID</span> in{" "}
-            <span className="text-white/80 font-semibold">client/.env</span> to enable Google sign-in.
+        <div className="rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-3">
+          <div className="text-[11px] text-[color:var(--muted)] mb-2 font-semibold">
+            Google login
+          </div>
+          <div className="text-xs text-[color:var(--subtle)]">
+            Add{" "}
+            <span className="text-[color:var(--text)] font-semibold">VITE_GOOGLE_CLIENT_ID</span>{" "}
+            in <span className="text-[color:var(--text)] font-semibold">client/.env</span> to enable
+            Google sign-in.
           </div>
         </div>
       )}
 
       <div className="flex items-center gap-3 py-1">
-        <div className="h-px flex-1 bg-white/10" />
-        <div className="text-[11px] text-white/45">or sign in with email</div>
-        <div className="h-px flex-1 bg-white/10" />
+        <div className="h-px flex-1 bg-[color:var(--control-border)]" />
+        <div className="text-[11px] text-[color:var(--subtle)]">or sign in with email</div>
+        <div className="h-px flex-1 bg-[color:var(--control-border)]" />
       </div>
 
       <Input

@@ -8,7 +8,8 @@ export default function Modal({ open, onClose, title, children, className }) {
     <div className="fixed inset-0 z-50">
       <button
         type="button"
-        className="absolute inset-0 bg-black/55 backdrop-blur-sm"
+        className="absolute inset-0 backdrop-blur-sm"
+        style={{ background: "var(--overlay)" }}
         onClick={onClose}
         aria-label="Close modal"
       />
@@ -16,12 +17,14 @@ export default function Modal({ open, onClose, title, children, className }) {
         <div className={cn("glass-strong w-full max-w-lg p-5 md:p-6", className)}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              {title ? <div className="text-sm font-bold text-white">{title}</div> : null}
+              {title ? (
+                <div className="text-sm font-bold text-[color:var(--text)]">{title}</div>
+              ) : null}
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-white/10 bg-white/6 hover:bg-white/10 px-2.5 py-2 text-white/70 transition"
+              className="rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-2.5 py-2 text-[color:var(--muted)] transition"
               aria-label="Close"
             >
               <X className="h-4 w-4" />

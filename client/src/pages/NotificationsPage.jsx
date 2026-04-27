@@ -21,8 +21,8 @@ export default function NotificationsPage() {
       <Card className="p-5 md:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-sm font-bold text-white">Notifications</div>
-            <div className="mt-0.5 text-xs text-white/50">
+            <div className="text-sm font-bold text-[color:var(--text)]">Notifications</div>
+            <div className="mt-0.5 text-xs text-[color:var(--muted)]">
               Live updates from attendance and gamification events.
             </div>
           </div>
@@ -42,8 +42,8 @@ export default function NotificationsPage() {
 
       {rows.length === 0 ? (
         <Card className="p-10 text-center">
-          <div className="text-sm font-semibold text-white">No notifications yet</div>
-          <div className="mt-1 text-xs text-white/50">
+          <div className="text-sm font-semibold text-[color:var(--text)]">No notifications yet</div>
+          <div className="mt-1 text-xs text-[color:var(--muted)]">
             When check-ins happen, you’ll see updates here instantly.
           </div>
         </Card>
@@ -54,19 +54,21 @@ export default function NotificationsPage() {
               key={n.id}
               type="button"
               onClick={() => markRead(n.id)}
-              className="text-left glass p-4 transition hover:bg-white/[0.08] hover:border-white/16 focus:outline-none focus-visible:focus-ring"
+              className="text-left glass p-4 transition hover:bg-[color:var(--control-bg)] hover:border-[color:var(--glass-border-strong)] focus:outline-none focus-visible:focus-ring"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="text-sm font-bold text-white truncate">{n.title}</div>
+                    <div className="text-sm font-bold text-[color:var(--text)] truncate">
+                      {n.title}
+                    </div>
                     <Badge variant={variantToBadge[n.variant] || "neutral"}>{n.variant}</Badge>
                   </div>
                   {n.message ? (
-                    <div className="mt-1 text-xs text-white/55">{n.message}</div>
+                    <div className="mt-1 text-xs text-[color:var(--muted)]">{n.message}</div>
                   ) : null}
                 </div>
-                <div className="text-[11px] text-white/45 shrink-0">
+                <div className="text-[11px] text-[color:var(--subtle)] shrink-0">
                   {new Date(n.createdAt).toLocaleString()}
                 </div>
               </div>
