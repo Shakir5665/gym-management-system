@@ -9,6 +9,7 @@ import Modal from "../components/ui/Modal";
 import Select from "../components/ui/Select";
 import AreaSpark from "../components/charts/AreaSpark";
 import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown } from "lucide-react";
+import QRCode from "qrcode";
 import { socket } from "../socket";
 
 function riskVariant(risk) {
@@ -30,6 +31,7 @@ export default function MemberProfilePage() {
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
 
   const [game, setGame] = useState({});
   const [risk, setRisk] = useState("");
@@ -77,6 +79,18 @@ export default function MemberProfilePage() {
     let cancelled = false;
     setLoading(true);
     fetchAll();
+
+    if (id) {
+      QRCode.toDataURL(JSON.stringify({ memberId: id }), {
+        margin: 1,
+        width: 200,
+        color: { dark: "#000000", light: "#ffffff" },
+      })
+        .then((url) => {
+          if (!cancelled) setQrCodeUrl(url);
+        })
+        .catch((err) => console.error("QR Gen Error:", err));
+    }
 
     function onAttendance(payload) {
       if (!payload || payload.memberId !== id) return;
@@ -190,7 +204,12 @@ export default function MemberProfilePage() {
               {member?.phone || " "}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4">
+            {qrCodeUrl ? (
+              <div className="flex flex-col items-center p-1 rounded bg-white shadow-sm border border-[color:var(--control-border)]">
+                <img src={qrCodeUrl} alt="Member QR Code" className="w-16 h-16 object-contain" />
+              </div>
+            ) : null}
             <Button variant="solid" onClick={() => setEditOpen(true)}>
               Edit
             </Button>
