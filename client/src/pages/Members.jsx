@@ -16,7 +16,7 @@ export default function Members({ setSelectedMember }) {
       setLoading(true);
       const res = await API.get("/members");
       setMembers(res.data);
-    } catch (err) {
+    } catch {
       setError("Failed to load members");
     } finally {
       setLoading(false);

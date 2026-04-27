@@ -2,9 +2,13 @@ import { useState, useEffect } from "react";
 import API from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import { Mail, Lock } from "lucide-react";
 
 export default function Login() {
   const { login } = useAuth();
+  const googleEnabled = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,84 +72,96 @@ export default function Login() {
   };
 
   return (
-    <div>
-      {/* 🟢 MESSAGE BOX */}
-      {message && (
+    <div className="grid gap-3">
+      {message ? (
         <div
-          className={`mb-4 p-3 rounded-lg text-sm font-medium border ${
+          className={`rounded-xl border px-3 py-2 text-xs font-semibold ${
             messageType === "success"
-              ? "bg-green-500/20 text-green-300 border-green-500/50"
-              : "bg-red-500/20 text-red-300 border-red-500/50"
+              ? "bg-success-500/10 text-green-200 border-success-500/25"
+              : "bg-danger-500/10 text-red-200 border-danger-500/25"
           }`}
         >
           {message}
         </div>
+      ) : null}
+
+      {/* GOOGLE (PRIMARY) */}
+      {googleEnabled ? (
+        <div className="rounded-xl border border-white/10 bg-white/6 px-3 py-3">
+          <div className="text-[11px] text-white/50 mb-2 font-semibold">Continue with</div>
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                try {
+                  setLoading(true);
+                  const res = await API.post("/auth/google", {
+                    token: credentialResponse.credential,
+                  });
+                  login(res.data.token, res.data.hasGym, res.data.user);
+                  setMessage("Google login successful!");
+                  setMessageType("success");
+                } catch (err) {
+                  console.error("Google login error:", err);
+                  setMessage("Google login failed");
+                  setMessageType("error");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              onError={() => {
+                setMessage("Google login failed");
+                setMessageType("error");
+              }}
+              width="320"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-white/10 bg-white/6 px-3 py-3">
+          <div className="text-[11px] text-white/50 mb-2 font-semibold">Google login</div>
+          <div className="text-xs text-white/55">
+            Add <span className="text-white/80 font-semibold">VITE_GOOGLE_CLIENT_ID</span> in{" "}
+            <span className="text-white/80 font-semibold">client/.env</span> to enable Google sign-in.
+          </div>
+        </div>
       )}
 
-      {/* EMAIL */}
-      <input
-        className="w-full p-3 mb-3 bg-gray-700 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none transition"
-        placeholder="Email address"
+      <div className="flex items-center gap-3 py-1">
+        <div className="h-px flex-1 bg-white/10" />
+        <div className="text-[11px] text-white/45">or sign in with email</div>
+        <div className="h-px flex-1 bg-white/10" />
+      </div>
+
+      <Input
+        label="Email"
+        placeholder="you@company.com"
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        onKeyPress={handleKeyPress}
+        onKeyDown={handleKeyPress}
         disabled={loading}
+        left={<Mail className="h-4 w-4" />}
       />
 
-      {/* PASSWORD */}
-      <input
+      <Input
+        label="Password"
+        placeholder="••••••••"
         type="password"
-        className="w-full p-3 mb-4 bg-gray-700 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none transition"
-        placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        onKeyPress={handleKeyPress}
+        onKeyDown={handleKeyPress}
         disabled={loading}
+        left={<Lock className="h-4 w-4" />}
       />
 
-      {/* LOGIN BUTTON */}
-      <button
+      <Button
         onClick={handleLogin}
         disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 p-3 rounded-lg font-semibold mb-4 transition"
+        variant="primary"
+        className="w-full mt-1"
       >
-        {loading ? "Logging in..." : "Login"}
-      </button>
-
-      {/* DIVIDER */}
-      <div className="text-center text-gray-400 mb-4 text-sm">OR</div>
-
-      {/* 🔥 GOOGLE LOGIN */}
-      <div className="flex justify-center">
-        <GoogleLogin
-          onSuccess={async (credentialResponse) => {
-            try {
-              setLoading(true);
-              const res = await API.post("/auth/google", {
-                token: credentialResponse.credential,
-              });
-
-              // ✅ IMPORTANT: pass hasGym
-              login(res.data.token, res.data.hasGym, res.data.user);
-              setMessage("Google login successful!");
-              setMessageType("success");
-
-              // ❌ REMOVE redirect → ProtectedRoute handles it
-            } catch (err) {
-              console.error("Google login error:", err);
-              setMessage("Google login failed");
-              setMessageType("error");
-            } finally {
-              setLoading(false);
-            }
-          }}
-          onError={() => {
-            setMessage("Google login failed");
-            setMessageType("error");
-          }}
-        />
-      </div>
+        {loading ? "Signing in…" : "Sign in"}
+      </Button>
     </div>
   );
 }

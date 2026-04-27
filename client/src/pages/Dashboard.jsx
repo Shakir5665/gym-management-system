@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import API from "../api/api";
 import { socket } from "../socket";
 
@@ -8,7 +8,7 @@ export default function Dashboard({ memberId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -20,16 +20,16 @@ export default function Dashboard({ memberId }) {
 
       setGame(gRes.data || {});
       setRisk(rRes.data.risk || "");
-    } catch (err) {
+    } catch {
       setError("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
-  };
+  }, [memberId]);
 
   useEffect(() => {
     fetchData();
-  }, [memberId]);
+  }, [fetchData]);
 
   useEffect(() => {
     socket.on("gamification:update", fetchData);
@@ -39,7 +39,7 @@ export default function Dashboard({ memberId }) {
       socket.off("gamification:update");
       socket.off("attendance:new");
     };
-  }, [memberId]);
+  }, [fetchData]);
 
   if (loading) {
     return (

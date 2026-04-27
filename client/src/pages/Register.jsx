@@ -1,8 +1,12 @@
 import { useState } from "react";
 import API from "../api/api";
 import { GoogleLogin } from "@react-oauth/google";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import { Building2, Lock, Mail, User } from "lucide-react";
 
 export default function Register({ onSuccess }) {
+  const googleEnabled = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -75,7 +79,7 @@ export default function Register({ onSuccess }) {
       setGoogleToken(credentialResponse.credential);
       setGoogleGymSetup(true);
       setLoading(false);
-    } catch (err) {
+    } catch {
       setMessage("Google registration failed");
       setMessageType("error");
       setLoading(false);
@@ -129,44 +133,46 @@ export default function Register({ onSuccess }) {
           </div>
         )}
 
-        <input
-          type="text"
-          className="w-full p-3 mb-4 bg-gray-700 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none transition"
+        <Input
+          label="Gym name"
           placeholder="Enter your gym name"
           value={googleGymName}
           onChange={(e) => setGoogleGymName(e.target.value)}
-          onKeyPress={(e) => {
+          onKeyDown={(e) => {
             if (e.key === "Enter") handleCompleteGoogleRegister();
           }}
           disabled={loading}
           autoFocus
+          left={<Building2 className="h-4 w-4" />}
         />
 
-        <button
+        <Button
           onClick={handleCompleteGoogleRegister}
           disabled={loading}
-          className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 p-3 rounded-lg font-semibold transition"
+          variant="primary"
+          className="w-full mt-3"
         >
           {loading ? "Completing registration..." : "Complete Registration"}
-        </button>
+        </Button>
 
-        <button
+        <Button
           onClick={() => {
             setGoogleGymSetup(false);
             setGoogleGymName("");
             setGoogleToken("");
           }}
           disabled={loading}
-          className="w-full mt-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 p-3 rounded-lg font-semibold transition"
+          variant="ghost"
+          className="w-full mt-2"
         >
           Cancel
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="grid gap-3">
       {message && (
         <div
           className={`mb-4 p-3 rounded-lg text-sm font-medium border ${
@@ -179,47 +185,77 @@ export default function Register({ onSuccess }) {
         </div>
       )}
 
-      {["name", "email", "password", "gymName"].map((field) => (
-        <input
-          key={field}
-          type={field === "password" ? "password" : "text"}
-          className="w-full p-3 mb-3 bg-gray-700 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none transition"
-          placeholder={
-            field === "name"
-              ? "Full name"
-              : field === "email"
-                ? "Email address"
-                : field === "password"
-                  ? "Password (min 6)"
-                  : "Gym name"
-          }
-          value={form[field]}
-          onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-          onKeyPress={handleKeyPress}
-          disabled={loading}
-        />
-      ))}
+      <Input
+        label="Full name"
+        placeholder="Your name"
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+        onKeyDown={handleKeyPress}
+        disabled={loading}
+        left={<User className="h-4 w-4" />}
+      />
+      <Input
+        label="Email"
+        placeholder="you@company.com"
+        value={form.email}
+        onChange={(e) => setForm({ ...form, email: e.target.value })}
+        onKeyDown={handleKeyPress}
+        disabled={loading}
+        left={<Mail className="h-4 w-4" />}
+      />
+      <Input
+        label="Password"
+        placeholder="Minimum 6 characters"
+        type="password"
+        value={form.password}
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+        onKeyDown={handleKeyPress}
+        disabled={loading}
+        left={<Lock className="h-4 w-4" />}
+      />
+      <Input
+        label="Gym name"
+        placeholder="Your gym brand"
+        value={form.gymName}
+        onChange={(e) => setForm({ ...form, gymName: e.target.value })}
+        onKeyDown={handleKeyPress}
+        disabled={loading}
+        left={<Building2 className="h-4 w-4" />}
+      />
 
-      <button
+      <Button
         onClick={handleRegister}
         disabled={loading}
-        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 p-3 rounded-lg font-semibold mt-2 transition"
+        variant="primary"
+        className="w-full mt-1"
       >
         {loading ? "Creating account..." : "Register"}
-      </button>
+      </Button>
 
-      <div className="text-center text-gray-400 my-4 text-sm">OR</div>
+      <div className="flex items-center gap-3 py-1">
+        <div className="h-px flex-1 bg-white/10" />
+        <div className="text-[11px] text-white/45">or use Google</div>
+        <div className="h-px flex-1 bg-white/10" />
+      </div>
 
       <div className="flex justify-center">
-        <GoogleLogin
-          onSuccess={handleGoogleRegister}
-          onError={() => {
-            setMessage("Google registration failed");
-            setMessageType("error");
-          }}
-          text="signup_with"
-          useOneTap={false}
-        />
+        {googleEnabled ? (
+          <GoogleLogin
+            onSuccess={handleGoogleRegister}
+            onError={() => {
+              setMessage("Google registration failed");
+              setMessageType("error");
+            }}
+            text="signup_with"
+            useOneTap={false}
+            width="320"
+          />
+        ) : (
+          <div className="w-full rounded-xl border border-white/10 bg-white/6 px-3 py-3 text-xs text-white/55 text-center">
+            Add <span className="text-white/80 font-semibold">VITE_GOOGLE_CLIENT_ID</span> in{" "}
+            <span className="text-white/80 font-semibold">client/.env</span> to enable Google signup.
+          </div>
+        )}
       </div>
     </div>
   );

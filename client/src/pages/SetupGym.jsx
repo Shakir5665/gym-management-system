@@ -1,6 +1,10 @@
 import { useState } from "react";
 import API from "../api/api";
 import { useAuth } from "../context/AuthContext";
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import { Building2 } from "lucide-react";
 
 export default function SetupGym() {
   const [gymName, setGymName] = useState("");
@@ -39,37 +43,40 @@ export default function SetupGym() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-white px-4">
-      <div className="bg-gray-800 p-8 rounded-lg w-full max-w-md shadow-2xl border border-gray-700">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome! 🏋️</h1>
-          <p className="text-gray-400">Let's set up your gym first</p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-10">
+      <Card className="w-full max-w-md p-6 md:p-8">
+        <div className="mb-6">
+          <div className="text-3xl font-black tracking-tight text-white">Create your gym</div>
+          <div className="mt-1 text-sm text-white/55">
+            One quick step—then you’re ready to manage members.
+          </div>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-500/20 text-red-300 rounded-lg border border-red-500/50 text-sm">
+        {error ? (
+          <div className="mb-4 rounded-xl border border-danger-500/25 bg-danger-500/10 px-3 py-2 text-xs font-semibold text-red-200">
             {error}
           </div>
-        )}
+        ) : null}
 
-        <input
-          type="text"
-          className="w-full p-3 mb-4 bg-gray-700 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none transition"
-          placeholder="Enter your gym name"
+        <Input
+          label="Gym name"
+          placeholder="e.g., Iron Temple Fitness"
           value={gymName}
           onChange={(e) => setGymName(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyPress}
           disabled={loading}
+          left={<Building2 className="h-4 w-4" />}
         />
 
-        <button
+        <Button
           onClick={handleCreate}
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 p-3 rounded-lg font-semibold transition"
+          variant="primary"
+          className="w-full mt-4"
         >
-          {loading ? "Creating..." : "Create Gym"}
-        </button>
-      </div>
+          {loading ? "Creating…" : "Create gym"}
+        </Button>
+      </Card>
     </div>
   );
 }

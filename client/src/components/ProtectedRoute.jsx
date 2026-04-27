@@ -1,5 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import SetupGym from "../pages/SetupGym";
+import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({ children }) {
   const { token, hasGym, loading } = useAuth();
@@ -15,7 +16,7 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  if (!token) return null;
+  if (!token) return <Navigate to="/" replace />;
 
   if (!hasGym) return <SetupGym />;
 

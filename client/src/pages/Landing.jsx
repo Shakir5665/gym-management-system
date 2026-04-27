@@ -6,86 +6,97 @@ export default function Landing() {
   const [mode, setMode] = useState("login");
 
   return (
-    <div className="min-h-screen flex">
-      {/* LEFT SIDE */}
-      <div
-        className="hidden lg:flex w-1/2 relative bg-cover bg-center"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1558611848-73f7eb4001ab')",
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/60" />
-        <div className="relative z-10 flex flex-col justify-center p-12 text-white">
-          <h1 className="text-5xl font-bold mb-6">
-            Gym Management <span className="text-blue-400">SaaS</span>
-          </h1>
-          <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-            Manage your gym efficiently with our smart system. Track members,
-            attendance, and growth in real-time.
-          </p>
-          <div className="space-y-3 text-gray-300">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">✅</span>
-              <span>Real-time member tracking</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">✅</span>
-              <span>Gamification & rewards</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">✅</span>
-              <span>Multi-tenant architecture</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">✅</span>
-              <span>Socket.io live updates</span>
+    <div className="min-h-screen">
+      <div className="pointer-events-none fixed inset-0 opacity-60">
+        <div className="absolute inset-0 bg-grid-fade bg-grid [mask-image:radial-gradient(60%_55%_at_50%_20%,black,transparent)]" />
+      </div>
+
+      <div className="relative mx-auto max-w-7xl min-h-screen grid lg:grid-cols-2 gap-6 px-4 py-10 lg:py-0 items-center">
+        {/* LEFT: HERO */}
+        <div className="hidden lg:block">
+          <div className="glass p-10 overflow-hidden relative">
+            <div className="absolute -top-32 -left-32 h-72 w-72 rounded-full bg-brand-400/20 blur-3xl" />
+            <div className="absolute -bottom-40 -right-24 h-80 w-80 rounded-full bg-accent-500/18 blur-3xl" />
+
+            <div className="relative">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-[11px] font-semibold text-white/70">
+                Premium SaaS UI • Dark glass theme
+              </div>
+              <h1 className="mt-5 text-5xl font-black tracking-tight text-white leading-[1.05]">
+                Gym Management{" "}
+                <span className="bg-gradient-to-r from-brand-200 to-accent-400 bg-clip-text text-transparent">
+                  SaaS
+                </span>
+              </h1>
+              <p className="mt-4 text-base text-white/60 leading-relaxed max-w-lg">
+                A modern system for member management, QR check-ins, gamification, and real-time
+                notifications—built for speed and clarity.
+              </p>
+
+              <div className="mt-8 grid grid-cols-2 gap-3 text-sm">
+                {[
+                  "Real-time member tracking",
+                  "Gamification & streaks",
+                  "QR check-ins",
+                  "Live notifications",
+                ].map((t) => (
+                  <div
+                    key={t}
+                    className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-white/75"
+                  >
+                    <div className="text-xs font-bold text-white/85">{t}</div>
+                    <div className="mt-1 text-[11px] text-white/45">Fast, minimal, high-contrast</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* RIGHT SIDE */}
-      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4">
-        <div className="bg-gray-800 p-8 rounded-2xl w-full max-w-md shadow-2xl border border-gray-700">
-          <h2 className="text-3xl font-bold mb-2 text-center">
-            {mode === "login" ? "Welcome Back" : "Join Us"}
-          </h2>
-          <p className="text-gray-400 text-center mb-6 text-sm">
-            {mode === "login"
-              ? "Login to your gym account"
-              : "Create your gym account"}
-          </p>
+        {/* RIGHT: AUTH */}
+        <div className="flex items-center justify-center">
+          <div className="glass-strong w-full max-w-md p-6 md:p-8">
+            <div className="text-center">
+              <div className="text-2xl font-black tracking-tight text-white">
+                {mode === "login" ? "Welcome back" : "Create your account"}
+              </div>
+              <div className="mt-1 text-sm text-white/55">
+                {mode === "login"
+                  ? "Sign in to manage your gym in seconds."
+                  : "Set up your gym and start tracking members."}
+              </div>
+            </div>
 
-          {mode === "login" ? (
-            <Login key="login" />
-          ) : (
-            <Register key="register" onSuccess={() => setMode("login")} />
-          )}
+            <div className="mt-6">{mode === "login" ? <Login /> : <Register onSuccess={() => setMode("login")} />}</div>
 
-          <p className="text-sm mt-6 text-center text-gray-400">
-            {mode === "login" ? (
-              <>
-                Don't have an account?{" "}
-                <button
-                  onClick={() => setMode("register")}
-                  className="text-blue-400 hover:text-blue-300 font-semibold transition"
-                >
-                  Sign up
-                </button>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <button
-                  onClick={() => setMode("login")}
-                  className="text-blue-400 hover:text-blue-300 font-semibold transition"
-                >
-                  Login
-                </button>
-              </>
-            )}
-          </p>
+            <div className="mt-6 text-center text-sm text-white/55">
+              {mode === "login" ? (
+                <>
+                  Don&apos;t have an account?{" "}
+                  <button
+                    onClick={() => setMode("register")}
+                    className="text-brand-200 hover:text-white font-semibold transition"
+                  >
+                    Sign up
+                  </button>
+                </>
+              ) : (
+                <>
+                  Already have an account?{" "}
+                  <button
+                    onClick={() => setMode("login")}
+                    className="text-brand-200 hover:text-white font-semibold transition"
+                  >
+                    Login
+                  </button>
+                </>
+              )}
+            </div>
+
+            <div className="mt-6 text-center text-[11px] text-white/35">
+              By continuing, you agree to secure authentication and real-time updates.
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,66 +1,72 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* 🔹 Theme Variables */
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #ffffff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
-}
-
-/* 🔹 Dark Mode */
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #111827; /* Tailwind gray-900 */
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
+    color-scheme: dark;
+    --radius: 18px;
+    --ring: rgba(34, 211, 238, 0.35);
+    --text: rgba(255, 255, 255, 0.86);
+    --muted: rgba(255, 255, 255, 0.62);
+    --subtle: rgba(255, 255, 255, 0.46);
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+    background: radial-gradient(900px 650px at 10% 0%, rgba(6, 182, 212, 0.16), transparent 58%),
+      radial-gradient(900px 650px at 90% 10%, rgba(139, 92, 246, 0.14), transparent 60%),
+      linear-gradient(180deg, #070a12 0%, #070a12 100%);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: rgba(34, 211, 238, 0.25);
   }
 }
 
-/* 🔹 Reset */
-body {
-  margin: 0;
-  padding: 0;
-  background: var(--bg);
-  color: var(--text);
+@layer components {
+  .glass {
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset,
+      0 18px 60px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--radius);
+  }
+
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07) inset,
+      0 18px 65px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--radius);
+  }
+
+  .focus-ring {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--ring);
+  }
 }
 
-/* 🔹 IMPORTANT: Fix layout issue */
-#root {
-  min-height: 100vh;
-}
-
-/* 🔹 Typography */
-h1, h2 {
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 2.5rem;
-  margin: 1rem 0;
-}
-
-h2 {
-  font-size: 1.5rem;
-}
-
-/* 🔹 Optional small helpers */
-p {
-  margin: 0;
-}
-
-code {
-  background: var(--code-bg);
-  padding: 4px 6px;
-  border-radius: 4px;
+@layer utilities {
+  .text-muted {
+    color: var(--muted);
+  }
+  .text-subtle {
+    color: var(--subtle);
+  }
 }
