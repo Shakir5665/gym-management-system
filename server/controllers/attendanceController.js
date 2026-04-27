@@ -3,16 +3,20 @@ import Member from "../models/Member.js";
 import Gamification from "../models/Gamification.js";
 
 export const checkIn = async (req, res) => {
-
-  try{
+  try {
     const { memberId } = req.body;
 
     const member = await Member.findById(memberId);
+
+    if (!member) {
+      return res.status(404).json({ message: "Member not found" });
+    }
 
     let status = "SUCCESS";
     let reason = "";
     const now = new Date();
 
+    // RULE ENGINE
     if (member.isBanned) {
       status = "BLOCKED";
       reason = "User is banned";
@@ -24,13 +28,16 @@ export const checkIn = async (req, res) => {
       reason = "Subscription expired";
     }
 
+    // SAVE ATTENDANCE
     const record = await Attendance.create({
       memberId,
       status,
       reason
     });
 
-    // 🎮 GAMIFICATION
+    const io = req.app.get("io"); // 🔥 get socket instance
+
+    // GAMIFICATION
     if (status === "SUCCESS") {
       let game = await Gamification.findOne({ memberId });
 
@@ -43,8 +50,10 @@ export const checkIn = async (req, res) => {
         });
       } else {
         const today = new Date();
+        const last = new Date(game.lastCheckIn);
+
         const diff = Math.floor(
-          (today - new Date(game.lastCheckIn)) / (1000 * 60 * 60 * 24)
+          (today - last) / (1000 * 60 * 60 * 24)
         );
 
         if (diff === 1) game.streak++;
@@ -55,14 +64,23 @@ export const checkIn = async (req, res) => {
 
         await game.save();
       }
+
+      // EMIT GAMIFICATION EVENT
+      io.emit("gamification:update", { memberId });
     }
 
-    res.json({ status, reason, record });
-}
+    // EMIT ATTENDANCE EVENT
+    io.emit("attendance:new", {
+      memberId,
+      status,
+      time: new Date()
+    });
 
-catch (err) {
+    // RESPONSE LAST
+    res.json({ status, reason, record });
+
+  } catch (err) {
     console.error("CheckIn error:", err);
     res.status(500).json({ message: err.message });
   }
-
 };

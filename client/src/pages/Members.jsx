@@ -1,39 +1,30 @@
 import { useEffect, useState } from "react";
 import API from "../api/api";
 
-export default function Members() {
+export default function Members({ setSelectedMember }) {
   const [members, setMembers] = useState([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [error, setError] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
 
   const fetchMembers = async () => {
-    try {
-      const res = await API.get("/members");
-      setMembers(res.data);
-    } catch (err) {
-      setError("Failed to fetch members: " + err.message);
-      console.error(err);
-    }
+    const res = await API.get("/members");
+    setMembers(res.data);
   };
 
   const addMember = async () => {
-    if (!name || !phone) {
-      setError("Please enter both name and phone");
-      return;
-    }
-    try {
-      await API.post("/members", { name, phone });
-      setName("");
-      setPhone("");
-      setError("");
-      fetchMembers();
-    } catch (err) {
-      setError(
-        "Failed to add member: " + err.response?.data?.message || err.message,
-      );
-      console.error(err);
-    }
+    if (!name || !phone) return;
+
+    await API.post("/members", { name, phone });
+
+    setName("");
+    setPhone("");
+    fetchMembers();
+  };
+
+  const handleSelect = (m) => {
+    setSelectedId(m._id);
+    setSelectedMember(m._id);
   };
 
   useEffect(() => {
@@ -41,31 +32,54 @@ export default function Members() {
   }, []);
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Members</h1>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div>
 
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Enter name"
-      />
-      <input
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="Enter phone"
-      />
-      <button onClick={addMember}>Add Member</button>
+      {/* 🔹 FORM */}
+      <div className="mb-4 space-y-2">
+        <input
+          className="w-full p-2 rounded bg-gray-700 outline-none"
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
-      <ul>
+        <input
+          className="w-full p-2 rounded bg-gray-700 outline-none"
+          placeholder="Phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+
+        <button
+          onClick={addMember}
+          className="w-full bg-blue-500 hover:bg-blue-600 p-2 rounded font-semibold"
+        >
+          Add Member
+        </button>
+      </div>
+
+      {/* 🔹 MEMBER LIST */}
+      <div className="space-y-3">
         {members.map((m) => (
-          <li key={m._id}>
-            {m.name}
-            <br />
-            <img src={m.qrCode} width="100" alt="QR" />
-          </li>
+          <div
+            key={m._id}
+            onClick={() => handleSelect(m)}
+            className={`p-3 rounded cursor-pointer border transition ${
+              selectedId === m._id
+                ? "bg-blue-600 border-blue-400"
+                : "bg-gray-700 border-gray-600 hover:bg-gray-600"
+            }`}
+          >
+            <p className="font-semibold">{m.name}</p>
+
+            <img
+              src={m.qrCode}
+              className="w-16 mt-2"
+              alt="QR"
+            />
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

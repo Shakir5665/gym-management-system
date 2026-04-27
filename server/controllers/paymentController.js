@@ -19,4 +19,10 @@ export const makePayment = async (req, res) => {
   await member.save();
 
   res.json({ message: "Payment success" });
+
+  const io = req.app.get("io");
+
+  io.emit("payment:update", {
+    memberId
+  });
 };
