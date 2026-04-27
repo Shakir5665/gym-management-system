@@ -10,6 +10,7 @@ export default function Scanner() {
   const [result, setResult] = useState("");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
+  const [isPaused, setIsPaused] = useState(false);
   const scannerRef = useRef(null);
   const regionId = useMemo(() => "qr-reader-region", []);
 
@@ -35,6 +36,7 @@ export default function Scanner() {
       // ignore
     } finally {
       setRunning(false);
+      setIsPaused(false);
       isProcessingRef.current = false;
     }
   };
@@ -46,8 +48,8 @@ export default function Scanner() {
       const gainNode = audioCtx.createGain();
 
       oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // 880 Hz
-      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // volume
+      oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime); // 1000 Hz for a sharper beep
+      gainNode.gain.setValueAtTime(1.0, audioCtx.currentTime); // Loud volume (100%)
 
       oscillator.connect(gainNode);
       gainNode.connect(audioCtx.destination);
@@ -56,7 +58,7 @@ export default function Scanner() {
       setTimeout(() => {
         oscillator.stop();
         audioCtx.close();
-      }, 150); // Beep duration
+      }, 300); // Longer beep duration (300ms)
     } catch (e) {
       console.warn("Audio not supported or blocked:", e);
     }
@@ -66,6 +68,7 @@ export default function Scanner() {
     try {
       setError("");
       setResult("");
+      setIsPaused(false);
       isProcessingRef.current = false;
 
       if (!scannerRef.current) scannerRef.current = new Html5Qrcode(regionId);
@@ -78,6 +81,7 @@ export default function Scanner() {
         async (decodedText) => {
           if (isProcessingRef.current) return;
           isProcessingRef.current = true;
+          setIsPaused(true);
 
           try {
             playBeep(); // Play sound immediately on successful read
@@ -96,6 +100,7 @@ export default function Scanner() {
             // Wait 2 seconds, then resume
             setTimeout(() => {
               isProcessingRef.current = false;
+              setIsPaused(false);
               try {
                 if (scannerRef.current && typeof scannerRef.current.resume === "function") {
                   scannerRef.current.resume();
@@ -151,10 +156,21 @@ export default function Scanner() {
 
       <Card className="p-5 md:p-6">
         <div className="grid gap-3">
-          <div
-            id={regionId}
-            className="w-full overflow-hidden rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)]"
-          />
+          <div className="relative">
+            <div
+              id={regionId}
+              className={`w-full overflow-hidden rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] transition-opacity ${
+                isPaused ? "opacity-30" : "opacity-100"
+              }`}
+            />
+            {isPaused && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Badge variant="warning" className="text-sm px-3 py-1.5 shadow-sm">
+                  Paused for next scan...
+                </Badge>
+              </div>
+            )}
+          </div>
           {error ? <div className="text-sm text-danger-500 font-semibold">{error}</div> : null}
           {result ? (
             <div className="flex items-center gap-2">
