@@ -27,7 +27,11 @@ const app = express();
 
 // 🔹 Middlewares
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+  origin: [
+    "http://localhost:5173",
+    "https://gym-management-system-client.onrender.com",
+    process.env.CORS_ORIGIN
+  ].filter(Boolean),
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -35,12 +39,12 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// 🔹 Security headers for Google OAuth
-app.use((req, res, next) => {
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-  next();
-});
+// 🔹 Security headers for Google OAuth (Removed as they break cross-origin popups in production)
+// app.use((req, res, next) => {
+//   res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+//   res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+//   next();
+// });
 
 // 🔹 Health Check
 app.get("/", (req, res) => {
