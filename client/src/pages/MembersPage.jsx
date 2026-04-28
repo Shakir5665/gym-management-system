@@ -32,7 +32,7 @@ export default function MembersPage() {
   const [error, setError] = useState("");
 
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("ALL");
+  const [memberType, setMemberType] = useState("ALL");
 
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({
@@ -126,7 +126,6 @@ export default function MembersPage() {
       setMembers(
         all.map((m) => ({
           ...m,
-          risk: riskSet.has(String(m._id)) ? "HIGH" : m.risk,
           paymentDue: dueSet.has(String(m._id)),
           isNew: newSet.has(String(m._id)),
         })),
@@ -155,7 +154,6 @@ export default function MembersPage() {
 
   const filtered = useMemo(() => {
     const view = String(searchParams.get("view") || "");
-    const riskLevel = String(searchParams.get("level") || "");
     const q = query.trim().toLowerCase();
     return members.filter((m) => {
       const name = String(m?.fullLegalName || m?.name || "").toLowerCase();
@@ -164,31 +162,25 @@ export default function MembersPage() {
       const matchesQuery =
         !q || name.includes(q) || phone.includes(q) || email.includes(q);
 
-      const s = String(m?.status || "ACTIVE").toUpperCase();
-      const matchesStatus = status === "ALL" || s === status;
-      if (view === "risk" && riskLevel) {
-        return (
-          matchesQuery &&
-          matchesStatus &&
-          String(m?.risk || "").toUpperCase() === riskLevel.toUpperCase()
-        );
-      }
+      // Determine member category
+      let category = "ACTIVE";
+      if (m?.isBanned) category = "BANNED";
+      else if (m?.hasFine) category = "FINED";
+
+      const matchesMemberType = memberType === "ALL" || category === memberType;
+
       if (view === "atrisk") {
-        return (
-          matchesQuery &&
-          matchesStatus &&
-          String(m?.risk || "").toUpperCase() === "HIGH"
-        );
+        return matchesQuery && matchesMemberType && (m?.isBanned || m?.hasFine);
       }
       if (view === "paymentsdue") {
-        return matchesQuery && matchesStatus && Boolean(m?.paymentDue);
+        return matchesQuery && matchesMemberType && Boolean(m?.paymentDue);
       }
       if (view === "new") {
-        return matchesQuery && matchesStatus && Boolean(m?.isNew);
+        return matchesQuery && matchesMemberType && Boolean(m?.isNew);
       }
-      return matchesQuery && matchesStatus;
+      return matchesQuery && matchesMemberType;
     });
-  }, [members, query, searchParams, status]);
+  }, [members, query, searchParams, memberType]);
 
   const handleAdd = async () => {
     const errors = validateForm();
@@ -297,14 +289,14 @@ export default function MembersPage() {
           />
 
           <Select
-            label="Status"
-            value={status}
-            onChange={(val) => setStatus(val)}
+            label="Member Status"
+            value={memberType}
+            onChange={(val) => setMemberType(val)}
             options={[
               { value: "ALL", label: "All" },
               { value: "ACTIVE", label: "Active" },
-              { value: "PAUSED", label: "Paused" },
-              { value: "INACTIVE", label: "Inactive" },
+              { value: "BANNED", label: "Banned" },
+              { value: "FINED", label: "Fined" },
             ]}
           />
 
@@ -360,8 +352,12 @@ export default function MembersPage() {
                     {m.phone}
                   </div>
                 </div>
-                <Badge variant={memberStatusVariant(m.status)}>
-                  {String(m.status || "ACTIVE").toUpperCase()}
+                <Badge
+                  variant={
+                    m?.isBanned ? "danger" : m?.hasFine ? "warning" : "success"
+                  }
+                >
+                  {m?.isBanned ? "BANNED" : m?.hasFine ? "FINED" : "ACTIVE"}
                 </Badge>
               </div>
 
@@ -498,7 +494,7 @@ export default function MembersPage() {
               setFormErrors([]);
             }}
           />
-          <div className="flex items-center justify-end gap-2 pt-2">
+          <div className="flex items-center justify-end gap-2 pt-4 mt-4 border-t border-[color:var(--glass-border)] sticky bottom-0 bg-[color:var(--glass-bg)] p-4 -m-5 md:-m-6">
             <Button
               variant="ghost"
               onClick={() => {

@@ -13,10 +13,10 @@ export default function Modal({ open, onClose, title, children, className }) {
         onClick={onClose}
         aria-label="Close modal"
       />
-      <div className="absolute inset-0 flex items-end md:items-center justify-center p-3 md:p-6 overflow-y-auto md:overflow-visible">
+      <div className="absolute inset-0 flex items-end md:items-center justify-center p-3 md:p-6">
         <div
           className={cn(
-            "glass-strong w-full max-w-lg p-5 md:p-6 max-h-[90vh] md:max-h-none overflow-y-auto md:overflow-visible",
+            "glass-strong w-full max-w-lg p-5 md:p-6 max-h-[85vh] overflow-y-auto md:max-h-none md:overflow-y-visible",
             className,
           )}
         >
