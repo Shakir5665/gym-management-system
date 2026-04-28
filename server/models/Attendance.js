@@ -6,7 +6,8 @@ const schema = new mongoose.Schema({
   gymId: { type: mongoose.Schema.Types.ObjectId, required: true },
   status: String,
   reason: String,
-  checkInTime: { type: Date, default: Date.now }
+  checkInTime: { type: Date, default: Date.now },
+  checkOutTime: { type: Date, default: null }
 });
 
 schema.index({ memberId: 1, gymId: 1, checkInTime: -1 });

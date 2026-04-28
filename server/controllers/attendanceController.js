@@ -40,78 +40,93 @@ export const checkIn = async (req, res) => {
       });
     }
 
-    // Check if already checked in today
+    // Handle checkin/checkout flow
     let record = null;
+    let action = "CHECKIN";
+
     if (status === "SUCCESS") {
-      const alreadyCheckedIn = await Attendance.findOne({
+      record = await Attendance.findOne({
         memberId,
         gymId,
         status: "SUCCESS",
         checkInTime: { $gte: todayStart }
-      });
+      }).sort({ checkInTime: -1 });
 
-      if (alreadyCheckedIn) {
-        // Return success so they can enter, but do NOT add points or duplicate attendance logs
-        return res.json({ 
-          status: "SUCCESS", 
-          reason: "Already checked in today", 
-          record: alreadyCheckedIn 
-        });
-      }
-    }
-
-    // ✅ Save attendance if not already checked in
-    record = await Attendance.create({
-      memberId,
-      gymId,
-      status,
-      reason
-    });
-
-    // 🎮 GAMIFICATION
-    if (status === "SUCCESS") {
-      let game = await Gamification.findOne({ memberId, gymId });
-
-      if (!game) {
-        game = await Gamification.create({
+      if (record) {
+        if (!record.checkOutTime) {
+          // 2nd scan or 4th scan: marks them as Checked-out
+          record.checkOutTime = now;
+          await record.save();
+          
+          const io = req.app.get("io");
+          io.emit("attendance:new", { memberId, gymId, status: "CHECKOUT" });
+          
+          return res.json({ 
+            status: "SUCCESS", 
+            reason: "Checked out successfully", 
+            record 
+          });
+        } else {
+          // 3rd scan: Record exists and checked out -> check in again without points
+          record.checkOutTime = null;
+          await record.save();
+          reason = "Checked in again";
+          action = "CHECKIN_AGAIN";
+        }
+      } else {
+        // 1st scan: No record exists yet -> Creates a Check-in
+        record = await Attendance.create({
           memberId,
           gymId,
-          points: 10,
-          streak: 1,
-          lastCheckIn: now
+          status,
+          reason: "Checked in",
+          checkInTime: now
         });
-      } else {
-        const lastDate = new Date(game.lastCheckIn).toDateString();
-        const todayDate = now.toDateString();
+        action = "FIRST_CHECKIN";
+      }
 
-        if (lastDate !== todayDate) {
-          const yesterday = new Date(now);
-          yesterday.setDate(yesterday.getDate() - 1);
-          
-          if (lastDate === yesterday.toDateString()) {
-            game.streak++;
-          } else {
-            game.streak = 1;
+      // 🎮 GAMIFICATION
+      if (action === "FIRST_CHECKIN") {
+        let game = await Gamification.findOne({ memberId, gymId });
+
+        if (!game) {
+          game = await Gamification.create({
+            memberId,
+            gymId,
+            points: 10,
+            streak: 1,
+            lastCheckIn: now
+          });
+        } else {
+          const lastDate = new Date(game.lastCheckIn).toDateString();
+          const todayDate = now.toDateString();
+
+          if (lastDate !== todayDate) {
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (lastDate === yesterday.toDateString()) {
+              game.streak++;
+            } else {
+              game.streak = 1;
+            }
+
+            game.points += 10;
+            game.lastCheckIn = now;
+            await game.save();
           }
-
-          game.points += 10;
-          game.lastCheckIn = now;
-          await game.save();
         }
       }
+
+      // 🔔 SOCKET
+      const io = req.app.get("io");
+      io.emit("attendance:new", { memberId, gymId, status });
+      if (action === "FIRST_CHECKIN") {
+        io.emit("gamification:update", { memberId, gymId });
+      }
+
+      res.json({ status, reason: reason || "Checked in", record });
     }
-
-    // 🔔 SOCKET
-    const io = req.app.get("io");
-
-    io.emit("attendance:new", { memberId, gymId, status });
-
-    if (status === "SUCCESS") {
-      io.emit("gamification:update", { memberId, gymId });
-    }
-
-    res.json({ status, reason, record });
-
   } catch (err) {
     console.error("CheckIn error:", err);
     res.status(500).json({ message: err.message });

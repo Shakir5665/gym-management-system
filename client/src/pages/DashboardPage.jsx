@@ -139,14 +139,14 @@ export default function DashboardPage() {
               Dashboard
             </div>
             <div className="mt-1 text-2xl md:text-3xl font-black tracking-tight text-[color:var(--text)]">
-              Gym performance overview
+              Gym Performance Overview
             </div>
             <div className="mt-1 text-xs text-[color:var(--subtle)]">
               Clean real-time visibility into members, revenue, and retention.
             </div>
           </div>
           <Button variant="ghost" onClick={() => load(false)} disabled={refreshing}>
-            {refreshing ? "Refreshing..." : "Refresh metrics"}
+            {refreshing ? "Refreshing..." : "Refresh"}
           </Button>
         </div>
       </Card>

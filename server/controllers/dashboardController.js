@@ -93,7 +93,12 @@ export async function getDashboardSummary(req, res) {
         Member.countDocuments({ gymId, createdAt: { $gte: addDays(todayStart, -7) } }),
       ]);
 
-    const activeNow = todayCheckins; // today successful check-ins (simple + useful)
+    const activeNow = await Attendance.countDocuments({
+      gymId,
+      status: "SUCCESS",
+      checkInTime: { $gte: todayStart, $lt: tomorrowStart },
+      checkOutTime: null
+    });
     const activeNowChangePct = percentChange(todayCheckins, yesterdayCheckins);
 
     const monthRevenue = monthRevenueAgg?.[0]?.total || 0;
