@@ -16,11 +16,11 @@ export default function Modal({ open, onClose, title, children, className }) {
       <div className="absolute inset-0 flex items-end md:items-center justify-center p-3 md:p-6">
         <div
           className={cn(
-            "glass-strong w-full max-w-lg p-5 md:p-6 max-h-[85vh] overflow-y-auto md:max-h-none md:overflow-y-visible",
+            "glass-strong w-full max-w-lg flex flex-col max-h-[85vh] md:max-h-none",
             className,
           )}
         >
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-3 p-5 md:p-6 flex-shrink-0 border-b border-[color:var(--glass-border)]">
             <div className="min-w-0">
               {title ? (
                 <div className="text-sm font-bold text-[color:var(--text)]">
@@ -37,7 +37,7 @@ export default function Modal({ open, onClose, title, children, className }) {
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="mt-4">{children}</div>
+          <div className="overflow-y-auto flex-1 p-5 md:p-6">{children}</div>
         </div>
       </div>
     </div>

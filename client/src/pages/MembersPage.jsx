@@ -494,7 +494,7 @@ export default function MembersPage() {
               setFormErrors([]);
             }}
           />
-          <div className="flex items-center justify-end gap-2 pt-4 mt-4 border-t border-[color:var(--glass-border)] sticky bottom-0 bg-[color:var(--glass-bg)] p-4 -m-5 md:-m-6">
+          <div className="flex items-center justify-end gap-2 pt-4 mt-6">
             <Button
               variant="ghost"
               onClick={() => {
