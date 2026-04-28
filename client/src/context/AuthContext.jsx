@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }) => {
   const [hasGym, setHasGym] = useState(false);
   const [user, setUser] = useState(null);
   const [gymName, setGymName] = useState(null);
+  const [gymLogo, setGymLogo] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // 🔄 Load persisted state
@@ -28,6 +29,7 @@ export const AuthProvider = ({ children }) => {
       const storedGym = localStorage.getItem("hasGym");
       const storedUser = localStorage.getItem("user");
       const storedGymName = localStorage.getItem("gymName");
+      const storedGymLogo = localStorage.getItem("gymLogo");
 
       if (storedToken) {
         setToken(storedToken);
@@ -37,6 +39,9 @@ export const AuthProvider = ({ children }) => {
         }
         if (storedGymName) {
           setGymName(storedGymName);
+        }
+        if (storedGymLogo) {
+          setGymLogo(storedGymLogo);
         }
       }
     } catch (err) {
@@ -54,9 +59,14 @@ export const AuthProvider = ({ children }) => {
       try {
         const res = await API.get("/gym/me");
         const name = res.data?.name || res.data?.gym?.name;
+        const logo = res.data?.logo || res.data?.gym?.logo;
         if (!cancelled && name) {
           setGymName(name);
           localStorage.setItem("gymName", name);
+        }
+        if (!cancelled && logo) {
+          setGymLogo(logo);
+          localStorage.setItem("gymLogo", logo);
         }
       } catch {
         // ignore - gym endpoint may be missing in some environments
@@ -96,11 +106,13 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("hasGym");
       localStorage.removeItem("user");
       localStorage.removeItem("gymName");
+      localStorage.removeItem("gymLogo");
 
       setToken(null);
       setHasGym(false);
       setUser(null);
       setGymName(null);
+      setGymLogo(null);
     } catch (err) {
       console.error("Logout error:", err);
     }
@@ -112,9 +124,11 @@ export const AuthProvider = ({ children }) => {
         token,
         user,
         gymName,
+        gymLogo,
         hasGym,
         setHasGym,
         setGymName,
+        setGymLogo,
         login,
         logout,
         loading,

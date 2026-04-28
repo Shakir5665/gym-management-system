@@ -64,9 +64,26 @@ export const getMyGym = async (req, res) => {
   try {
     const gymId = req.user?.gymId;
     if (!gymId) return res.status(404).json({ message: "No gym linked to user" });
-    const gym = await Gym.findById(gymId).select("name ownerId createdAt");
+    const gym = await Gym.findById(gymId).select("name ownerId createdAt logo");
     if (!gym) return res.status(404).json({ message: "Gym not found" });
     res.json(gym);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const updateLogo = async (req, res) => {
+  try {
+    const gymId = req.user?.gymId;
+    const { logo } = req.body;
+    
+    if (!gymId) return res.status(404).json({ message: "No gym linked to user" });
+    if (!logo) return res.status(400).json({ message: "Logo is required" });
+    
+    const gym = await Gym.findByIdAndUpdate(gymId, { logo }, { new: true });
+    if (!gym) return res.status(404).json({ message: "Gym not found" });
+    
+    res.json({ message: "Logo updated successfully", logo: gym.logo });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { BarChart3, CreditCard, QrCode, ReceiptText, Users } from "lucide-react";
 import { cn } from "../../lib/cn";
+import Favicon from "../../assets/favicon.png";
 
 const nav = [
   { to: "/app/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -17,9 +18,13 @@ export default function Sidebar() {
         <div className="absolute -top-24 -left-20 h-44 w-44 rounded-full bg-brand-400/20 blur-3xl" />
         <div className="absolute -bottom-24 -right-20 h-44 w-44 rounded-full bg-accent-500/16 blur-3xl" />
         <div className="relative flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-brand-400/40 to-accent-500/28 border border-white/12 shadow-glow" />
+          <img
+            src={Favicon}
+            alt="Smart Gym Logo"
+            className="h-20 w-30 object-contain"
+          />
           <div className="min-w-0">
-            <div className="text-sm font-black tracking-tight text-[color:var(--text)]">Gym Pro</div>
+            <div className="text-sm font-black tracking-tight text-[color:var(--text)]">SMART GYM</div>
             <div className="text-[11px] text-[color:var(--subtle)] truncate">Premium Gym OS</div>
           </div>
         </div>

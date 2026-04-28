@@ -1,9 +1,13 @@
 import { useState } from "react";
 import Login from "./Login";
 import Register from "./Register";
+import LogoLight from "../assets/Logo-Light.png";
+import LogoDark from "../assets/Logo-Dark.png";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Landing() {
   const [mode, setMode] = useState("login");
+  const { theme } = useTheme();
 
   return (
     <div className="min-h-screen">
@@ -13,46 +17,12 @@ export default function Landing() {
 
       <div className="relative mx-auto max-w-7xl min-h-screen grid lg:grid-cols-2 gap-6 px-4 py-10 lg:py-0 items-center">
         {/* LEFT: HERO */}
-        <div className="hidden lg:block">
-          <div className="glass p-10 overflow-hidden relative">
-            <div className="absolute -top-32 -left-32 h-72 w-72 rounded-full bg-brand-400/20 blur-3xl" />
-            <div className="absolute -bottom-40 -right-24 h-80 w-80 rounded-full bg-accent-500/18 blur-3xl" />
-
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-1 text-[11px] font-semibold text-[color:var(--muted)]">
-                Premium SaaS UI • Dark glass theme
-              </div>
-              <h1 className="mt-5 text-5xl font-black tracking-tight text-[color:var(--text)] leading-[1.05]">
-                Gym Management{" "}
-                <span className="bg-gradient-to-r from-brand-200 to-accent-400 bg-clip-text text-transparent">
-                  SaaS
-                </span>
-              </h1>
-              <p className="mt-4 text-base text-[color:var(--muted)] leading-relaxed max-w-lg">
-                A modern system for member management, QR check-ins, gamification, and real-time
-                notifications—built for speed and clarity.
-              </p>
-
-              <div className="mt-8 grid grid-cols-2 gap-3 text-sm">
-                {[
-                  "Real-time member tracking",
-                  "Gamification & streaks",
-                  "QR check-ins",
-                  "Live notifications",
-                ].map((t) => (
-                  <div
-                    key={t}
-                    className="rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-4 py-3 text-[color:var(--muted)]"
-                  >
-                    <div className="text-xs font-bold text-[color:var(--text)]">{t}</div>
-                    <div className="mt-1 text-[11px] text-[color:var(--subtle)]">
-                      Fast, minimal, high-contrast
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        <div className="hidden lg:flex items-center justify-center p-10">
+          <img 
+            src={theme === "dark" ? LogoDark : LogoLight} 
+            alt="Gym Management Logo" 
+            className="w-full max-w-xl object-contain drop-shadow-2xl opacity-90 hover:opacity-100 transition-opacity duration-500"
+          />
         </div>
 
         {/* RIGHT: AUTH */}

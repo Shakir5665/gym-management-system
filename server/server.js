@@ -37,7 +37,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
   optionsSuccessStatus: 200
 }));
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 
 // 🔹 Security headers for Google OAuth (Removed as they break cross-origin popups in production)
 // app.use((req, res, next) => {

@@ -9,7 +9,7 @@ import API from "../../api/api";
 import MobileMenu from "./MobileMenu";
 
 export default function Topbar({ title, subtitle }) {
-  const { user, gymName, logout } = useAuth();
+  const { user, gymName, gymLogo, setGymLogo, logout } = useAuth();
   const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
@@ -22,6 +22,25 @@ export default function Topbar({ title, subtitle }) {
   const wrapRef = useRef(null);
 
   const trimmed = useMemo(() => q.trim(), [q]);
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const base64Logo = reader.result;
+        setGymLogo(base64Logo);
+        localStorage.setItem("gymLogo", base64Logo);
+        
+        await API.put("/gym/logo", { logo: base64Logo });
+      } catch (err) {
+        console.error("Failed to upload logo:", err);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -74,22 +93,43 @@ export default function Topbar({ title, subtitle }) {
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <button
-                type="button"
-                onClick={() => navigate("/app/dashboard")}
-                className="flex items-center gap-2 rounded-xl px-1.5 md:px-2 py-1.5 hover:bg-[color:var(--control-bg)] transition"
-                aria-label="Go to dashboard"
-              >
-                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-brand-400/35 to-accent-500/25 border border-white/10 shadow-glow" />
-                <div className="hidden sm:block">
+              <div className="flex items-center gap-2 rounded-xl px-1.5 md:px-2 py-1.5 hover:bg-[color:var(--control-bg)] transition">
+                <label 
+                  htmlFor="gym-logo-upload" 
+                  className="relative group cursor-pointer shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                  title="Upload Gym Logo"
+                >
+                  {gymLogo ? (
+                    <img src={gymLogo} alt="Gym Logo" className="h-8 w-8 rounded-xl object-cover shadow-glow border border-white/10" />
+                  ) : (
+                    <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-brand-400/35 to-accent-500/25 border border-white/10 shadow-glow" />
+                  )}
+                  <div className="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  </div>
+                  <input 
+                    type="file" 
+                    id="gym-logo-upload" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={handleLogoUpload} 
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => navigate("/app/dashboard")}
+                  className="hidden sm:block text-left"
+                  aria-label="Go to dashboard"
+                >
                   <div className="text-sm font-black tracking-tight text-[color:var(--text)] leading-tight truncate max-w-[240px]">
-                    {gymName || "Gym Pro"}
+                    {gymName || "----"}
                   </div>
                   <div className="text-[11px] text-[color:var(--subtle)] leading-tight truncate max-w-[240px]">
                     {gymName ? "Your gym" : "Premium Gym OS"}
                   </div>
-                </div>
-              </button>
+                </button>
+              </div>
 
               <div className="hidden md:block min-w-0">
                 <div className="text-sm font-bold text-[color:var(--text)] truncate">
