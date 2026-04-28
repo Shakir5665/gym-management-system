@@ -1,8 +1,9 @@
 import { NavLink } from "react-router-dom";
-import { BarChart3, CreditCard, QrCode, ReceiptText, Users, X, LogOut } from "lucide-react";
+import { BarChart3, CreditCard, QrCode, ReceiptText, Users, X, LogOut, Settings } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { useAuth } from "../../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
+import Favicon from "../../assets/favicon.png";
 
 const nav = [
   { to: "/app/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -10,10 +11,11 @@ const nav = [
   { to: "/app/scanner", label: "Scanner", icon: QrCode },
   { to: "/app/payments", label: "Payments", icon: CreditCard },
   { to: "/app/accounting", label: "Accounting", icon: ReceiptText },
+  { to: "/app/profile", label: "Profile", icon: Settings },
 ];
 
 export default function MobileMenu({ open, onClose }) {
-  const { user, gymName, logout } = useAuth();
+  const { user, gymName, gymLogo, logout } = useAuth();
 
   return (
     <AnimatePresence>
@@ -38,7 +40,11 @@ export default function MobileMenu({ open, onClose }) {
           >
             <div className="flex items-center justify-between p-4 border-b border-[color:var(--control-border)]">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-brand-400/40 to-accent-500/28 border border-white/12 shadow-glow" />
+                <img
+                  src={gymLogo || Favicon}
+                  alt="Gym Logo"
+                  className="h-10 w-10 rounded-2xl object-cover border border-white/12 shadow-glow bg-gradient-to-br from-brand-400/40 to-accent-500/28"
+                />
                 <div className="min-w-0">
                   <div className="text-sm font-black tracking-tight text-[color:var(--text)] truncate max-w-[160px]">
                     {gymName || "Gym Pro"}
