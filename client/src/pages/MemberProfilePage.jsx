@@ -8,7 +8,7 @@ import Input from "../components/ui/Input";
 import Modal from "../components/ui/Modal";
 import Select from "../components/ui/Select";
 import AreaSpark from "../components/charts/AreaSpark";
-import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning, Ban, ShieldCheck, Receipt, CheckCircle, Edit3 } from "lucide-react";
+import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning } from "lucide-react";
 import QRCode from "qrcode";
 import { socket } from "../socket";
 
@@ -46,7 +46,6 @@ export default function MemberProfilePage() {
     gender: "",
     email: "",
     phone: "",
-    emergencyPhone: "",
     emergencyPhone: "",
     homeAddress: "",
   });
@@ -313,20 +312,15 @@ export default function MemberProfilePage() {
                 <img src={qrCodeUrl} alt="Member QR Code" className="w-16 h-16 object-contain" />
               </div>
             ) : null}
-            <div className="flex flex-row items-center gap-2 mt-3 sm:mt-0">
-              <Button variant="danger" onClick={() => member?.isBanned ? handleUnban() : setBanOpen(true)} className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-2 sm:px-4 py-2 sm:py-2.5">
-                {member?.isBanned ? <ShieldCheck className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
-                <span className="text-[11px] sm:text-sm font-semibold">{member?.isBanned ? "Unban" : "Ban"}</span>
-              </Button>
-              <Button variant="warning" onClick={() => member?.hasFine ? handleUnfine() : setFineOpen(true)} className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-2 sm:px-4 py-2 sm:py-2.5">
-                {member?.hasFine ? <CheckCircle className="w-4 h-4" /> : <Receipt className="w-4 h-4" />}
-                <span className="text-[11px] sm:text-sm font-semibold">{member?.hasFine ? "Unfine" : "Fine"}</span>
-              </Button>
-              <Button variant="solid" onClick={() => setEditOpen(true)} className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-2 sm:px-4 py-2 sm:py-2.5">
-                <Edit3 className="w-4 h-4" />
-                <span className="text-[11px] sm:text-sm font-semibold">Edit</span>
-              </Button>
-            </div>
+            <Button variant="danger" onClick={() => member?.isBanned ? handleUnban() : setBanOpen(true)}>
+              {member?.isBanned ? "Unban" : "Ban"}
+            </Button>
+            <Button variant="warning" onClick={() => member?.hasFine ? handleUnfine() : setFineOpen(true)}>
+              {member?.hasFine ? "Remove Fine" : "Fine"}
+            </Button>
+            <Button variant="solid" onClick={() => setEditOpen(true)}>
+              Edit
+            </Button>
           </div>
         </div>
       </Card>
@@ -482,7 +476,7 @@ export default function MemberProfilePage() {
             <div className="text-xs text-[color:var(--muted)] mt-0.5">Last payments</div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => {}} disabled>
+            <Button variant="ghost" onClick={() => { }} disabled>
               Send reminder
             </Button>
             <Button
@@ -495,7 +489,7 @@ export default function MemberProfilePage() {
             >
               Mark payment
             </Button>
-            <Button variant="ghost" onClick={() => {}} disabled>
+            <Button variant="ghost" onClick={() => { }} disabled>
               Add note
             </Button>
           </div>
@@ -586,9 +580,9 @@ export default function MemberProfilePage() {
 
       <Modal open={banOpen} onClose={() => setBanOpen(false)} title="Ban Member">
         <div className="grid gap-3">
-          <Input label="Reason" value={banForm.reason} onChange={(e) => setBanForm(p => ({...p, reason: e.target.value}))} autoFocus />
-          <Input label="From Date" type="date" value={banForm.from} onChange={(e) => setBanForm(p => ({...p, from: e.target.value}))} />
-          <Input label="To Date" type="date" value={banForm.to} onChange={(e) => setBanForm(p => ({...p, to: e.target.value}))} />
+          <Input label="Reason" value={banForm.reason} onChange={(e) => setBanForm(p => ({ ...p, reason: e.target.value }))} autoFocus />
+          <Input label="From Date" type="date" value={banForm.from} onChange={(e) => setBanForm(p => ({ ...p, from: e.target.value }))} />
+          <Input label="To Date" type="date" value={banForm.to} onChange={(e) => setBanForm(p => ({ ...p, to: e.target.value }))} />
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setBanOpen(false)} disabled={saving}>Cancel</Button>
             <Button variant="danger" onClick={handleBan} disabled={saving}>{saving ? "Saving..." : "Ban Member"}</Button>
@@ -598,8 +592,8 @@ export default function MemberProfilePage() {
 
       <Modal open={fineOpen} onClose={() => setFineOpen(false)} title="Fine Member">
         <div className="grid gap-3">
-          <Input label="Amount" type="number" value={fineForm.amount} onChange={(e) => setFineForm(p => ({...p, amount: e.target.value}))} autoFocus />
-          <Input label="Reason" value={fineForm.reason} onChange={(e) => setFineForm(p => ({...p, reason: e.target.value}))} />
+          <Input label="Amount" type="number" value={fineForm.amount} onChange={(e) => setFineForm(p => ({ ...p, amount: e.target.value }))} autoFocus />
+          <Input label="Reason" value={fineForm.reason} onChange={(e) => setFineForm(p => ({ ...p, reason: e.target.value }))} />
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setFineOpen(false)} disabled={saving}>Cancel</Button>
             <Button variant="warning" onClick={handleFine} disabled={saving}>{saving ? "Saving..." : "Apply Fine"}</Button>
