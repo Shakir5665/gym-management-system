@@ -4,13 +4,15 @@ import API from "../api/api";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
-import { Camera, RefreshCcw } from "lucide-react";
+import Modal from "../components/ui/Modal";
+import { Camera, RefreshCcw, ShieldAlert } from "lucide-react";
 
 export default function Scanner() {
   const [result, setResult] = useState("");
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
   const [isPaused, setIsPaused] = useState(false);
+  const [blockedInfo, setBlockedInfo] = useState(null);
   const scannerRef = useRef(null);
   const regionId = useMemo(() => "qr-reader-region", []);
 
@@ -95,7 +97,12 @@ export default function Scanner() {
             const res = await API.post("/attendance/checkin", { memberId });
             setResult(`${res.data?.status || "OK"} — ${res.data?.reason || "Checked in"}`);
           } catch (err) {
-            setResult(`Error — ${err.response?.data?.message || err.message}`);
+            if (err.response?.data?.status === "BLOCKED") {
+              setBlockedInfo({ reason: err.response?.data?.reason || "Access denied" });
+              setResult("");
+            } else {
+              setResult(`Error — ${err.response?.data?.message || err.response?.data?.reason || err.message}`);
+            }
           } finally {
             // Wait 2 seconds, then resume
             setTimeout(() => {
@@ -186,6 +193,17 @@ export default function Scanner() {
           )}
         </div>
       </Card>
+
+      <Modal open={!!blockedInfo} onClose={() => setBlockedInfo(null)} title="Access Blocked">
+        <div className="flex flex-col items-center p-4 text-center">
+          <div className="p-4 bg-red-100 dark:bg-red-900/30 rounded-full mb-4">
+            <ShieldAlert className="h-10 w-10 text-red-600 dark:text-red-400" />
+          </div>
+          <h3 className="text-lg font-bold text-[color:var(--text)] mb-2">Member Blocked</h3>
+          <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-6">{blockedInfo?.reason}</p>
+          <Button variant="danger" onClick={() => setBlockedInfo(null)} className="w-full">Dismiss</Button>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -129,3 +129,71 @@ export const updateMember = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const banMember = async (req, res) => {
+  try {
+    if (!req.user.gymId) return res.status(403).json({ message: "You must create a gym first" });
+    const { banReason, banFrom, banTo } = req.body;
+    const member = await Member.findOne({ _id: req.params.id, gymId: req.user.gymId });
+    if (!member) return res.status(404).json({ message: "Member not found" });
+
+    member.isBanned = true;
+    member.banReason = banReason;
+    member.banFrom = banFrom ? new Date(banFrom) : null;
+    member.banTo = banTo ? new Date(banTo) : null;
+    await member.save();
+    res.json(member);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const unbanMember = async (req, res) => {
+  try {
+    if (!req.user.gymId) return res.status(403).json({ message: "You must create a gym first" });
+    const member = await Member.findOne({ _id: req.params.id, gymId: req.user.gymId });
+    if (!member) return res.status(404).json({ message: "Member not found" });
+
+    member.isBanned = false;
+    member.banReason = null;
+    member.banFrom = null;
+    member.banTo = null;
+    await member.save();
+    res.json(member);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const fineMember = async (req, res) => {
+  try {
+    if (!req.user.gymId) return res.status(403).json({ message: "You must create a gym first" });
+    const { fineAmount, fineReason } = req.body;
+    const member = await Member.findOne({ _id: req.params.id, gymId: req.user.gymId });
+    if (!member) return res.status(404).json({ message: "Member not found" });
+
+    member.hasFine = true;
+    member.fineAmount = fineAmount;
+    member.fineReason = fineReason;
+    await member.save();
+    res.json(member);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const unfineMember = async (req, res) => {
+  try {
+    if (!req.user.gymId) return res.status(403).json({ message: "You must create a gym first" });
+    const member = await Member.findOne({ _id: req.params.id, gymId: req.user.gymId });
+    if (!member) return res.status(404).json({ message: "Member not found" });
+
+    member.hasFine = false;
+    member.fineAmount = null;
+    member.fineReason = null;
+    await member.save();
+    res.json(member);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

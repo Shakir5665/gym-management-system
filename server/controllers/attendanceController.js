@@ -24,13 +24,20 @@ export const checkIn = async (req, res) => {
     // 🚫 Rules
     if (member.isBanned) {
       status = "BLOCKED";
-      reason = "User is banned";
+      reason = `Banned: ${member.banReason || "No reason provided"}`;
     } else if (member.hasFine) {
       status = "BLOCKED";
-      reason = "Pending fine";
+      reason = `Fined: ${member.fineAmount || ""} LKR - ${member.fineReason || "No reason provided"}`;
     } else if (!member.subscriptionEnd || member.subscriptionEnd < now) {
       status = "BLOCKED";
-      reason = "Subscription expired";
+      reason = "Expired payment";
+    }
+
+    if (status === "BLOCKED") {
+      return res.status(403).json({ 
+        status: "BLOCKED", 
+        reason: reason 
+      });
     }
 
     // Check if already checked in today

@@ -8,7 +8,7 @@ import Input from "../components/ui/Input";
 import Modal from "../components/ui/Modal";
 import Select from "../components/ui/Select";
 import AreaSpark from "../components/charts/AreaSpark";
-import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown } from "lucide-react";
+import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning, Ban, ShieldCheck, Receipt, CheckCircle, Edit3 } from "lucide-react";
 import QRCode from "qrcode";
 import { socket } from "../socket";
 
@@ -47,8 +47,15 @@ export default function MemberProfilePage() {
     email: "",
     phone: "",
     emergencyPhone: "",
+    emergencyPhone: "",
     homeAddress: "",
   });
+
+  const [banOpen, setBanOpen] = useState(false);
+  const [banForm, setBanForm] = useState({ reason: "", from: "", to: "" });
+
+  const [fineOpen, setFineOpen] = useState(false);
+  const [fineForm, setFineForm] = useState({ amount: "", reason: "" });
 
   async function fetchAll() {
     try {
@@ -156,6 +163,63 @@ export default function MemberProfilePage() {
     }
   }
 
+  async function handleBan() {
+    try {
+      setSaving(true);
+      await API.put(`/members/${id}/ban`, {
+        banReason: banForm.reason,
+        banFrom: banForm.from,
+        banTo: banForm.to,
+      });
+      setBanOpen(false);
+      await fetchAll();
+    } catch (e) {
+      setError(e?.response?.data?.message || "Failed to ban member");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleUnban() {
+    try {
+      setSaving(true);
+      await API.put(`/members/${id}/unban`);
+      await fetchAll();
+    } catch (e) {
+      setError(e?.response?.data?.message || "Failed to unban member");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleFine() {
+    try {
+      setSaving(true);
+      await API.put(`/members/${id}/fine`, {
+        fineAmount: Number(fineForm.amount),
+        fineReason: fineForm.reason,
+      });
+      setFineOpen(false);
+      await fetchAll();
+    } catch (e) {
+      setError(e?.response?.data?.message || "Failed to fine member");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleUnfine() {
+    try {
+      setSaving(true);
+      await API.put(`/members/${id}/unfine`);
+      await fetchAll();
+    } catch (e) {
+      setError(e?.response?.data?.message || "Failed to unfine member");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const metricCard =
     "glass p-5 md:p-6 transition hover:border-[color:var(--glass-border-strong)] hover:bg-[color:var(--control-bg)] hover:-translate-y-[1px] will-change-transform";
 
@@ -185,6 +249,45 @@ export default function MemberProfilePage() {
 
   return (
     <div className="grid gap-4 md:gap-6">
+      {(member?.isBanned || member?.hasFine) && (
+        <Card className="p-5 md:p-6 bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/20 shadow-lg">
+          <div className="flex flex-col gap-4">
+            {member?.isBanned && (
+              <div className="flex items-center gap-4 bg-white/60 dark:bg-black/20 p-4 rounded-xl border border-red-500/30">
+                <div className="p-3 bg-red-500/20 rounded-full shadow-inner">
+                  <Gavel className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Account Banned</h3>
+                  <p className="text-xs text-[color:var(--text)] mt-1">
+                    <span className="font-semibold">Reason:</span> {member.banReason || "No reason provided"}
+                  </p>
+                  <p className="text-[11px] text-[color:var(--muted)] mt-1">
+                    <span className="font-semibold">Period:</span> {member.banFrom ? new Date(member.banFrom).toLocaleDateString() : "-"} to {member.banTo ? new Date(member.banTo).toLocaleDateString() : "-"}
+                  </p>
+                </div>
+              </div>
+            )}
+            {member?.hasFine && (
+              <div className="flex items-center gap-4 bg-white/60 dark:bg-black/20 p-4 rounded-xl border border-orange-500/30">
+                <div className="p-3 bg-orange-500/20 rounded-full shadow-inner">
+                  <FileWarning className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Active Fine</h3>
+                  <p className="text-xs text-[color:var(--text)] mt-1">
+                    <span className="font-semibold">Amount:</span> {formatMoneyLKR(member.fineAmount)}
+                  </p>
+                  <p className="text-[11px] text-[color:var(--muted)] mt-1">
+                    <span className="font-semibold">Reason:</span> {member.fineReason || "No reason provided"}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
       <Card className="p-5 md:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -210,9 +313,20 @@ export default function MemberProfilePage() {
                 <img src={qrCodeUrl} alt="Member QR Code" className="w-16 h-16 object-contain" />
               </div>
             ) : null}
-            <Button variant="solid" onClick={() => setEditOpen(true)}>
-              Edit
-            </Button>
+            <div className="flex flex-row items-center gap-2 mt-3 sm:mt-0">
+              <Button variant="danger" onClick={() => member?.isBanned ? handleUnban() : setBanOpen(true)} className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-2 sm:px-4 py-2 sm:py-2.5">
+                {member?.isBanned ? <ShieldCheck className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
+                <span className="text-[11px] sm:text-sm font-semibold">{member?.isBanned ? "Unban" : "Ban"}</span>
+              </Button>
+              <Button variant="warning" onClick={() => member?.hasFine ? handleUnfine() : setFineOpen(true)} className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-2 sm:px-4 py-2 sm:py-2.5">
+                {member?.hasFine ? <CheckCircle className="w-4 h-4" /> : <Receipt className="w-4 h-4" />}
+                <span className="text-[11px] sm:text-sm font-semibold">{member?.hasFine ? "Unfine" : "Fine"}</span>
+              </Button>
+              <Button variant="solid" onClick={() => setEditOpen(true)} className="flex flex-1 sm:flex-none items-center justify-center gap-1.5 px-2 sm:px-4 py-2 sm:py-2.5">
+                <Edit3 className="w-4 h-4" />
+                <span className="text-[11px] sm:text-sm font-semibold">Edit</span>
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
@@ -466,6 +580,29 @@ export default function MemberProfilePage() {
             <Button variant="primary" onClick={handleSaveMember} disabled={saving}>
               {saving ? "Saving..." : "Save changes"}
             </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={banOpen} onClose={() => setBanOpen(false)} title="Ban Member">
+        <div className="grid gap-3">
+          <Input label="Reason" value={banForm.reason} onChange={(e) => setBanForm(p => ({...p, reason: e.target.value}))} autoFocus />
+          <Input label="From Date" type="date" value={banForm.from} onChange={(e) => setBanForm(p => ({...p, from: e.target.value}))} />
+          <Input label="To Date" type="date" value={banForm.to} onChange={(e) => setBanForm(p => ({...p, to: e.target.value}))} />
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setBanOpen(false)} disabled={saving}>Cancel</Button>
+            <Button variant="danger" onClick={handleBan} disabled={saving}>{saving ? "Saving..." : "Ban Member"}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={fineOpen} onClose={() => setFineOpen(false)} title="Fine Member">
+        <div className="grid gap-3">
+          <Input label="Amount" type="number" value={fineForm.amount} onChange={(e) => setFineForm(p => ({...p, amount: e.target.value}))} autoFocus />
+          <Input label="Reason" value={fineForm.reason} onChange={(e) => setFineForm(p => ({...p, reason: e.target.value}))} />
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setFineOpen(false)} disabled={saving}>Cancel</Button>
+            <Button variant="warning" onClick={handleFine} disabled={saving}>{saving ? "Saving..." : "Apply Fine"}</Button>
           </div>
         </div>
       </Modal>
