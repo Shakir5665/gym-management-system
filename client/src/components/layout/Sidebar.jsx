@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { BarChart3, CreditCard, QrCode, ReceiptText, Users } from "lucide-react";
+import { BarChart3, CreditCard, QrCode, ReceiptText, Users, Settings } from "lucide-react";
 import { cn } from "../../lib/cn";
 import Favicon from "../../assets/favicon.png";
 
@@ -9,6 +9,7 @@ const nav = [
   { to: "/app/scanner", label: "Scanner", icon: QrCode },
   { to: "/app/payments", label: "Payments", icon: CreditCard },
   { to: "/app/accounting", label: "Accounting", icon: ReceiptText },
+  { to: "/app/profile", label: "Profile", icon: Settings },
 ];
 
 export default function Sidebar() {

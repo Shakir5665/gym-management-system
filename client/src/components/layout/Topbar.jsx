@@ -33,7 +33,7 @@ export default function Topbar({ title, subtitle }) {
         const base64Logo = reader.result;
         setGymLogo(base64Logo);
         localStorage.setItem("gymLogo", base64Logo);
-        
+
         await API.put("/gym/logo", { logo: base64Logo });
       } catch (err) {
         console.error("Failed to upload logo:", err);
@@ -94,8 +94,8 @@ export default function Topbar({ title, subtitle }) {
                 <Menu className="h-5 w-5" />
               </button>
               <div className="flex items-center gap-2 rounded-xl px-1.5 md:px-2 py-1.5 hover:bg-[color:var(--control-bg)] transition">
-                <label 
-                  htmlFor="gym-logo-upload" 
+                <label
+                  htmlFor="gym-logo-upload"
                   className="relative group cursor-pointer shrink-0"
                   onClick={(e) => e.stopPropagation()}
                   title="Upload Gym Logo"
@@ -108,12 +108,12 @@ export default function Topbar({ title, subtitle }) {
                   <div className="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   </div>
-                  <input 
-                    type="file" 
-                    id="gym-logo-upload" 
-                    accept="image/*" 
-                    className="hidden" 
-                    onChange={handleLogoUpload} 
+                  <input
+                    type="file"
+                    id="gym-logo-upload"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleLogoUpload}
                   />
                 </label>
                 <button
@@ -131,16 +131,7 @@ export default function Topbar({ title, subtitle }) {
                 </button>
               </div>
 
-              <div className="hidden md:block min-w-0">
-                <div className="text-sm font-bold text-[color:var(--text)] truncate">
-                  {title}
-                </div>
-                {subtitle ? (
-                  <div className="text-xs text-[color:var(--muted)] mt-0.5 truncate">
-                    {subtitle}
-                  </div>
-                ) : null}
-              </div>
+
             </div>
 
             <div className="flex items-center gap-2">
@@ -240,7 +231,6 @@ export default function Topbar({ title, subtitle }) {
                     {user?.name || "Account"}
                   </div>
                   <div className="text-[11px] text-[color:var(--subtle)] leading-tight truncate max-w-[220px]">
-                    {gymName ? `${gymName} • ` : ""}
                     {user?.email || " "}
                   </div>
                 </div>

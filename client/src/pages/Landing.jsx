@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Login from "./Login";
 import Register from "./Register";
+import ForgotPassword from "./ForgotPassword";
 import LogoLight from "../assets/Logo-Light.png";
 import LogoDark from "../assets/Logo-Dark.png";
 import { useTheme } from "../context/ThemeContext";
@@ -30,16 +31,26 @@ export default function Landing() {
           <div className="glass-strong w-full max-w-md p-6 md:p-8">
             <div className="text-center">
               <div className="text-2xl font-black tracking-tight text-[color:var(--text)]">
-                {mode === "login" ? "Welcome back" : "Create your account"}
+                {mode === "login" ? "Welcome back" : mode === "forgot-password" ? "Reset Password" : "Create your account"}
               </div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
                 {mode === "login"
                   ? "Sign in to manage your gym in seconds."
+                  : mode === "forgot-password"
+                  ? "Recover access to your account securely."
                   : "Set up your gym and start tracking members."}
               </div>
             </div>
 
-            <div className="mt-6">{mode === "login" ? <Login /> : <Register onSuccess={() => setMode("login")} />}</div>
+            <div className="mt-6">
+              {mode === "login" ? (
+                <Login onForgotPassword={() => setMode("forgot-password")} />
+              ) : mode === "forgot-password" ? (
+                <ForgotPassword onSuccess={() => setMode("login")} onCancel={() => setMode("login")} />
+              ) : (
+                <Register onSuccess={() => setMode("login")} />
+              )}
+            </div>
 
             <div className="mt-6 text-center text-sm text-[color:var(--muted)]">
               {mode === "login" ? (
@@ -65,9 +76,11 @@ export default function Landing() {
               )}
             </div>
 
-            <div className="mt-6 text-center text-[11px] text-[color:var(--subtle)]">
-              By continuing, you agree to secure authentication and real-time updates.
-            </div>
+            {mode !== "forgot-password" && (
+              <div className="mt-6 text-center text-[11px] text-[color:var(--subtle)]">
+                By continuing, you agree to secure authentication and real-time updates.
+              </div>
+            )}
           </div>
         </div>
       </div>

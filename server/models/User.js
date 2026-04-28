@@ -7,7 +7,9 @@ const userSchema = new mongoose.Schema({
   password: String,
   googleId: String,
   provider: { type: String, default: "local" },
-  gymId: { type: mongoose.Schema.Types.ObjectId, ref: "Gym" }
+  gymId: { type: mongoose.Schema.Types.ObjectId, ref: "Gym" },
+  resetPasswordOtp: String,
+  resetPasswordExpires: Date
 });
 
 export default mongoose.model("User", userSchema);

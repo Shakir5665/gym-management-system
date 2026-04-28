@@ -88,3 +88,16 @@ export const updateLogo = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const updateGymProfile = async (req, res) => {
+  try {
+    const { name } = req.body;
+    const gymId = req.user?.gymId;
+    if (!gymId) return res.status(404).json({ message: "No gym linked" });
+    
+    const gym = await Gym.findByIdAndUpdate(gymId, { name }, { new: true });
+    res.json({ gym: { name: gym.name }, message: "Gym updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
