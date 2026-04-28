@@ -101,7 +101,7 @@ export default function Topbar({ title, subtitle }) {
                   title="Upload Gym Logo"
                 >
                   {gymLogo ? (
-                    <img src={gymLogo} alt="Gym Logo" className="h-8 w-8 rounded-xl object-cover shadow-glow border border-sky-600 dark:border-white/10" />
+                    <img src={gymLogo} alt="Gym Logo" className="h-10 w-10 rounded-xl object-cover shadow-glow border border-sky-600 dark:border-white/10" />
                   ) : (
                     <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-brand-400/35 to-accent-500/25 border border-sky-600 dark:border-white/10 shadow-glow" />
                   )}

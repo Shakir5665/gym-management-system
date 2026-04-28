@@ -18,6 +18,9 @@ export const checkIn = async (req, res) => {
     let reason = "";
     const now = new Date();
 
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+
     // 🚫 Rules
     if (member.isBanned) {
       status = "BLOCKED";
@@ -30,8 +33,28 @@ export const checkIn = async (req, res) => {
       reason = "Subscription expired";
     }
 
-    // ✅ Save attendance
-    const record = await Attendance.create({
+    // Check if already checked in today
+    let record = null;
+    if (status === "SUCCESS") {
+      const alreadyCheckedIn = await Attendance.findOne({
+        memberId,
+        gymId,
+        status: "SUCCESS",
+        checkInTime: { $gte: todayStart }
+      });
+
+      if (alreadyCheckedIn) {
+        // Return success so they can enter, but do NOT add points or duplicate attendance logs
+        return res.json({ 
+          status: "SUCCESS", 
+          reason: "Already checked in today", 
+          record: alreadyCheckedIn 
+        });
+      }
+    }
+
+    // ✅ Save attendance if not already checked in
+    record = await Attendance.create({
       memberId,
       gymId,
       status,
@@ -51,17 +74,23 @@ export const checkIn = async (req, res) => {
           lastCheckIn: now
         });
       } else {
-        const diff = Math.floor(
-          (now - new Date(game.lastCheckIn)) / (1000 * 60 * 60 * 24)
-        );
+        const lastDate = new Date(game.lastCheckIn).toDateString();
+        const todayDate = now.toDateString();
 
-        if (diff === 1) game.streak++;
-        else if (diff > 1) game.streak = 1;
+        if (lastDate !== todayDate) {
+          const yesterday = new Date(now);
+          yesterday.setDate(yesterday.getDate() - 1);
+          
+          if (lastDate === yesterday.toDateString()) {
+            game.streak++;
+          } else {
+            game.streak = 1;
+          }
 
-        game.points += 10;
-        game.lastCheckIn = now;
-
-        await game.save();
+          game.points += 10;
+          game.lastCheckIn = now;
+          await game.save();
+        }
       }
     }
 
