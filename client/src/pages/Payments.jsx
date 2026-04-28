@@ -20,7 +20,8 @@ export default function Payments() {
 
   const prefillMemberId = String(searchParams.get("memberId") || "");
   const prefillMemberName = String(searchParams.get("memberName") || "");
-  const showPaymentForm = String(searchParams.get("action") || "").toLowerCase() === "pay";
+  const showPaymentForm =
+    String(searchParams.get("action") || "").toLowerCase() === "pay";
 
   const loadReport = async () => {
     try {
@@ -29,7 +30,9 @@ export default function Payments() {
       const res = await API.get("/payments?limit=150");
       setPayments(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      setReportError(err.response?.data?.message || "Failed to load payment report");
+      setReportError(
+        err.response?.data?.message || "Failed to load payment report",
+      );
     } finally {
       setLoadingReport(false);
     }
@@ -78,7 +81,9 @@ export default function Payments() {
   return (
     <div className="grid gap-4 md:gap-6">
       <Card className="p-5 md:p-6">
-        <div className="text-sm font-bold text-[color:var(--text)]">Payments Report</div>
+        <div className="text-sm font-bold text-[color:var(--text)]">
+          Payments Report
+        </div>
         <div className="mt-0.5 text-xs text-[color:var(--muted)]">
           Recent payments across all members.
         </div>
@@ -97,7 +102,9 @@ export default function Payments() {
 
       <Card className="p-5 md:p-6">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-xs text-[color:var(--muted)]">Latest entries first</div>
+          <div className="text-xs text-[color:var(--muted)]">
+            Latest entries first
+          </div>
           <Button variant="ghost" onClick={loadReport}>
             Refresh
           </Button>
@@ -106,31 +113,38 @@ export default function Payments() {
         <div className="mt-4 space-y-2">
           {loadingReport ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-14 rounded-xl bg-[color:var(--control-bg)] animate-pulse" />
+              <div
+                key={i}
+                className="h-14 rounded-xl bg-[color:var(--control-bg)] animate-pulse"
+              />
             ))
           ) : reportError ? (
             <div className="rounded-xl border border-[color:var(--danger-soft-border)] bg-[color:var(--danger-soft-bg)] px-3 py-2 text-xs font-semibold text-[color:var(--danger-ink)]">
               {reportError}
             </div>
           ) : payments.length === 0 ? (
-            <div className="text-xs text-[color:var(--muted)]">No payments yet.</div>
+            <div className="text-xs text-[color:var(--muted)]">
+              No payments yet.
+            </div>
           ) : (
             payments.map((p) => (
               <div
                 key={p._id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-2"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-[color:var(--text)] truncate">
+                  <div className="text-xs sm:text-sm font-semibold text-[color:var(--text)] truncate">
                     {p.memberName || "Unknown member"}
                   </div>
-                  <div className="text-[11px] text-[color:var(--muted)] truncate">
+                  <div className="text-[10px] sm:text-[11px] text-[color:var(--muted)] truncate">
                     {p.memberPhone ? `${p.memberPhone} • ` : ""}
                     {new Date(p.createdAt).toLocaleString()}
-                    {p.nextDueDate ? ` • next due ${new Date(p.nextDueDate).toLocaleDateString()}` : ""}
+                    {p.nextDueDate
+                      ? ` • next due ${new Date(p.nextDueDate).toLocaleDateString()}`
+                      : ""}
                   </div>
                 </div>
-                <div className="text-xs font-bold text-[color:var(--text)]">
+                <div className="text-xs sm:text-sm font-bold text-[color:var(--text)] flex-shrink-0">
                   {`${Number(p.amount || 0).toLocaleString("en-LK", {
                     maximumFractionDigits: 0,
                   })} LKR`}
@@ -144,7 +158,11 @@ export default function Payments() {
       <Modal
         open={showPaymentForm}
         onClose={() => navigate("/app/payments", { replace: true })}
-        title={prefillMemberName ? `Make payment • ${prefillMemberName}` : "Make payment"}
+        title={
+          prefillMemberName
+            ? `Make payment • ${prefillMemberName}`
+            : "Make payment"
+        }
         className="max-w-lg"
       >
         {message ? (
@@ -173,10 +191,17 @@ export default function Payments() {
             onChange={(e) => setAmount(e.target.value)}
           />
           <div className="flex items-center justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => navigate("/app/payments", { replace: true })}>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/app/payments", { replace: true })}
+            >
               Cancel
             </Button>
-            <Button variant="primary" onClick={handlePayment} disabled={processing}>
+            <Button
+              variant="primary"
+              onClick={handlePayment}
+              disabled={processing}
+            >
               {processing ? "Processing…" : "Pay"}
             </Button>
           </div>

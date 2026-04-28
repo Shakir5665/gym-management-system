@@ -6,7 +6,13 @@ import Input from "../components/ui/Input";
 import Badge from "../components/ui/Badge";
 import Modal from "../components/ui/Modal";
 import Select from "../components/ui/Select";
-import { CreditCard, QrCode, Search, UserPlus, ChevronDown } from "lucide-react";
+import {
+  CreditCard,
+  QrCode,
+  Search,
+  UserPlus,
+  ChevronDown,
+} from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { socket } from "../socket";
 
@@ -39,8 +45,61 @@ export default function MembersPage() {
     homeAddress: "",
   });
   const [adding, setAdding] = useState(false);
+  const [formErrors, setFormErrors] = useState([]);
 
   const [qrMember, setQrMember] = useState(null);
+
+  const validateForm = () => {
+    const errors = [];
+
+    // Name validation
+    if (!form.fullLegalName.trim()) {
+      errors.push("Full legal name is required");
+    } else if (form.fullLegalName.trim().length < 2) {
+      errors.push("Full legal name must be at least 2 characters");
+    }
+
+    // Phone validation
+    if (!form.phone.trim()) {
+      errors.push("Primary phone is required");
+    } else {
+      const phoneRegex = /^[\d\s\+\-\(\)]{7,}$/;
+      if (!phoneRegex.test(form.phone.trim())) {
+        errors.push("Primary phone must be a valid phone number");
+      }
+    }
+
+    // Email validation (if provided)
+    if (form.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.email.trim())) {
+        errors.push("Email must be a valid email address");
+      }
+    }
+
+    // Emergency phone validation (if provided)
+    if (form.emergencyPhone.trim()) {
+      const phoneRegex = /^[\d\s\+\-\(\)]{7,}$/;
+      if (!phoneRegex.test(form.emergencyPhone.trim())) {
+        errors.push("Emergency phone must be a valid phone number");
+      }
+    }
+
+    // Date of birth validation (if provided)
+    if (form.dateOfBirth) {
+      const dob = new Date(form.dateOfBirth);
+      const today = new Date();
+      if (dob > today) {
+        errors.push("Date of birth cannot be in the future");
+      }
+      const age = today.getFullYear() - dob.getFullYear();
+      if (age < 13) {
+        errors.push("Member must be at least 13 years old");
+      }
+    }
+
+    return errors;
+  };
 
   const fetchMembers = async () => {
     try {
@@ -132,13 +191,15 @@ export default function MembersPage() {
   }, [members, query, searchParams, status]);
 
   const handleAdd = async () => {
-    if (!form.fullLegalName.trim() || !form.phone.trim()) {
-      setError("Full legal name and primary phone are required");
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setFormErrors(errors);
       return;
     }
     try {
       setAdding(true);
       setError("");
+      setFormErrors([]);
       await API.post("/members", {
         fullLegalName: form.fullLegalName.trim(),
         dateOfBirth: form.dateOfBirth || undefined,
@@ -347,31 +408,51 @@ export default function MembersPage() {
 
       <Modal
         open={addOpen}
-        onClose={() => setAddOpen(false)}
+        onClose={() => {
+          setAddOpen(false);
+          setFormErrors([]);
+        }}
         title="Add member"
       >
+        {formErrors.length > 0 ? (
+          <div className="mb-4 space-y-2">
+            {formErrors.map((err, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-[color:var(--danger-soft-border)] bg-[color:var(--danger-soft-bg)] px-3 py-2 text-xs font-semibold text-[color:var(--danger-ink)]"
+              >
+                • {err}
+              </div>
+            ))}
+          </div>
+        ) : null}
         <div className="grid gap-3">
           <Input
             label="Full legal name"
             placeholder="e.g., Mohamed"
             value={form.fullLegalName}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, fullLegalName: e.target.value }))
-            }
+            onChange={(e) => {
+              setForm((p) => ({ ...p, fullLegalName: e.target.value }));
+              setFormErrors([]);
+            }}
             autoFocus
           />
           <Input
             label="Date of birth"
             type="date"
             value={form.dateOfBirth}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, dateOfBirth: e.target.value }))
-            }
+            onChange={(e) => {
+              setForm((p) => ({ ...p, dateOfBirth: e.target.value }));
+              setFormErrors([]);
+            }}
           />
           <Select
             label="Gender"
             value={form.gender}
-            onChange={(val) => setForm((p) => ({ ...p, gender: val }))}
+            onChange={(val) => {
+              setForm((p) => ({ ...p, gender: val }));
+              setFormErrors([]);
+            }}
             options={[
               { value: "", label: "Select" },
               { value: "MALE", label: "Male" },
@@ -385,34 +466,45 @@ export default function MembersPage() {
             type="email"
             placeholder="name@example.com"
             value={form.email}
-            onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+            onChange={(e) => {
+              setForm((p) => ({ ...p, email: e.target.value }));
+              setFormErrors([]);
+            }}
           />
           <Input
             label="Primary phone"
             placeholder="e.g., +94 7x xxx xxxx"
             value={form.phone}
-            onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+            onChange={(e) => {
+              setForm((p) => ({ ...p, phone: e.target.value }));
+              setFormErrors([]);
+            }}
           />
           <Input
             label="Emergency phone"
             placeholder="e.g., +94 7x xxx xxxx"
             value={form.emergencyPhone}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, emergencyPhone: e.target.value }))
-            }
+            onChange={(e) => {
+              setForm((p) => ({ ...p, emergencyPhone: e.target.value }));
+              setFormErrors([]);
+            }}
           />
           <Input
             label="Home address"
             placeholder="Street, City, State"
             value={form.homeAddress}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, homeAddress: e.target.value }))
-            }
+            onChange={(e) => {
+              setForm((p) => ({ ...p, homeAddress: e.target.value }));
+              setFormErrors([]);
+            }}
           />
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button
               variant="ghost"
-              onClick={() => setAddOpen(false)}
+              onClick={() => {
+                setAddOpen(false);
+                setFormErrors([]);
+              }}
               disabled={adding}
             >
               Cancel

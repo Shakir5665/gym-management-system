@@ -33,7 +33,9 @@ export default function Topbar({ title, subtitle }) {
       }
       try {
         setSearching(true);
-        const res = await API.get(`/members?query=${encodeURIComponent(trimmed)}&limit=6`);
+        const res = await API.get(
+          `/members?query=${encodeURIComponent(trimmed)}&limit=6`,
+        );
         if (cancelled) return;
         setResults(Array.isArray(res.data) ? res.data : []);
       } catch {
@@ -62,7 +64,7 @@ export default function Topbar({ title, subtitle }) {
   return (
     <header className="sticky top-0 z-20">
       <div className="mx-auto max-w-7xl px-4 md:px-8 pt-4">
-        <div className="glass px-4 py-3 md:px-5 md:py-3">
+        <div className="rounded-2xl backdrop-blur-md border border-[color:var(--glass-border)] px-4 py-3 md:px-5 md:py-3 md:bg-[color:var(--glass-bg)] bg-[color:var(--bg2)]">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex items-center gap-2 md:gap-3">
               <button
@@ -90,7 +92,9 @@ export default function Topbar({ title, subtitle }) {
               </button>
 
               <div className="hidden md:block min-w-0">
-                <div className="text-sm font-bold text-[color:var(--text)] truncate">{title}</div>
+                <div className="text-sm font-bold text-[color:var(--text)] truncate">
+                  {title}
+                </div>
                 {subtitle ? (
                   <div className="text-xs text-[color:var(--muted)] mt-0.5 truncate">
                     {subtitle}
@@ -118,7 +122,9 @@ export default function Topbar({ title, subtitle }) {
                 {open && trimmed ? (
                   <div className="absolute right-0 mt-2 w-[340px] glass-strong p-2">
                     {searching ? (
-                      <div className="px-3 py-2 text-xs text-[color:var(--muted)]">Searching…</div>
+                      <div className="px-3 py-2 text-xs text-[color:var(--muted)]">
+                        Searching…
+                      </div>
                     ) : results.length === 0 ? (
                       <div className="px-3 py-2 text-xs text-[color:var(--muted)]">
                         No members found
@@ -167,7 +173,11 @@ export default function Topbar({ title, subtitle }) {
                 aria-label="Toggle theme"
                 title="Toggle theme"
               >
-                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
               </button>
 
               <button
@@ -194,7 +204,12 @@ export default function Topbar({ title, subtitle }) {
                     {user?.email || " "}
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={logout} className="gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="gap-2"
+                >
                   <LogOut className="h-4 w-4" />
                   Logout
                 </Button>
@@ -213,8 +228,10 @@ export default function Topbar({ title, subtitle }) {
           </div>
         </div>
       </div>
-      <MobileMenu open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      <MobileMenu
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+      />
     </header>
   );
 }
-
