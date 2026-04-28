@@ -1,0 +1,48 @@
+name: Keep Server Alive
+
+on:
+  schedule:
+    # Run every 10 minutes to prevent server sleep
+    - cron: "*/10 * * * *"
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  ping-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Server Health Check
+        run: |
+          echo "🔄 Pinging server health check endpoint..."
+
+          # Try to ping the server (adjust URL based on your deployment)
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.SERVER_URL }})
+
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Server is alive (HTTP $RESPONSE)"
+          else
+            echo "⚠️ Server responded with HTTP $RESPONSE"
+          fi
+        continue-on-error: true
+
+      - name: Fallback - Alternative Server URL
+        if: failure()
+        run: |
+          echo "🔄 Trying alternative endpoint..."
+
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.SERVER_URL }}/api/gym)
+
+          if [ "$RESPONSE" = "401" ] || [ "$RESPONSE" = "403" ]; then
+            echo "✅ Server is alive (requires auth - HTTP $RESPONSE)"
+          elif [ "$RESPONSE" = "200" ]; then
+            echo "✅ Server is alive (HTTP $RESPONSE)"
+          else
+            echo "⚠️ Server responded with HTTP $RESPONSE"
+          fi
+        continue-on-error: true
+
+      - name: Check at Different Time
+        run: |
+          echo "📅 Check timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"

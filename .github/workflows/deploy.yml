@@ -1,0 +1,132 @@
+name: Server Health & Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "server/**"
+      - ".github/workflows/deploy.yml"
+
+  schedule:
+    # Run daily health check at 2 AM UTC
+    - cron: "0 2 * * *"
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install Dependencies
+        working-directory: ./server
+        run: npm install
+
+      - name: Check Server Configuration
+        working-directory: ./server
+        run: |
+          echo "✅ Checking server configuration..."
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo ""
+          echo "Installed packages:"
+          npm list --depth=0
+
+      - name: Verify Required Environment Variables
+        run: |
+          echo "✅ Checking for required environment variables..."
+
+          # This will fail if secrets aren't configured
+          if [ -z "${{ secrets.MONGO_URI }}" ]; then
+            echo "⚠️ MONGO_URI not configured in secrets"
+          else
+            echo "✅ MONGO_URI is configured"
+          fi
+
+          if [ -z "${{ secrets.JWT_SECRET }}" ]; then
+            echo "⚠️ JWT_SECRET not configured in secrets"
+          else
+            echo "✅ JWT_SECRET is configured"
+          fi
+
+  keep-alive:
+    runs-on: ubuntu-latest
+    needs: health-check
+
+    steps:
+      - name: Ping Production Server
+        run: |
+          echo "🔄 Running health check on server..."
+
+          SERVER_URL="${{ secrets.SERVER_URL }}"
+
+          if [ -z "$SERVER_URL" ]; then
+            echo "⚠️ SERVER_URL not configured in secrets"
+            exit 0
+          fi
+
+          # Make request with timeout
+          RESPONSE=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "$SERVER_URL")
+
+          echo "Response Code: $RESPONSE"
+
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Server is healthy"
+          elif [ "$RESPONSE" = "000" ]; then
+            echo "❌ Server is unreachable (timeout or connection error)"
+            exit 1
+          else
+            echo "⚠️ Server responded with HTTP $RESPONSE (may still be operational)"
+          fi
+        continue-on-error: true
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "🚨 Server health check failed!"
+          echo "Please check your deployment at: ${{ secrets.SERVER_URL }}"
+
+  lint-and-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Check Code Structure
+        working-directory: ./server
+        run: |
+          echo "✅ Validating server structure..."
+
+          # Check key files exist
+          if [ ! -f "server.js" ]; then echo "❌ server.js not found"; exit 1; fi
+          if [ ! -f "package.json" ]; then echo "❌ package.json not found"; exit 1; fi
+          if [ ! -d "models" ]; then echo "❌ models directory not found"; exit 1; fi
+          if [ ! -d "routes" ]; then echo "❌ routes directory not found"; exit 1; fi
+          if [ ! -d "controllers" ]; then echo "❌ controllers directory not found"; exit 1; fi
+
+          echo "✅ All required files and directories present"

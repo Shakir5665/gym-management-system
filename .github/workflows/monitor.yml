@@ -1,0 +1,75 @@
+name: Continuous Monitoring
+
+on:
+  schedule:
+    # Run every 5 minutes for intensive monitoring
+    - cron: "*/5 * * * *"
+
+  workflow_dispatch:
+
+jobs:
+  monitor-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Monitor Server Status
+        run: |
+          echo "📊 Continuous Server Monitoring"
+          echo "================================"
+
+          SERVER_URL="${{ secrets.SERVER_URL }}"
+
+          if [ -z "$SERVER_URL" ]; then
+            echo "❌ SERVER_URL not configured in GitHub secrets"
+            echo ""
+            echo "To fix this:"
+            echo "1. Go to: https://github.com/YOUR_USERNAME/gym-system/settings/secrets/actions"
+            echo "2. Add a new secret named 'SERVER_URL' with your server URL"
+            echo "3. Example: https://gym-api.onrender.com or https://your-server.herokuapp.com"
+            exit 1
+          fi
+
+          echo "Testing: $SERVER_URL"
+          echo ""
+
+          # Test 1: Basic connectivity
+          echo "Test 1: Basic Connectivity"
+          HTTP_CODE=$(curl -s -m 15 -o /dev/null -w "%{http_code}" "$SERVER_URL")
+          echo "Status Code: $HTTP_CODE"
+
+          # Test 2: Response time
+          echo ""
+          echo "Test 2: Response Time"
+          RESPONSE_TIME=$(curl -s -m 15 -w "%{time_total}" -o /dev/null "$SERVER_URL")
+          echo "Response Time: ${RESPONSE_TIME}s"
+
+          # Test 3: Database connectivity (if applicable)
+          echo ""
+          echo "Test 3: Database Check"
+          DB_CHECK=$(curl -s -m 15 "$SERVER_URL/api/members" -H "Authorization: Bearer test" 2>/dev/null || echo "Connection error")
+          if [[ "$DB_CHECK" == *"error"* ]] || [[ "$DB_CHECK" == "Connection error" ]]; then
+            echo "⚠️ Database might be unreachable"
+          else
+            echo "✅ Database appears to be responding"
+          fi
+
+          # Summary
+          echo ""
+          echo "================================"
+          echo "Monitor Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "401" ] || [ "$HTTP_CODE" = "403" ]; then
+            echo "✅ Server Status: ALIVE"
+          else
+            echo "❌ Server Status: POTENTIALLY DOWN (HTTP $HTTP_CODE)"
+          fi
+        continue-on-error: true
+
+      - name: Log Performance Metrics
+        run: |
+          echo "📈 Server Performance Metrics"
+          echo "=============================="
+          echo "Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "Workflow Run: ${{ github.run_number }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Event: ${{ github.event_name }}"
