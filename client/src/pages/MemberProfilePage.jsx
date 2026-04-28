@@ -8,7 +8,7 @@ import Input from "../components/ui/Input";
 import Modal from "../components/ui/Modal";
 import Select from "../components/ui/Select";
 import AreaSpark from "../components/charts/AreaSpark";
-import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning } from "lucide-react";
+import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning, Ban, ShieldCheck, Receipt, CheckCircle, Edit3 } from "lucide-react";
 import QRCode from "qrcode";
 import { socket } from "../socket";
 
@@ -312,15 +312,20 @@ export default function MemberProfilePage() {
                 <img src={qrCodeUrl} alt="Member QR Code" className="w-16 h-16 object-contain" />
               </div>
             ) : null}
-            <Button variant="danger" onClick={() => member?.isBanned ? handleUnban() : setBanOpen(true)}>
-              {member?.isBanned ? "Unban" : "Ban"}
-            </Button>
-            <Button variant="warning" onClick={() => member?.hasFine ? handleUnfine() : setFineOpen(true)}>
-              {member?.hasFine ? "Remove Fine" : "Fine"}
-            </Button>
-            <Button variant="solid" onClick={() => setEditOpen(true)}>
-              Edit
-            </Button>
+            <div className="flex flex-row items-center justify-end gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+              <Button variant="danger" onClick={() => member?.isBanned ? handleUnban() : setBanOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all">
+                {member?.isBanned ? <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> : <Ban className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />}
+                <span className="text-[11px] sm:text-sm font-semibold">{member?.isBanned ? "Unban" : "Ban"}</span>
+              </Button>
+              <Button variant="warning" onClick={() => member?.hasFine ? handleUnfine() : setFineOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all">
+                {member?.hasFine ? <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> : <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />}
+                <span className="text-[11px] sm:text-sm font-semibold">{member?.hasFine ? "Unfine" : "Fine"}</span>
+              </Button>
+              <Button variant="solid" onClick={() => setEditOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all">
+                <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="text-[11px] sm:text-sm font-semibold">Edit</span>
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
