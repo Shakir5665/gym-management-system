@@ -19,21 +19,21 @@ export default function NotificationsPage() {
   return (
     <div className="grid gap-4 md:gap-6">
       <Card className="p-5 md:p-6">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="text-sm font-bold text-[color:var(--text)]">Notifications</div>
             <div className="mt-0.5 text-xs text-[color:var(--muted)]">
               Live updates from attendance and gamification events.
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={unreadCount ? "brand" : "neutral"}>
+          <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
+            <Badge variant={unreadCount ? "brand" : "neutral"} className="mr-auto sm:mr-0">
               {unreadCount ? `${unreadCount} unread` : "All read"}
             </Badge>
-            <Button variant="ghost" onClick={markAllRead}>
+            <Button variant="ghost" onClick={markAllRead} size="sm">
               Mark all read
             </Button>
-            <Button variant="ghost" onClick={clear}>
+            <Button variant="ghost" onClick={clear} size="sm">
               Clear
             </Button>
           </div>
@@ -56,7 +56,7 @@ export default function NotificationsPage() {
               onClick={() => markRead(n.id)}
               className="text-left glass p-4 transition hover:bg-[color:var(--control-bg)] hover:border-[color:var(--glass-border-strong)] focus:outline-none focus-visible:focus-ring"
             >
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <div className="text-sm font-bold text-[color:var(--text)] truncate">
@@ -68,7 +68,7 @@ export default function NotificationsPage() {
                     <div className="mt-1 text-xs text-[color:var(--muted)]">{n.message}</div>
                   ) : null}
                 </div>
-                <div className="text-[11px] text-[color:var(--subtle)] shrink-0">
+                <div className="text-[11px] text-[color:var(--subtle)] shrink-0 self-start sm:self-auto">
                   {new Date(n.createdAt).toLocaleString()}
                 </div>
               </div>

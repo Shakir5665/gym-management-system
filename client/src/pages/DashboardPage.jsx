@@ -44,12 +44,15 @@ function StatCard({ icon: Icon, label, value, sub, className }) {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
   const [summary, setSummary] = useState(null);
   const [trend, setTrend] = useState([]);
 
-  async function load() {
+  async function load(isInitial = false) {
+    if (isInitial) setLoading(true);
+    else setRefreshing(true);
     try {
       setError("");
       const [sRes, tRes] = await Promise.all([
@@ -64,13 +67,13 @@ export default function DashboardPage() {
       );
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    load();
+    load(true);
 
     function refresh() {
       if (!cancelled) load();
@@ -142,8 +145,8 @@ export default function DashboardPage() {
               Clean real-time visibility into members, revenue, and retention.
             </div>
           </div>
-          <Button variant="ghost" onClick={load}>
-            Refresh metrics
+          <Button variant="ghost" onClick={() => load(false)} disabled={refreshing}>
+            {refreshing ? "Refreshing..." : "Refresh metrics"}
           </Button>
         </div>
       </Card>

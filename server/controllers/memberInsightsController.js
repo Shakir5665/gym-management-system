@@ -1,6 +1,7 @@
 import Attendance from "../models/Attendance.js";
 import Member from "../models/Member.js";
 import Payment from "../models/Payment.js";
+import mongoose from "mongoose";
 
 function startOfDay(d) {
   const x = new Date(d);
@@ -27,10 +28,12 @@ export async function getMemberAttendanceTrend(req, res) {
     const now = new Date();
     const start = startOfDay(addDays(now, -(days - 1)));
 
+    const gymObjectId = mongoose.Types.ObjectId.isValid(gymId) ? new mongoose.Types.ObjectId(gymId) : null;
+
     const rows = await Attendance.aggregate([
       {
         $match: {
-          gymId,
+          gymId: gymObjectId || gymId,
           memberId: member._id,
           status: "SUCCESS",
           checkInTime: { $gte: start },

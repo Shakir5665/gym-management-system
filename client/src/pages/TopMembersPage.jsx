@@ -130,7 +130,7 @@ export default function TopMembersPage() {
                   </div>
                 </div>
                 <Badge variant="brand" className="flex-shrink-0">
-                  {m.streak} 🔥
+                  {m.points} ⭐ • {m.streak} 🔥
                 </Badge>
               </div>
             </button>

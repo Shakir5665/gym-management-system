@@ -12,6 +12,8 @@ import {
   Search,
   UserPlus,
   ChevronDown,
+  Trophy,
+  ShieldAlert,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { socket } from "../socket";
@@ -231,25 +233,35 @@ export default function MembersPage() {
         <button
           type="button"
           onClick={() => navigate("/app/members/top")}
-          className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition"
+          className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition flex items-center justify-between"
         >
-          <div className="text-xs font-semibold text-[color:var(--muted)]">
-            Top members
+          <div>
+            <div className="text-xs font-semibold text-[color:var(--muted)]">
+              Top members
+            </div>
+            <div className="mt-1 text-sm font-bold text-[color:var(--text)]">
+              View by streak
+            </div>
           </div>
-          <div className="mt-2 text-sm font-bold text-[color:var(--text)]">
-            View by streak
+          <div className="rounded-2xl bg-[color:var(--brand-soft-bg)] border border-[color:var(--brand-soft-border)] p-2">
+            <Trophy className="h-5 w-5 text-[color:var(--brand-ink)]" />
           </div>
         </button>
         <button
           type="button"
           onClick={() => navigate("/app/members/at-risk")}
-          className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition"
+          className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition flex items-center justify-between"
         >
-          <div className="text-xs font-semibold text-[color:var(--muted)]">
-            At-risk members
+          <div>
+            <div className="text-xs font-semibold text-[color:var(--muted)]">
+              At-risk members
+            </div>
+            <div className="mt-1 text-sm font-bold text-[color:var(--text)]">
+              Low activity members
+            </div>
           </div>
-          <div className="mt-2 text-sm font-bold text-[color:var(--text)]">
-            Low activity members
+          <div className="rounded-2xl bg-[color:var(--danger-soft-bg)] border border-[color:var(--danger-soft-border)] p-2">
+            <ShieldAlert className="h-5 w-5 text-[color:var(--danger-ink)]" />
           </div>
         </button>
       </div>
