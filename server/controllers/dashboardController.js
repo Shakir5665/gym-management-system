@@ -104,7 +104,7 @@ export async function getDashboardSummary(req, res) {
         gymId,
         subscriptionEnd: { $exists: true, $lte: soonDue },
       }),
-      getLastCheckinByMember(gymId),
+      getLastCheckinByMember(gymObjectId || gymId),
     ]);
 
     const riskCounts = { LOW: 0, MEDIUM: 0, HIGH: 0 };
