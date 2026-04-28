@@ -43,7 +43,7 @@ export default function MobileMenu({ open, onClose }) {
                 <img
                   src={gymLogo || Favicon}
                   alt="Gym Logo"
-                  className="h-10 w-10 rounded-2xl object-cover border border-white/12 shadow-glow bg-gradient-to-br from-brand-400/40 to-accent-500/28"
+                  className="h-10 w-10 rounded-2xl object-cover shadow-glow bg-gradient-to-br from-brand-400/40 to-accent-500/28 border border-sky-600 dark:border-white/12"
                 />
                 <div className="min-w-0">
                   <div className="text-sm font-black tracking-tight text-[color:var(--text)] truncate max-w-[160px]">
