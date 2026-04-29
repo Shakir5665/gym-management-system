@@ -1,5 +1,14 @@
 import { NavLink } from "react-router-dom";
-import { BarChart3, CreditCard, QrCode, ReceiptText, Users, X, LogOut, Settings } from "lucide-react";
+import {
+  BarChart3,
+  CreditCard,
+  QrCode,
+  ReceiptText,
+  Users,
+  X,
+  LogOut,
+  Settings,
+} from "lucide-react";
 import { cn } from "../../lib/cn";
 import { useAuth } from "../../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,7 +45,7 @@ export default function MobileMenu({ open, onClose }) {
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-            className="fixed top-0 left-0 bottom-0 z-[101] w-[280px] bg-[color:var(--bg)] border-r border-[color:var(--glass-border)] shadow-2xl flex flex-col"
+            className="fixed top-0 left-0 bottom-0 z-[101] w-[280px] bg-[color:var(--bg)] border-r border-[color:var(--control-border)] shadow-2xl flex flex-col"
           >
             <div className="flex items-center justify-between p-4 border-b border-[color:var(--control-border)]">
               <div className="flex items-center gap-3">

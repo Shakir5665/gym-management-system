@@ -81,11 +81,10 @@ export default function Topbar({ title, subtitle }) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-8 pt-4">
-        <div className="rounded-2xl backdrop-blur-md border border-[color:var(--glass-border)] px-4 py-3 md:px-5 md:py-3 md:bg-[color:var(--glass-bg)] bg-[color:var(--bg2)]">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 flex items-center gap-2 md:gap-3">
+    <header className="sticky top-0 z-50 bg-[color:var(--bg2)] border-b border-[color:var(--control-border)]">
+      <div className="mx-auto max-w-7xl px-4 md:px-8 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex items-center gap-2 md:gap-3">
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
@@ -130,8 +129,6 @@ export default function Topbar({ title, subtitle }) {
                   </div>
                 </button>
               </div>
-
-
             </div>
 
             <div className="flex items-center gap-2">
@@ -255,7 +252,6 @@ export default function Topbar({ title, subtitle }) {
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
-          </div>
         </div>
       </div>
       <MobileMenu

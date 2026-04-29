@@ -1,5 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { BarChart3, CreditCard, QrCode, ReceiptText, Users, Settings } from "lucide-react";
+import {
+  BarChart3,
+  CreditCard,
+  QrCode,
+  ReceiptText,
+  Users,
+  Settings,
+} from "lucide-react";
 import { cn } from "../../lib/cn";
 import Favicon from "../../assets/favicon.png";
 
@@ -14,8 +21,8 @@ const nav = [
 
 export default function Sidebar() {
   return (
-    <aside className="hidden md:flex w-[296px] shrink-0 flex-col p-4">
-      <div className="glass px-4 py-4 relative overflow-hidden">
+    <aside className="hidden md:flex w-[296px] shrink-0 flex-col p-4 bg-[color:var(--bg)] border-r border-[color:var(--control-border)]">
+      <div className="rounded-2xl bg-gradient-to-br from-[color:var(--bg2)] to-[color:var(--bg)] border border-[color:var(--control-border)] px-4 py-4 relative overflow-hidden">
         <div className="absolute -top-24 -left-20 h-44 w-44 rounded-full bg-brand-400/20 blur-3xl" />
         <div className="absolute -bottom-24 -right-20 h-44 w-44 rounded-full bg-accent-500/16 blur-3xl" />
         <div className="relative flex items-center gap-3">
@@ -25,13 +32,17 @@ export default function Sidebar() {
             className="h-20 w-30 object-contain"
           />
           <div className="min-w-0">
-            <div className="text-sm font-black tracking-tight text-[color:var(--text)]">SMART GYM</div>
-            <div className="text-[11px] text-[color:var(--subtle)] truncate">Premium Gym OS</div>
+            <div className="text-sm font-black tracking-tight text-[color:var(--text)]">
+              SMART GYM
+            </div>
+            <div className="text-[11px] text-[color:var(--subtle)] truncate">
+              Premium Gym OS
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-4 glass p-2">
+      <div className="mt-4 rounded-2xl bg-gradient-to-br from-[color:var(--bg2)] to-[color:var(--bg)] border border-[color:var(--control-border)] p-2">
         <div className="px-2 pt-2 pb-1 text-[11px] font-semibold text-[color:var(--subtle)]">
           Navigation
         </div>
@@ -61,17 +72,20 @@ export default function Sidebar() {
         })}
       </div>
 
-      <div className="mt-4 glass p-4">
-        <div className="text-xs font-semibold text-[color:var(--muted)]">Live system</div>
+      <div className="mt-4 rounded-2xl bg-gradient-to-br from-[color:var(--bg2)] to-[color:var(--bg)] border border-[color:var(--control-border)] p-4">
+        <div className="text-xs font-semibold text-[color:var(--muted)]">
+          Live system
+        </div>
         <div className="mt-1 text-xs text-[color:var(--subtle)] leading-relaxed">
           Real-time updates, QR check-ins, and gamification—built for speed.
         </div>
         <div className="mt-3 h-px bg-[color:var(--control-border)]" />
         <div className="mt-3 text-[11px] text-[color:var(--subtle)]">
-          Tip: Keep an eye on <span className="text-[color:var(--muted)] font-semibold">Risk</span> to prevent churn.
+          Tip: Keep an eye on{" "}
+          <span className="text-[color:var(--muted)] font-semibold">Risk</span>{" "}
+          to prevent churn.
         </div>
       </div>
     </aside>
   );
 }
-
