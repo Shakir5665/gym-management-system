@@ -139,7 +139,7 @@ export default function DashboardPage() {
               Dashboard
             </div>
             <div className="mt-1 text-2xl md:text-3xl font-black tracking-tight text-[color:var(--text)]">
-              Performance Overview...
+              Performance Overview
             </div>
             <div className="mt-1 text-xs text-[color:var(--subtle)]">
               Clean real-time visibility into members, revenue, and retention.
