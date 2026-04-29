@@ -76,6 +76,57 @@ export async function getExpenses(req, res) {
   }
 }
 
+export async function updateExpense(req, res) {
+  try {
+    const gymId = req.user?.gymId;
+    if (!gymId) return res.status(403).json({ message: "You must create a gym first" });
+
+    const { id } = req.params;
+    const reason = String(req.body.reason || "").trim();
+    const amount = Number(req.body.amount);
+    const spentAtRaw = String(req.body.spentAt || "").trim();
+    const note = String(req.body.note || "").trim();
+
+    if (!reason) return res.status(400).json({ message: "Expense reason is required" });
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ message: "Valid expense amount is required" });
+    }
+
+    const spentAt = spentAtRaw ? new Date(spentAtRaw) : new Date();
+    if (Number.isNaN(spentAt.getTime())) {
+      return res.status(400).json({ message: "Invalid expense date" });
+    }
+
+    const row = await Expense.findOneAndUpdate(
+      { _id: id, gymId },
+      { reason, amount, spentAt, note },
+      { new: true }
+    );
+
+    if (!row) return res.status(404).json({ message: "Expense not found" });
+
+    res.json(row);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+export async function deleteExpense(req, res) {
+  try {
+    const gymId = req.user?.gymId;
+    if (!gymId) return res.status(403).json({ message: "You must create a gym first" });
+
+    const { id } = req.params;
+    const row = await Expense.findOneAndDelete({ _id: id, gymId });
+
+    if (!row) return res.status(404).json({ message: "Expense not found" });
+
+    res.json({ message: "Expense deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
 export async function getAccountingReport(req, res) {
   try {
     const gymIdRaw = req.user?.gymId;

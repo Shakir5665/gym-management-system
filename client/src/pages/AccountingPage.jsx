@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
+import Modal from "../components/ui/Modal";
 import API from "../api/api";
 import { useAuth } from "../context/AuthContext";
+import { Pencil, Trash2 } from "lucide-react";
 
 function toDateInput(d) {
   return new Date(d).toISOString().slice(0, 10);
@@ -105,6 +107,8 @@ export default function AccountingPage() {
   const [spentAt, setSpentAt] = useState(toDateInput(new Date()));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [expenseToDelete, setExpenseToDelete] = useState(null);
   const [report, setReport] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -131,7 +135,7 @@ export default function AccountingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleAddExpense = async () => {
+  const handleSaveExpense = async () => {
     if (!reason.trim() || !amount) {
       setError("Expense reason and amount are required");
       return;
@@ -139,19 +143,64 @@ export default function AccountingPage() {
     try {
       setSaving(true);
       setError("");
-      await API.post("/accounting/expenses", {
+      
+      const payload = {
         reason: reason.trim(),
         amount: Number(amount),
         spentAt,
-      });
+      };
+
+      if (editingId) {
+        await API.put(`/accounting/expenses/${editingId}`, payload);
+      } else {
+        await API.post("/accounting/expenses", payload);
+      }
+
       setReason("");
       setAmount("");
+      setEditingId(null);
       await fetchAll();
     } catch (e) {
-      setError(e?.response?.data?.message || "Failed to add expense");
+      setError(e?.response?.data?.message || "Failed to save expense");
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEditExpense = (expense) => {
+    setEditingId(expense._id);
+    setReason(expense.reason);
+    setAmount(expense.amount);
+    setSpentAt(toDateInput(expense.spentAt));
+  };
+
+  const handleDeleteExpense = (expense) => {
+    setExpenseToDelete(expense);
+  };
+
+  const confirmDeleteExpense = async () => {
+    if (!expenseToDelete) return;
+    try {
+      setError("");
+      await API.delete(`/accounting/expenses/${expenseToDelete._id}`);
+      await fetchAll();
+      if (editingId === expenseToDelete._id) {
+        setEditingId(null);
+        setReason("");
+        setAmount("");
+      }
+    } catch (e) {
+      setError(e?.response?.data?.message || "Failed to delete expense");
+    } finally {
+      setExpenseToDelete(null);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setReason("");
+    setAmount("");
+    setSpentAt(toDateInput(new Date()));
   };
 
   const printReport = () => {
@@ -191,43 +240,57 @@ export default function AccountingPage() {
               Manage gym expenses and print financial reports.
             </div>
           </div>
-          <div className="flex flex-wrap items-end gap-2">
-            <Input
-              label="From"
-              type="date"
-              value={range.from}
-              onChange={(e) => setRange((p) => ({ ...p, from: e.target.value }))}
-            />
-            <Input
-              label="To"
-              type="date"
-              value={range.to}
-              onChange={(e) => setRange((p) => ({ ...p, to: e.target.value }))}
-            />
-            <Button variant="ghost" onClick={() => fetchAll(range.from, range.to)}>
-              Apply
-            </Button>
-            <Button variant="primary" onClick={printReport} disabled={!report}>
-              Print report
-            </Button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-2 w-full md:w-auto mt-2 md:mt-0">
+            <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
+              <Input
+                id="report-from"
+                name="reportFrom"
+                label="From"
+                type="date"
+                value={range.from}
+                onChange={(e) => setRange((p) => ({ ...p, from: e.target.value }))}
+              />
+              <Input
+                id="report-to"
+                name="reportTo"
+                label="To"
+                type="date"
+                value={range.to}
+                onChange={(e) => setRange((p) => ({ ...p, to: e.target.value }))}
+              />
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto mt-1 sm:mt-0">
+              <Button variant="ghost" className="flex-1 sm:flex-none" onClick={() => fetchAll(range.from, range.to)}>
+                Apply
+              </Button>
+              <Button variant="primary" className="flex-1 sm:flex-none" onClick={printReport} disabled={!report}>
+                Print report
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         <Card className="p-5 md:p-6 lg:col-span-1">
-          <div className="text-sm font-bold text-[color:var(--text)]">Add expense</div>
+          <div className="text-sm font-bold text-[color:var(--text)]">
+            {editingId ? "Edit expense" : "Add expense"}
+          </div>
           <div className="text-xs text-[color:var(--muted)] mt-0.5">
-            Add manual expense with your own reason.
+            {editingId ? "Update existing expense details." : "Add manual expense with your own reason."}
           </div>
           <div className="mt-4 grid gap-3">
             <Input
+              id="expense-reason"
+              name="expenseReason"
               label="Reason"
               placeholder="e.g., Rent, Utilities, Equipment repairs"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
             <Input
+              id="expense-amount"
+              name="expenseAmount"
               label="Amount"
               type="number"
               min="0"
@@ -236,14 +299,21 @@ export default function AccountingPage() {
               onChange={(e) => setAmount(e.target.value)}
             />
             <Input
+              id="expense-date"
+              name="expenseDate"
               label="Date"
               type="date"
               value={spentAt}
               onChange={(e) => setSpentAt(e.target.value)}
             />
-            <div className="flex justify-end">
-              <Button variant="primary" onClick={handleAddExpense} disabled={saving}>
-                {saving ? "Saving..." : "Add expense"}
+            <div className="flex justify-end gap-2">
+              {editingId && (
+                <Button variant="ghost" onClick={cancelEdit} disabled={saving}>
+                  Cancel
+                </Button>
+              )}
+              <Button variant="primary" onClick={handleSaveExpense} disabled={saving}>
+                {saving ? "Saving..." : editingId ? "Update" : "Add expense"}
               </Button>
             </div>
           </div>
@@ -273,7 +343,25 @@ export default function AccountingPage() {
                       {new Date(x.spentAt).toLocaleDateString()}
                     </div>
                   </div>
-                  <div className="text-xs font-bold text-[color:var(--text)]">{money(x.amount)}</div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs font-bold text-[color:var(--text)]">{money(x.amount)}</div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleEditExpense(x)}
+                        className="p-1.5 text-[color:var(--muted)] hover:text-brand-500 hover:bg-[color:var(--control-bg-hover)] rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteExpense(x)}
+                        className="p-1.5 text-[color:var(--muted)] hover:text-danger-500 hover:bg-danger-500/10 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))
             )}
@@ -311,6 +399,28 @@ export default function AccountingPage() {
           </div>
         ) : null}
       </Card>
+
+      <Modal
+        open={!!expenseToDelete}
+        onClose={() => setExpenseToDelete(null)}
+        title="Delete Expense"
+      >
+        <p className="text-sm text-[color:var(--text)]">
+          Are you sure you want to permanently delete this expense?
+          <br />
+          <strong className="block mt-2 font-semibold">
+            {expenseToDelete?.reason} - {money(expenseToDelete?.amount)}
+          </strong>
+        </p>
+        <div className="flex justify-end gap-2 mt-6">
+          <Button variant="ghost" onClick={() => setExpenseToDelete(null)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={confirmDeleteExpense}>
+            Delete
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
