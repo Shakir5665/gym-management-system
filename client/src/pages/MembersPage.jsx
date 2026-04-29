@@ -266,7 +266,7 @@ export default function MembersPage() {
         </button>
       </div>
 
-      <Card className="p-5 md:p-6">
+      <Card className="relative z-20 p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="text-sm font-bold text-[color:var(--text)]">
@@ -378,7 +378,7 @@ export default function MembersPage() {
                   <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[color:var(--control-bg)] border border-[color:var(--control-border)]">
                     {m.name?.slice?.(0, 1)?.toUpperCase?.() || "M"}
                   </span>
-                  <span>Tap to set as active</span>
+                  <span>Tap to view profile</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button

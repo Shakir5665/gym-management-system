@@ -246,9 +246,12 @@ export default function MemberProfilePage() {
     );
   }
 
+  const latestPayment = payments?.[0];
+  const isPaymentExpired = latestPayment?.nextDueDate && new Date(latestPayment.nextDueDate) < new Date();
+
   return (
     <div className="grid gap-4 md:gap-6">
-      {(member?.isBanned || member?.hasFine) && (
+      {(member?.isBanned || member?.hasFine || isPaymentExpired) && (
         <Card className="p-5 md:p-6 bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/20 shadow-lg">
           <div className="flex flex-col gap-4">
             {member?.isBanned && (
@@ -279,6 +282,22 @@ export default function MemberProfilePage() {
                   </p>
                   <p className="text-[11px] text-[color:var(--muted)] mt-1">
                     <span className="font-semibold">Reason:</span> {member.fineReason || "No reason provided"}
+                  </p>
+                </div>
+              </div>
+            )}
+            {isPaymentExpired && (
+              <div className="flex items-center gap-4 bg-white/60 dark:bg-black/20 p-4 rounded-xl border border-red-500/30">
+                <div className="p-3 bg-red-500/20 rounded-full shadow-inner">
+                  <Receipt className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Payment Expired</h3>
+                  <p className="text-xs text-[color:var(--text)] mt-1">
+                    <span className="font-semibold">Last Paid:</span> {formatMoneyLKR(latestPayment.amount)}
+                  </p>
+                  <p className="text-[11px] text-[color:var(--muted)] mt-1">
+                    <span className="font-semibold">Expired On:</span> {new Date(latestPayment.nextDueDate).toLocaleDateString()}
                   </p>
                 </div>
               </div>
@@ -481,9 +500,6 @@ export default function MemberProfilePage() {
             <div className="text-xs text-[color:var(--muted)] mt-0.5">Last payments</div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => { }} disabled>
-              Send reminder
-            </Button>
             <Button
               variant="ghost"
               onClick={() =>
@@ -492,10 +508,7 @@ export default function MemberProfilePage() {
                 )
               }
             >
-              Mark payment
-            </Button>
-            <Button variant="ghost" onClick={() => { }} disabled>
-              Add note
+              Make payment
             </Button>
           </div>
         </div>

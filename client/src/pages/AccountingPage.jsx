@@ -143,7 +143,7 @@ export default function AccountingPage() {
     try {
       setSaving(true);
       setError("");
-      
+
       const payload = {
         reason: reason.trim(),
         amount: Number(amount),
@@ -263,7 +263,7 @@ export default function AccountingPage() {
               <Button variant="ghost" className="flex-1 sm:flex-none" onClick={() => fetchAll(range.from, range.to)}>
                 Apply
               </Button>
-              <Button variant="primary" className="flex-1 sm:flex-none" onClick={printReport} disabled={!report}>
+              <Button variant="ghost" className="flex-1 sm:flex-none" onClick={printReport} disabled={!report}>
                 Print report
               </Button>
             </div>
