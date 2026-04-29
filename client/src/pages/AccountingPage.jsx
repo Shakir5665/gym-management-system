@@ -107,8 +107,13 @@ export default function AccountingPage() {
   const [spentAt, setSpentAt] = useState(toDateInput(new Date()));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [editingId, setEditingId] = useState(null);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
+  
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [editReason, setEditReason] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editSpentAt, setEditSpentAt] = useState(toDateInput(new Date()));
   const [report, setReport] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -150,15 +155,10 @@ export default function AccountingPage() {
         spentAt,
       };
 
-      if (editingId) {
-        await API.put(`/accounting/expenses/${editingId}`, payload);
-      } else {
-        await API.post("/accounting/expenses", payload);
-      }
+      await API.post("/accounting/expenses", payload);
 
       setReason("");
       setAmount("");
-      setEditingId(null);
       await fetchAll();
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to save expense");
@@ -168,10 +168,34 @@ export default function AccountingPage() {
   };
 
   const handleEditExpense = (expense) => {
-    setEditingId(expense._id);
-    setReason(expense.reason);
-    setAmount(expense.amount);
-    setSpentAt(toDateInput(expense.spentAt));
+    setEditingExpense(expense);
+    setEditReason(expense.reason);
+    setEditAmount(expense.amount);
+    setEditSpentAt(toDateInput(expense.spentAt));
+    setEditModalOpen(true);
+  };
+
+  const handleUpdateExpense = async () => {
+    if (!editReason.trim() || !editAmount) {
+      setError("Expense reason and amount are required");
+      return;
+    }
+    try {
+      setSaving(true);
+      setError("");
+      await API.put(`/accounting/expenses/${editingExpense._id}`, {
+        reason: editReason.trim(),
+        amount: Number(editAmount),
+        spentAt: editSpentAt,
+      });
+      setEditModalOpen(false);
+      setEditingExpense(null);
+      await fetchAll();
+    } catch (e) {
+      setError(e?.response?.data?.message || "Failed to update expense");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDeleteExpense = (expense) => {
@@ -184,10 +208,9 @@ export default function AccountingPage() {
       setError("");
       await API.delete(`/accounting/expenses/${expenseToDelete._id}`);
       await fetchAll();
-      if (editingId === expenseToDelete._id) {
-        setEditingId(null);
-        setReason("");
-        setAmount("");
+      if (editingExpense?._id === expenseToDelete._id) {
+        setEditModalOpen(false);
+        setEditingExpense(null);
       }
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to delete expense");
@@ -274,17 +297,17 @@ export default function AccountingPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         <Card className="p-5 md:p-6 lg:col-span-1">
           <div className="text-sm font-bold text-[color:var(--text)]">
-            {editingId ? "Edit expense" : "Add expense"}
+            Add expense
           </div>
           <div className="text-xs text-[color:var(--muted)] mt-0.5">
-            {editingId ? "Update existing expense details." : "Add manual expense with your own reason."}
+            Add manual expense with your own reason.
           </div>
           <div className="mt-4 grid gap-3">
             <Input
               id="expense-reason"
               name="expenseReason"
               label="Reason"
-              placeholder="e.g., Rent, Utilities, Equipment repairs"
+              placeholder="EX: Electricity bill"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
@@ -294,7 +317,7 @@ export default function AccountingPage() {
               label="Amount"
               type="number"
               min="0"
-              placeholder="e.g., 5000"
+              placeholder="EX: 5000"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
@@ -307,13 +330,8 @@ export default function AccountingPage() {
               onChange={(e) => setSpentAt(e.target.value)}
             />
             <div className="flex justify-end gap-2">
-              {editingId && (
-                <Button variant="ghost" onClick={cancelEdit} disabled={saving}>
-                  Cancel
-                </Button>
-              )}
               <Button variant="primary" onClick={handleSaveExpense} disabled={saving}>
-                {saving ? "Saving..." : editingId ? "Update" : "Add expense"}
+                {saving ? "Saving..." : "Add expense"}
               </Button>
             </div>
           </div>
@@ -419,6 +437,44 @@ export default function AccountingPage() {
           <Button variant="danger" onClick={confirmDeleteExpense}>
             Delete
           </Button>
+        </div>
+      </Modal>
+
+      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Expense">
+        <div className="grid gap-4 mt-2">
+          {error && <div className="text-sm text-red-500 font-semibold">{error}</div>}
+          <Input
+            id="edit-expense-reason"
+            name="editExpenseReason"
+            label="Reason"
+            placeholder="EX: Electricity bill"
+            value={editReason}
+            onChange={(e) => setEditReason(e.target.value)}
+          />
+          <Input
+            id="edit-expense-amount"
+            name="editExpenseAmount"
+            label="Amount"
+            type="number"
+            min="0"
+            placeholder="EX: 5000"
+            value={editAmount}
+            onChange={(e) => setEditAmount(e.target.value)}
+          />
+          <Input
+            id="edit-expense-date"
+            name="editExpenseDate"
+            label="Date"
+            type="date"
+            value={editSpentAt}
+            onChange={(e) => setEditSpentAt(e.target.value)}
+          />
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="ghost" onClick={() => setEditModalOpen(false)} disabled={saving}>Cancel</Button>
+            <Button variant="primary" onClick={handleUpdateExpense} disabled={saving}>
+              {saving ? "Updating..." : "Update Expense"}
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

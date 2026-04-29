@@ -8,7 +8,7 @@ import Input from "../components/ui/Input";
 import Modal from "../components/ui/Modal";
 import Select from "../components/ui/Select";
 import AreaSpark from "../components/charts/AreaSpark";
-import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning, Ban, ShieldCheck, Receipt, CheckCircle, Edit3 } from "lucide-react";
+import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning, Ban, ShieldCheck, Receipt, CheckCircle, Edit3, Download } from "lucide-react";
 import QRCode from "qrcode";
 import { socket } from "../socket";
 
@@ -55,6 +55,17 @@ export default function MemberProfilePage() {
 
   const [fineOpen, setFineOpen] = useState(false);
   const [fineForm, setFineForm] = useState({ amount: "", reason: "" });
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+
+  const downloadQrCode = () => {
+    if (!qrCodeUrl) return;
+    const link = document.createElement("a");
+    link.href = qrCodeUrl;
+    link.download = `${member?.fullLegalName || member?.name || "member"}-qrcode.png`.replace(/\s+/g, "_");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   async function fetchAll() {
     try {
@@ -329,9 +340,14 @@ export default function MemberProfilePage() {
           </div>
           <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4">
             {qrCodeUrl ? (
-              <div className="flex flex-col items-center p-1 rounded bg-white shadow-sm border border-[color:var(--control-border)]">
-                <img src={qrCodeUrl} alt="Member QR Code" className="w-16 h-16 object-contain" />
-              </div>
+              <button
+                type="button"
+                onClick={() => setQrModalOpen(true)}
+                className="flex flex-col items-center p-1 rounded bg-white shadow-sm border border-[color:var(--control-border)] hover:scale-105 transition-transform"
+                title="View QR Code"
+              >
+                <img src={qrCodeUrl} alt="Member QR Code" className="w-10 h-10 object-contain" />
+              </button>
             ) : null}
             <div className="flex flex-row items-center justify-end gap-2 w-full sm:w-auto mt-3 sm:mt-0">
               <Button variant="danger" onClick={() => member?.isBanned ? handleUnban() : setBanOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all">
@@ -617,6 +633,26 @@ export default function MemberProfilePage() {
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setFineOpen(false)} disabled={saving}>Cancel</Button>
             <Button variant="warning" onClick={handleFine} disabled={saving}>{saving ? "Saving..." : "Apply Fine"}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={qrModalOpen} onClose={() => setQrModalOpen(false)} title="Member QR Code">
+        <div className="flex flex-col items-center justify-center p-6 gap-6">
+          <div className="bg-white p-4 rounded-xl shadow-lg border border-[color:var(--control-border)]">
+            <img src={qrCodeUrl} alt="Member QR Code Large" className="w-64 h-64 object-contain" />
+          </div>
+          <p className="text-sm font-semibold text-center text-[color:var(--text)]">
+            {member?.fullLegalName || member?.name}
+          </p>
+          <div className="flex gap-3 w-full">
+            <Button variant="ghost" onClick={() => setQrModalOpen(false)} className="flex-1">
+              Close
+            </Button>
+            <Button variant="primary" onClick={downloadQrCode} className="flex-1 flex justify-center items-center gap-2">
+              <Download className="w-4 h-4" />
+              Download
+            </Button>
           </div>
         </div>
       </Modal>

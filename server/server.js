@@ -51,6 +51,11 @@ app.get("/", (req, res) => {
   res.send("🚀 Gym SaaS API Running");
 });
 
+// 🔹 UptimeRobot Ping Route
+app.get("/ping", (req, res) => {
+  res.status(200).send("pong");
+});
+
 // 🔹 API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/members", memberRoutes);
