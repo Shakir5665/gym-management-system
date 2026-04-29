@@ -247,7 +247,7 @@ export default function MemberProfilePage() {
   }
 
   const latestPayment = payments?.[0];
-  const isPaymentExpired = latestPayment?.nextDueDate && new Date(latestPayment.nextDueDate) < new Date();
+  const isPaymentExpired = member?.subscriptionEnd && new Date(member.subscriptionEnd) < new Date();
 
   return (
     <div className="grid gap-4 md:gap-6">
@@ -293,11 +293,13 @@ export default function MemberProfilePage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Payment Expired</h3>
-                  <p className="text-xs text-[color:var(--text)] mt-1">
-                    <span className="font-semibold">Last Paid:</span> {formatMoneyLKR(latestPayment.amount)}
-                  </p>
+                  {latestPayment && (
+                    <p className="text-xs text-[color:var(--text)] mt-1">
+                      <span className="font-semibold">Last Paid:</span> {formatMoneyLKR(latestPayment.amount)}
+                    </p>
+                  )}
                   <p className="text-[11px] text-[color:var(--muted)] mt-1">
-                    <span className="font-semibold">Expired On:</span> {new Date(latestPayment.nextDueDate).toLocaleDateString()}
+                    <span className="font-semibold">Expired On:</span> {new Date(member.subscriptionEnd).toLocaleDateString()}
                   </p>
                 </div>
               </div>

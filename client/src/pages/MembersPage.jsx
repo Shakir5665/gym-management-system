@@ -168,6 +168,7 @@ export default function MembersPage() {
       let category = "ACTIVE";
       if (m?.isBanned) category = "BANNED";
       else if (m?.hasFine) category = "FINED";
+      else if (m?.subscriptionEnd && new Date(m.subscriptionEnd) < new Date()) category = "EXPIRED";
 
       const matchesMemberType = memberType === "ALL" || category === memberType;
 
@@ -307,6 +308,7 @@ export default function MembersPage() {
             options={[
               { value: "ALL", label: "All" },
               { value: "ACTIVE", label: "Active" },
+              { value: "EXPIRED", label: "Expired" },
               { value: "BANNED", label: "Banned" },
               { value: "FINED", label: "Fined" },
             ]}
@@ -364,13 +366,18 @@ export default function MembersPage() {
                     {m.phone}
                   </div>
                 </div>
-                <Badge
-                  variant={
-                    m?.isBanned ? "danger" : m?.hasFine ? "warning" : "success"
-                  }
-                >
-                  {m?.isBanned ? "BANNED" : m?.hasFine ? "FINED" : "ACTIVE"}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {m?.subscriptionEnd && new Date(m.subscriptionEnd) < new Date() && (
+                    <Badge variant="danger">EXPIRED</Badge>
+                  )}
+                  <Badge
+                    variant={
+                      m?.isBanned ? "danger" : m?.hasFine ? "warning" : "success"
+                    }
+                  >
+                    {m?.isBanned ? "BANNED" : m?.hasFine ? "FINED" : "ACTIVE"}
+                  </Badge>
+                </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between gap-3">
