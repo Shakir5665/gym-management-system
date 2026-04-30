@@ -13,8 +13,16 @@ export default function Scanner() {
   const [error, setError] = useState("");
   const [isPaused, setIsPaused] = useState(false);
   const [blockedInfo, setBlockedInfo] = useState(null);
+  
+  // 📸 Camera Selection State
+  const [cameras, setCameras] = useState([]);
+  const [selectedCam, setSelectedCam] = useState("");
+  const [mode, setMode] = useState("camera"); // "camera" or "usb"
+
   const scannerRef = useRef(null);
   const regionId = useMemo(() => "qr-reader-region", []);
+  const usbBuffer = useRef("");
+  const usbTimeout = useRef(null);
 
   const parseMemberId = (text) => {
     if (!text) return "";
@@ -74,6 +82,45 @@ export default function Scanner() {
     }
   };
 
+  const processScan = async (text) => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    setIsPaused(true);
+
+    try {
+      playBeep();
+      
+      // If using camera, pause it
+      if (mode === "camera" && scannerRef.current && typeof scannerRef.current.pause === "function") {
+        scannerRef.current.pause(true);
+      }
+
+      const memberId = parseMemberId(text);
+      const res = await API.post("/attendance/checkin", { memberId });
+      setResult(`${res.data?.status || "OK"} — ${res.data?.reason || "Checked in"}`);
+    } catch (err) {
+      if (err.response?.data?.status === "BLOCKED") {
+        setBlockedInfo({ reason: err.response?.data?.reason || "Access denied" });
+        setResult("");
+      } else {
+        setResult(`Error — ${err.response?.data?.message || err.response?.data?.reason || err.message}`);
+      }
+    } finally {
+      setTimeout(() => {
+        isProcessingRef.current = false;
+        setIsPaused(false);
+        try {
+          if (mode === "camera" && scannerRef.current && typeof scannerRef.current.resume === "function") {
+            scannerRef.current.resume();
+          }
+          setResult("");
+        } catch (e) {
+          // Ignore
+        }
+      }, 2000);
+    }
+  };
+
   const start = async () => {
     try {
       setError("");
@@ -85,48 +132,13 @@ export default function Scanner() {
       const config = { fps: 10, qrbox: { width: 260, height: 260 } };
 
       setRunning(true);
+      
+      const cameraConfig = selectedCam ? { deviceId: selectedCam } : { facingMode: "environment" };
+
       await scannerRef.current.start(
-        { facingMode: "environment" },
+        cameraConfig,
         config,
-        async (decodedText) => {
-          if (isProcessingRef.current) return;
-          isProcessingRef.current = true;
-          setIsPaused(true);
-
-          try {
-            playBeep(); // Play sound immediately on successful read
-            
-            // Pause camera temporarily
-            if (scannerRef.current && typeof scannerRef.current.pause === "function") {
-              scannerRef.current.pause(true);
-            }
-
-            const memberId = parseMemberId(decodedText);
-            const res = await API.post("/attendance/checkin", { memberId });
-            setResult(`${res.data?.status || "OK"} — ${res.data?.reason || "Checked in"}`);
-          } catch (err) {
-            if (err.response?.data?.status === "BLOCKED") {
-              setBlockedInfo({ reason: err.response?.data?.reason || "Access denied" });
-              setResult("");
-            } else {
-              setResult(`Error — ${err.response?.data?.message || err.response?.data?.reason || err.message}`);
-            }
-          } finally {
-            // Wait 2 seconds, then resume
-            setTimeout(() => {
-              isProcessingRef.current = false;
-              setIsPaused(false);
-              try {
-                if (scannerRef.current && typeof scannerRef.current.resume === "function") {
-                  scannerRef.current.resume();
-                  setResult(""); // Clear result for next scan
-                }
-              } catch (e) {
-                // Ignore if already stopped
-              }
-            }, 2000);
-          }
-        },
+        (decodedText) => processScan(decodedText),
         () => {},
       );
     } catch (e) {
@@ -136,56 +148,132 @@ export default function Scanner() {
   };
 
   useEffect(() => {
+    // 📸 Discover Cameras
+    Html5Qrcode.getCameras().then(devices => {
+      if (devices && devices.length > 0) {
+        setCameras(devices);
+        setSelectedCam(devices[0].id);
+      }
+    }).catch(err => {
+      console.warn("Camera discovery failed:", err);
+    });
+
     return () => {
       stop();
     };
   }, []);
 
+  // ⌨️ USB Scanner Listener
+  useEffect(() => {
+    if (mode !== "usb") return;
+
+    const handleKeyDown = (e) => {
+      // USB Scanners usually type very fast and end with "Enter"
+      if (e.key === "Enter") {
+        if (usbBuffer.current.length > 1) {
+          processScan(usbBuffer.current);
+        }
+        usbBuffer.current = "";
+      } else {
+        // Only accept alphanumeric and some symbols from the scanner
+        if (e.key.length === 1) {
+          usbBuffer.current += e.key;
+        }
+        
+        // Clear buffer if no key for 100ms (prevents manual typing conflicts)
+        if (usbTimeout.current) clearTimeout(usbTimeout.current);
+        usbTimeout.current = setTimeout(() => {
+          usbBuffer.current = "";
+        }, 100);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (usbTimeout.current) clearTimeout(usbTimeout.current);
+    };
+  }, [mode]);
+
   return (
     <div className="grid gap-4 md:gap-6">
       <Card className="p-5 md:p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <div className="text-sm font-bold text-[color:var(--text)]">QR Scanner</div>
-            <div className="text-xs text-[color:var(--muted)] mt-0.5">
-              Fast check-ins with camera scanning
+            <div className="text-sm font-bold text-[color:var(--text)]">Check-in Terminal</div>
+            <div className="flex items-center gap-2 mt-1">
+              <button
+                onClick={() => { stop(); setMode("camera"); }}
+                className={`text-[11px] px-3 py-1 rounded-full border transition ${mode === "camera" ? "bg-brand-500 text-white border-brand-500" : "bg-[color:var(--control-bg)] text-[color:var(--muted)] border-[color:var(--control-border)]"}`}
+              >
+                Camera Mode
+              </button>
+              <button
+                onClick={() => { stop(); setMode("usb"); }}
+                className={`text-[11px] px-3 py-1 rounded-full border transition ${mode === "usb" ? "bg-brand-500 text-white border-brand-500" : "bg-[color:var(--control-bg)] text-[color:var(--muted)] border-[color:var(--control-border)]"}`}
+              >
+                USB Scanner Mode
+              </button>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {running ? (
-              <Button variant="danger" onClick={stop}>
-                Stop
-              </Button>
-            ) : (
-              <Button variant="primary" onClick={start} className="gap-2">
-                <Camera className="h-4 w-4" />
-                Start scanning
-              </Button>
+            {mode === "camera" && (
+              <>
+                <select
+                  value={selectedCam}
+                  onChange={(e) => { setSelectedCam(e.target.value); if(running) { stop(); } }}
+                  className="text-xs bg-[color:var(--control-bg)] border border-[color:var(--control-border)] rounded-xl px-3 py-2 outline-none focus:ring-2 ring-brand-500/20"
+                >
+                  {cameras.map(cam => (
+                    <option key={cam.id} value={cam.id}>{cam.label || `Camera ${cam.id.slice(0, 5)}`}</option>
+                  ))}
+                </select>
+                {running ? (
+                  <Button variant="danger" onClick={stop}>Stop</Button>
+                ) : (
+                  <Button variant="primary" onClick={start} className="gap-2">
+                    <Camera className="h-4 w-4" /> Start
+                  </Button>
+                )}
+              </>
             )}
-            <Button variant="ghost" onClick={() => (running ? start() : null)} disabled={!running}>
-              <RefreshCcw className="h-4 w-4" />
-            </Button>
+            {mode === "usb" && (
+              <div className="flex items-center gap-2 text-xs font-bold text-green-500 bg-green-500/10 px-3 py-2 rounded-xl border border-green-500/20">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                READY FOR USB SCAN
+              </div>
+            )}
           </div>
         </div>
       </Card>
 
       <Card className="p-5 md:p-6">
         <div className="grid gap-3">
-          <div className="relative">
-            <div
-              id={regionId}
-              className={`w-full overflow-hidden rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] transition-opacity ${
-                isPaused ? "opacity-30" : "opacity-100"
-              }`}
-            />
-            {isPaused && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Badge variant="warning" className="text-sm px-3 py-1.5 shadow-sm">
-                  Paused for next scan...
-                </Badge>
+          {mode === "camera" ? (
+            <div className="relative">
+              <div
+                id={regionId}
+                className={`w-full overflow-hidden rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] transition-opacity ${
+                  isPaused ? "opacity-30" : "opacity-100"
+                }`}
+              />
+              {isPaused && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Badge variant="warning" className="text-sm px-3 py-1.5 shadow-sm">
+                    Paused for next scan...
+                  </Badge>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-[color:var(--control-border)] rounded-2xl bg-[color:var(--bg2)]">
+              <div className="p-4 bg-brand-500/10 rounded-full mb-4">
+                <RefreshCcw className="h-10 w-10 text-brand-500 animate-spin-slow" />
               </div>
-            )}
-          </div>
+              <div className="text-sm font-bold text-[color:var(--text)]">Waiting for USB Scanner...</div>
+              <div className="text-xs text-[color:var(--muted)] mt-1">Please point your handheld scanner at the member's QR code.</div>
+            </div>
+          )}
           {error ? <div className="text-sm text-danger-500 font-semibold">{error}</div> : null}
           {result ? (
             <div className="flex items-center gap-2">

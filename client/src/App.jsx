@@ -13,6 +13,8 @@ import Payments from "./pages/Payments";
 import MemberProfilePage from "./pages/MemberProfilePage";
 import AccountingPage from "./pages/AccountingPage";
 import ProfilePage from "./pages/ProfilePage";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import SuperRoute from "./components/SuperRoute";
 
 function App() {
   // ✅ Hooks must be inside component
@@ -56,6 +58,14 @@ function App() {
         <Route path="payments" element={<Payments />} />
         <Route path="accounting" element={<AccountingPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route 
+          path="super" 
+          element={
+            <SuperRoute>
+              <SuperAdminDashboard />
+            </SuperRoute>
+          } 
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

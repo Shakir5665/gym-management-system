@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [hasGym, setHasGym] = useState(false);
   const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
   const [gymName, setGymName] = useState(null);
   const [gymLogo, setGymLogo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,12 +29,14 @@ export const AuthProvider = ({ children }) => {
       const storedToken = localStorage.getItem("token");
       const storedGym = localStorage.getItem("hasGym");
       const storedUser = localStorage.getItem("user");
+      const storedRole = localStorage.getItem("role");
       const storedGymName = localStorage.getItem("gymName");
       const storedGymLogo = localStorage.getItem("gymLogo");
 
       if (storedToken) {
         setToken(storedToken);
         setHasGym(storedGym === "true");
+        setRole(storedRole);
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
@@ -86,6 +89,10 @@ export const AuthProvider = ({ children }) => {
       if (userData) {
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
+        if (userData.role) {
+          localStorage.setItem("role", userData.role);
+          setRole(userData.role);
+        }
       }
 
       setToken(tokenValue);
@@ -107,16 +114,49 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("user");
       localStorage.removeItem("gymName");
       localStorage.removeItem("gymLogo");
+      localStorage.removeItem("role");
 
       setToken(null);
       setHasGym(false);
       setUser(null);
+      setRole(null);
       setGymName(null);
       setGymLogo(null);
     } catch (err) {
       console.error("Logout error:", err);
     }
   };
+
+  // ⏱️ Automatic Logout (Inactivity Timer - 30 minutes)
+  useEffect(() => {
+    if (!token) return;
+
+    let timeoutId;
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        console.log("Inactivity detected. Logging out...");
+        logout();
+      }, 30 * 60 * 1000); // 30 minutes
+    };
+
+    // Events to track user activity
+    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
+    
+    events.forEach(event => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    resetTimer(); // Initialize timer
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach(event => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [token]);
 
   return (
     <AuthContext.Provider
@@ -126,6 +166,7 @@ export const AuthProvider = ({ children }) => {
         gymName,
         gymLogo,
         hasGym,
+        role,
         setHasGym,
         setGymName,
         setGymLogo,

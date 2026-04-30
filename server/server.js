@@ -15,6 +15,7 @@ import gymRoutes from "./routes/gymRoutes.js";
 import retentionRoutes from "./routes/retentionRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import accountingRoutes from "./routes/accountingRoutes.js";
+import superRoutes from "./routes/superRoutes.js";
 import { initAutomation } from "./services/automationService.js";
 
 
@@ -67,6 +68,7 @@ app.use("/api/gym", gymRoutes);
 app.use("/api/churn", retentionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/accounting", accountingRoutes);
+app.use("/api/super", superRoutes);
 
 // 🔹 Error handler
 app.use(errorHandler);
@@ -77,7 +79,9 @@ const server = http.createServer(app);
 // 🔹 Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: "*"
+    origin: ["http://localhost:5173", "https://gym-management-system-client.onrender.com", process.env.CORS_ORIGIN].filter(Boolean),
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -86,11 +90,8 @@ app.set("io", io);
 
 // 🔹 Socket connection
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
-  });
+  // Silent connection logs to prevent terminal spam
+  socket.on("disconnect", () => {});
 });
 
 // 🔹 MongoDB Connection
@@ -101,7 +102,7 @@ mongoose
   .then(() => {
     console.log(`MongoDB Connected (db: ${mongoDbName})`);
 
-    server.listen(process.env.PORT || 5000, () => {
+    server.listen(process.env.PORT || 5000, "0.0.0.0", () => {
       console.log(`Server running on port ${process.env.PORT || 5000}`);
       initAutomation(io);
     });

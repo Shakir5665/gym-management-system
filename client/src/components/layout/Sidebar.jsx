@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   BarChart3,
   CreditCard,
@@ -6,20 +7,28 @@ import {
   ReceiptText,
   Users,
   Settings,
+  LayoutGrid
 } from "lucide-react";
 import { cn } from "../../lib/cn";
 import Favicon from "../../assets/favicon.png";
 
-const nav = [
-  { to: "/app/dashboard", label: "Dashboard", icon: BarChart3 },
-  { to: "/app/members", label: "Members", icon: Users },
-  { to: "/app/scanner", label: "Scanner", icon: QrCode },
-  { to: "/app/payments", label: "Payments", icon: CreditCard },
-  { to: "/app/accounting", label: "Accounting", icon: ReceiptText },
-  { to: "/app/profile", label: "Profile", icon: Settings },
-];
-
 export default function Sidebar() {
+  const { role } = useAuth();
+
+  const nav = [
+    { to: "/app/dashboard", label: "Dashboard", icon: BarChart3 },
+    { to: "/app/members", label: "Members", icon: Users },
+    { to: "/app/scanner", label: "Scanner", icon: QrCode },
+    { to: "/app/payments", label: "Payments", icon: CreditCard },
+    { to: "/app/accounting", label: "Accounting", icon: ReceiptText },
+    { to: "/app/profile", label: "Profile", icon: Settings },
+  ];
+
+  // 🚀 Add Super Admin Portal for authorized users only
+  if (role === "SUPER_ADMIN") {
+    nav.push({ to: "/app/super", label: "Master Dashboard", icon: LayoutGrid });
+  }
+
   return (
     <aside className="hidden md:flex w-[296px] shrink-0 flex-col p-4 bg-[color:var(--bg)] border-r border-[color:var(--control-border)]">
       <div className="rounded-2xl bg-gradient-to-br from-[color:var(--bg2)] to-[color:var(--bg)] border border-[color:var(--control-border)] px-4 py-4 relative overflow-hidden">

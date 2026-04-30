@@ -6,29 +6,33 @@ import nodemailer from "nodemailer";
 import { OAuth2Client } from "google-auth-library";
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// 🔐 Strong Password Regex: At least 8 chars, 1 number, 1 special character
+const strongPasswordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$/;
+
 export const register = async (req, res) => {
   try {
-
     const { name, email, password, gymName } = req.body;
 
     if (!name || !email || !password || !gymName) {
-    return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (!strongPasswordRegex.test(password)) {
+      return res.status(400).json({ 
+        message: "Password must be at least 8 characters long and include at least one number and one special character (!@#$%^&*)" 
+      });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
     if (!emailRegex.test(email)) {
-     return res.status(400).json({ message: "Invalid email format" });
+      return res.status(400).json({ message: "Invalid email format" });
     }
 
-    // 🔴 CHECK EXISTING USER
     const existing = await User.findOne({ email });
-
     if (existing) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // 🔐 Hash password
     const hashed = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -46,7 +50,7 @@ export const register = async (req, res) => {
     await user.save();
 
     const token = jwt.sign(
-      { userId: user._id, gymId: gym._id },
+      { userId: user._id, gymId: gym._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -61,7 +65,6 @@ export const register = async (req, res) => {
         gymId: gym._id
       }
     });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -97,7 +100,7 @@ export const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id, gymId: user.gymId },
+      { userId: user._id, gymId: user.gymId, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -109,7 +112,8 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        gymId: user.gymId
+        gymId: user.gymId,
+        role: user.role
       }
     });
 
@@ -156,7 +160,7 @@ export const googleLogin = async (req, res) => {
     }
 
     const tokenJWT = jwt.sign(
-      { userId: user._id, gymId: user.gymId || null },
+      { userId: user._id, gymId: user.gymId || null, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -169,7 +173,8 @@ export const googleLogin = async (req, res) => {
         name: user.name,
         email: user.email,
         googleId: user.googleId,
-        gymId: user.gymId
+        gymId: user.gymId,
+        role: user.role
       }
     });
 
@@ -341,6 +346,12 @@ export const resetPassword = async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body;
     if (!resetToken || !newPassword) return res.status(400).json({ message: "Token and new password required" });
+
+    if (!strongPasswordRegex.test(newPassword)) {
+      return res.status(400).json({ 
+        message: "Password must be at least 8 characters long and include at least one number and one special character (!@#$%^&*)" 
+      });
+    }
 
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
     if (!decoded.resetPass) return res.status(400).json({ message: "Invalid reset token" });

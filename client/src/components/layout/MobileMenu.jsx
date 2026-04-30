@@ -8,23 +8,28 @@ import {
   X,
   LogOut,
   Settings,
+  LayoutGrid
 } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { useAuth } from "../../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Favicon from "../../assets/favicon.png";
 
-const nav = [
-  { to: "/app/dashboard", label: "Dashboard", icon: BarChart3 },
-  { to: "/app/members", label: "Members", icon: Users },
-  { to: "/app/scanner", label: "Scanner", icon: QrCode },
-  { to: "/app/payments", label: "Payments", icon: CreditCard },
-  { to: "/app/accounting", label: "Accounting", icon: ReceiptText },
-  { to: "/app/profile", label: "Profile", icon: Settings },
-];
-
 export default function MobileMenu({ open, onClose }) {
-  const { user, gymName, gymLogo, logout } = useAuth();
+  const { user, gymName, gymLogo, logout, role } = useAuth();
+
+  const nav = [
+    { to: "/app/dashboard", label: "Dashboard", icon: BarChart3 },
+    { to: "/app/members", label: "Members", icon: Users },
+    { to: "/app/scanner", label: "Scanner", icon: QrCode },
+    { to: "/app/payments", label: "Payments", icon: CreditCard },
+    { to: "/app/accounting", label: "Accounting", icon: ReceiptText },
+    { to: "/app/profile", label: "Profile", icon: Settings },
+  ];
+
+  if (role === "SUPER_ADMIN") {
+    nav.push({ to: "/app/super", label: "Master Dashboard", icon: LayoutGrid });
+  }
 
   return (
     <AnimatePresence>
