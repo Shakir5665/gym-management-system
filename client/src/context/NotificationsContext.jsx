@@ -8,6 +8,7 @@ import {
 } from "react";
 import { socket } from "../socket";
 import API from "../api/api";
+import { useAuth } from "./AuthContext";
 
 const NotificationsContext = createContext(null);
 
@@ -34,6 +35,7 @@ function normalizeNotification(n) {
 }
 
 export function NotificationsProvider({ children }) {
+  const { token } = useAuth();
   const [items, setItems] = useState([]);
 
   const push = useCallback((n) => {
@@ -99,6 +101,7 @@ export function NotificationsProvider({ children }) {
   useEffect(() => {
     // Fetch members whose subscription ends tomorrow
     async function fetchExpiring() {
+      if (!token) return;
       try {
         const res = await API.get("/members/expiring-tomorrow");
         if (Array.isArray(res.data)) {
@@ -113,7 +116,10 @@ export function NotificationsProvider({ children }) {
           });
         }
       } catch (err) {
-        console.error("Failed to fetch expiring members:", err);
+        // If it's a 401, we don't need to log it as an error here since the API interceptor handles it
+        if (err.response?.status !== 401) {
+          console.error("Failed to fetch expiring members:", err);
+        }
       }
     }
 
@@ -121,7 +127,7 @@ export function NotificationsProvider({ children }) {
     // Re-check every hour to keep it fresh
     const interval = setInterval(fetchExpiring, 1000 * 60 * 60);
     return () => clearInterval(interval);
-  }, [push]);
+  }, [push, token]);
 
   const unreadCount = useMemo(
     () => items.reduce((acc, n) => acc + (n.read ? 0 : 1), 0),
