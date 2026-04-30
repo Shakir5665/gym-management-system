@@ -193,7 +193,7 @@ export async function getAccountingReport(req, res) {
         netProfit,
       },
       expenseBreakdown,
-      generatedAt: new Date(),
+      generatedAt: new Date().toLocaleString("en-US", { timeZone: "Asia/Colombo" }),
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

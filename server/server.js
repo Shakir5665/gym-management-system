@@ -5,6 +5,9 @@ import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
 
+// Set global timezone to +05:30
+process.env.TZ = "Asia/Colombo";
+
 // 🔹 Routes
 import authRoutes from "./routes/authRoutes.js";
 import memberRoutes from "./routes/memberRoutes.js";

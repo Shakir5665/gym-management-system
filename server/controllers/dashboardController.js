@@ -5,6 +5,12 @@ import Gamification from "../models/Gamification.js";
 import { getChurnProbability } from "../services/retentionService.js";
 import mongoose from "mongoose";
 
+function startOfNoonDay(d) {
+  const x = new Date(d);
+  x.setHours(12, 0, 0, 0);
+  return x;
+}
+
 function startOfDay(d) {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -144,20 +150,31 @@ export async function getCheckinTrend(req, res) {
 
     const days = Math.max(1, Math.min(Number(req.query.days || 7), 30));
     const now = new Date();
-    const start = startOfDay(addDays(now, -(days - 1)));
+    
+    // Query start: start of day (local)
+    const startForQuery = new Date(now);
+    startForQuery.setDate(startForQuery.getDate() - (days - 1));
+    startForQuery.setHours(0, 0, 0, 0);
+
+    // Loop start: noon alignment for ISO safety
+    const startForLoop = startOfNoonDay(startForQuery);
 
     const rows = await Attendance.aggregate([
       {
         $match: {
           gymId: gymObjectId || gymId,
           status: "SUCCESS",
-          checkInTime: { $gte: start },
+          checkInTime: { $gte: startForQuery },
         },
       },
       {
         $group: {
           _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$checkInTime" },
+            $dateToString: { 
+              format: "%Y-%m-%d", 
+              date: "$checkInTime",
+              timezone: "+05:30"
+            },
           },
           count: { $sum: 1 },
         },
@@ -168,8 +185,8 @@ export async function getCheckinTrend(req, res) {
     const map = new Map(rows.map((r) => [r._id, r.count]));
     const series = [];
     for (let i = 0; i < days; i++) {
-      const d = addDays(start, i);
-      const key = d.toISOString().slice(0, 10);
+      const d = addDays(startForLoop, i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       series.push({ date: key, count: map.get(key) || 0 });
     }
 

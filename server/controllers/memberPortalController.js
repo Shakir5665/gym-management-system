@@ -125,7 +125,11 @@ export const getMemberProfile = async (req, res) => {
       {
         $group: {
           _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$checkInTime" },
+            $dateToString: { 
+              format: "%Y-%m-%d", 
+              date: "$checkInTime",
+              timezone: "+05:30" 
+            },
           },
           count: { $sum: 1 },
         },
@@ -136,7 +140,8 @@ export const getMemberProfile = async (req, res) => {
     const attendanceTrend = [];
     for (let i = 0; i < days; i++) {
       const d = addDays(startForLoop, i);
-      const key = d.toISOString().slice(0, 10);
+      // Generate YYYY-MM-DD in local time (+05:30)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       attendanceTrend.push({ date: key, count: map.get(key) || 0 });
     }
     
