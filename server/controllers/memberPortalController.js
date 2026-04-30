@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Member from "../models/Member.js";
 import User from "../models/User.js";
 import Payment from "../models/Payment.js";
@@ -105,10 +106,11 @@ export const getMemberProfile = async (req, res) => {
     // 3. Attendance Trend (Last 7 Days)
     const now = new Date();
     const start = startOfDay(addDays(now, -6));
+    
     const attendanceRows = await Attendance.aggregate([
       {
         $match: {
-          memberId: memberId,
+          memberId: new mongoose.Types.ObjectId(String(memberId)),
           status: "SUCCESS",
           checkInTime: { $gte: start },
         },
