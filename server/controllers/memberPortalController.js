@@ -116,35 +116,26 @@ export const getMemberProfile = async (req, res) => {
     const startForLoop = new Date(startForQuery);
     startForLoop.setHours(12, 0, 0, 0);
     
-    const attendanceRows = await Attendance.aggregate([
-      {
-        $match: {
-          memberId: new mongoose.Types.ObjectId(String(memberId)),
-          status: "SUCCESS",
-          checkInTime: { $gte: startForQuery },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: { 
-              format: "%Y-%m-%d", 
-              date: "$checkInTime",
-              timezone: "+05:30" 
-            },
-          },
-          count: { $sum: 1 },
-        },
-      },
-    ]);
+    const attendanceRows = await Attendance.find({
+      memberId,
+      status: "SUCCESS",
+      checkInTime: { $gte: startForQuery },
+    }).lean();
 
-    const map = new Map(attendanceRows.map((r) => [r._id, r.count]));
+    // Group by YYYY-MM-DD in local time
+    const countMap = {};
+    attendanceRows.forEach((row) => {
+      const d = new Date(row.checkInTime);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      countMap[key] = (countMap[key] || 0) + 1;
+    });
+
     const attendanceTrend = [];
     for (let i = 0; i < days; i++) {
-      const d = addDays(startForLoop, i);
-      // Generate YYYY-MM-DD in local time (+05:30)
+      const d = new Date(startForLoop);
+      d.setDate(d.getDate() + i);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      attendanceTrend.push({ date: key, count: map.get(key) || 0 });
+      attendanceTrend.push({ date: key, count: countMap[key] || 0 });
     }
     
     console.log(`[Dashboard Sync] Member: ${member.name}, ID: ${memberId}, Trend Points: ${attendanceRows.length}`);
