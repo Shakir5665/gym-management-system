@@ -116,14 +116,8 @@ export default function ProfilePage() {
               type="email" 
               value={formData.email} 
               onChange={e => setFormData({...formData, email: e.target.value})} 
-              disabled={user?.provider === 'google'}
             />
           </div>
-          {user?.provider === 'google' && (
-            <div className="mt-2 text-[11px] text-[color:var(--subtle)]">
-              Your email is managed by your Google account.
-            </div>
-          )}
         </div>
 
         <div className="border-t border-[color:var(--glass-border)] pt-6">

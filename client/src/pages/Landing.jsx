@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Login from "./Login";
-import Register from "./Register";
 import ForgotPassword from "./ForgotPassword";
 import LogoLight from "../assets/Logo-Light.png";
 import LogoDark from "../assets/Logo-Dark.png";
@@ -31,48 +30,31 @@ export default function Landing() {
           <div className="glass-strong w-full max-w-md p-6 md:p-8">
             <div className="text-center">
               <div className="text-2xl font-black tracking-tight text-[color:var(--text)]">
-                {mode === "login" ? "Welcome back" : mode === "forgot-password" ? "Reset Password" : "Create your account"}
+                {mode === "login" ? "Welcome back" : "Reset Password"}
               </div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
                 {mode === "login"
                   ? "Sign in to access your portal."
-                  : mode === "forgot-password"
-                  ? "Recover access to your account securely."
-                  : "Set up your gym and start tracking members."}
+                  : "Recover access to your account securely."}
               </div>
             </div>
 
             <div className="mt-6">
               {mode === "login" ? (
                 <Login onForgotPassword={() => setMode("forgot-password")} />
-              ) : mode === "forgot-password" ? (
-                <ForgotPassword onSuccess={() => setMode("login")} onCancel={() => setMode("login")} />
               ) : (
-                <Register onSuccess={() => setMode("login")} />
+                <ForgotPassword onSuccess={() => setMode("login")} onCancel={() => setMode("login")} />
               )}
             </div>
 
             <div className="mt-6 text-center text-sm text-[color:var(--muted)]">
-              {mode === "login" ? (
-                <>
-                  Don&apos;t have an account?{" "}
-                  <button
-                    onClick={() => setMode("register")}
-                    className="text-[color:var(--brand-ink)] hover:text-[color:var(--text)] font-semibold transition"
-                  >
-                    Sign up
-                  </button>
-                </>
-              ) : (
-                <>
-                  Already have an account?{" "}
-                  <button
-                    onClick={() => setMode("login")}
-                    className="text-[color:var(--brand-ink)] hover:text-[color:var(--text)] font-semibold transition"
-                  >
-                    Login
-                  </button>
-                </>
+              {mode === "forgot-password" && (
+                <button
+                  onClick={() => setMode("login")}
+                  className="text-[color:var(--brand-ink)] hover:text-[color:var(--text)] font-semibold transition"
+                >
+                  Back to login
+                </button>
               )}
             </div>
 

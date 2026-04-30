@@ -42,13 +42,6 @@ app.use(cors({
 }));
 app.use(express.json({ limit: "5mb" }));
 
-// 🔹 Security headers for Google OAuth (Removed as they break cross-origin popups in production)
-// app.use((req, res, next) => {
-//   res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-//   res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-//   next();
-// });
-
 // 🔹 Health Check
 app.get("/", (req, res) => {
   res.send("SMART GYM API Running");
