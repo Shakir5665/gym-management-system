@@ -9,10 +9,10 @@ import Gamification from "../models/Gamification.js";
 
 const strongPasswordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$/;
 
-// Helper for dates
-const startOfDay = (d) => {
+// Helper for dates (using noon to avoid timezone-border issues with UTC conversion)
+const startOfNoonDay = (d) => {
   const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
+  x.setHours(12, 0, 0, 0);
   return x;
 };
 
@@ -106,14 +106,20 @@ export const getMemberProfile = async (req, res) => {
     // 3. Attendance Trend (Last 7 Days)
     const days = 7;
     const now = new Date();
-    const start = startOfDay(addDays(now, -(days - 1)));
+    // Start from 6 days ago at 00:00:00 local to capture everything
+    const startForQuery = new Date(now);
+    startForQuery.setDate(startForQuery.getDate() - (days - 1));
+    startForQuery.setHours(0, 0, 0, 0);
+    
+    // For the loop labels, we use Noon to ensure ISO string date matches local date
+    const startForLoop = startOfNoonDay(startForQuery);
     
     const attendanceRows = await Attendance.aggregate([
       {
         $match: {
           memberId: new mongoose.Types.ObjectId(String(memberId)),
           status: "SUCCESS",
-          checkInTime: { $gte: start },
+          checkInTime: { $gte: startForQuery },
         },
       },
       {
@@ -129,7 +135,7 @@ export const getMemberProfile = async (req, res) => {
     const map = new Map(attendanceRows.map((r) => [r._id, r.count]));
     const attendanceTrend = [];
     for (let i = 0; i < days; i++) {
-      const d = addDays(start, i);
+      const d = addDays(startForLoop, i);
       const key = d.toISOString().slice(0, 10);
       attendanceTrend.push({ date: key, count: map.get(key) || 0 });
     }
