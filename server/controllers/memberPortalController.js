@@ -123,16 +123,25 @@ export const getMemberProfile = async (req, res) => {
           count: { $sum: 1 },
         },
       },
-      { $sort: { _id: 1 } },
     ]);
 
-    const trendMap = new Map(attendanceRows.map((r) => [r._id, r.count]));
+    // Convert rows to a simple map for easy lookup
+    const trendMap = {};
+    attendanceRows.forEach(row => {
+      trendMap[row._id] = row.count;
+    });
+
     const attendanceTrend = [];
     for (let i = 0; i < 7; i++) {
       const d = addDays(start, i);
       const key = d.toISOString().slice(0, 10);
-      attendanceTrend.push({ date: key, count: trendMap.get(key) || 0 });
+      attendanceTrend.push({ 
+        date: key, 
+        count: trendMap[key] || 0 
+      });
     }
+    
+    console.log(`[Chart Debug] Member: ${member.name}, Found ${attendanceRows.length} activity days in range.`);
     
     res.json({
       member,
