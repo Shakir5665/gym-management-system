@@ -4,8 +4,22 @@ import Payment from "../models/Payment.js";
 import Attendance from "../models/Attendance.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import Gamification from "../models/Gamification.js";
 
 const strongPasswordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$/;
+
+// Helper for dates
+const startOfDay = (d) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+
+const addDays = (d, days) => {
+  const x = new Date(d);
+  x.setDate(x.getDate() + days);
+  return x;
+};
 
 export const memberRegister = async (req, res) => {
   try {
@@ -79,15 +93,82 @@ export const getMemberProfile = async (req, res) => {
     
     if (!member) return res.status(404).json({ message: "Member record not found" });
 
-    // Calculate some stats
-    const totalCheckins = await Attendance.countDocuments({ memberId: member._id, status: "SUCCESS" });
+    const gymId = member.gymId._id;
+    const memberId = member._id;
+
+    // 1. Basic Stats
+    const totalCheckins = await Attendance.countDocuments({ memberId, status: "SUCCESS" });
+    
+    // 2. Gamification Stats
+    const gamification = await Gamification.findOne({ memberId, gymId });
+
+    // 3. Attendance Trend (Last 7 Days)
+    const now = new Date();
+    const start = startOfDay(addDays(now, -6));
+    const attendanceRows = await Attendance.aggregate([
+      {
+        $match: {
+          memberId: memberId,
+          status: "SUCCESS",
+          checkInTime: { $gte: start },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$checkInTime" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    const trendMap = new Map(attendanceRows.map((r) => [r._id, r.count]));
+    const attendanceTrend = [];
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(start, i);
+      const key = d.toISOString().slice(0, 10);
+      attendanceTrend.push({ date: key, count: trendMap.get(key) || 0 });
+    }
     
     res.json({
       member,
       stats: {
-        totalCheckins
+        totalCheckins,
+        points: gamification?.points || 0,
+        streak: gamification?.streak || 0,
+        attendanceTrend
       }
     });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getLeaderboard = async (req, res) => {
+  try {
+    const gymId = req.user.gymId;
+    if (!gymId) return res.status(403).json({ message: "Gym ID missing" });
+
+    const limit = 10;
+    const topGame = await Gamification.find({ gymId })
+      .sort({ streak: -1, points: -1 })
+      .limit(limit)
+      .lean();
+
+    const memberIds = topGame.map(g => g.memberId);
+    const members = await Member.find({ _id: { $in: memberIds } }).select("name").lean();
+    const memberMap = new Map(members.map(m => [String(m._id), m.name]));
+
+    const leaderboard = topGame.map(g => ({
+      memberId: g.memberId,
+      name: memberMap.get(String(g.memberId)) || "Anonymous",
+      streak: g.streak || 0,
+      points: g.points || 0
+    }));
+
+    res.json(leaderboard);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

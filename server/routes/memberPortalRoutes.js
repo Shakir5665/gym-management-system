@@ -4,7 +4,8 @@ import {
   getMemberProfile, 
   updateMemberProfile, 
   getMemberPayments, 
-  getMemberAttendance 
+  getMemberAttendance,
+  getLeaderboard
 } from "../controllers/memberPortalController.js";
 import auth from "../middleware/auth.js";
 
@@ -15,5 +16,6 @@ router.get("/profile", auth, getMemberProfile);
 router.put("/profile", auth, updateMemberProfile);
 router.get("/payments", auth, getMemberPayments);
 router.get("/attendance", auth, getMemberAttendance);
+router.get("/leaderboard", auth, getLeaderboard);
 
 export default router;
