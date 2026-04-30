@@ -106,13 +106,15 @@ export const getMemberProfile = async (req, res) => {
     // 3. Attendance Trend (Last 7 Days)
     const days = 7;
     const now = new Date();
-    // Start from 6 days ago at 00:00:00 local to capture everything
+    
+    // Start exactly 6 days ago from today's date
     const startForQuery = new Date(now);
-    startForQuery.setDate(startForQuery.getDate() - (days - 1));
     startForQuery.setHours(0, 0, 0, 0);
+    startForQuery.setDate(startForQuery.getDate() - 6);
     
     // For the loop labels, we use Noon to ensure ISO string date matches local date
-    const startForLoop = startOfNoonDay(startForQuery);
+    const startForLoop = new Date(startForQuery);
+    startForLoop.setHours(12, 0, 0, 0);
     
     const attendanceRows = await Attendance.aggregate([
       {
