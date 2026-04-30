@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [gymName, setGymName] = useState(null);
+  const [isDeactivated, setIsDeactivated] = useState(false);
   const [gymLogo, setGymLogo] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -148,9 +149,13 @@ export const AuthProvider = ({ children }) => {
       window.addEventListener(event, resetTimer);
     });
 
+    const handleDeactivation = () => setIsDeactivated(true);
+    window.addEventListener("gym:deactivated", handleDeactivation);
+
     resetTimer(); // Initialize timer
 
     return () => {
+      window.removeEventListener("gym:deactivated", handleDeactivation);
       if (timeoutId) clearTimeout(timeoutId);
       events.forEach(event => {
         window.removeEventListener(event, resetTimer);
@@ -167,6 +172,7 @@ export const AuthProvider = ({ children }) => {
         gymLogo,
         hasGym,
         role,
+        isDeactivated,
         setHasGym,
         setGymName,
         setGymLogo,

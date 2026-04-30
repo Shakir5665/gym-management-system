@@ -15,10 +15,16 @@ import AccountingPage from "./pages/AccountingPage";
 import ProfilePage from "./pages/ProfilePage";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperRoute from "./components/SuperRoute";
+import DeactivatedNotice from "./components/ui/DeactivatedNotice";
 
 function App() {
   // ✅ Hooks must be inside component
-  const { token, loading } = useAuth();
+  const { token, loading, isDeactivated } = useAuth();
+
+  // 🔥 Show Deactivated Notice if account is locked
+  if (isDeactivated) {
+    return <DeactivatedNotice />;
+  }
 
   // 🔥 Show loading while checking auth
   if (loading) {

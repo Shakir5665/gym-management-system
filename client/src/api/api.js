@@ -28,6 +28,12 @@ API.interceptors.response.use(
       localStorage.removeItem("user");
       window.location.href = "/";
     }
+
+    if (err.response?.status === 403 && err.response?.data?.message?.includes("deactivated")) {
+      // Gym account deactivated
+      window.dispatchEvent(new CustomEvent("gym:deactivated"));
+    }
+
     return Promise.reject(err);
   }
 );
