@@ -105,9 +105,16 @@ export const checkIn = async (req, res) => {
             const yesterday = new Date(now);
             yesterday.setDate(yesterday.getDate() - 1);
             
-            if (lastDate === yesterday.toDateString()) {
+            const dayBeforeYesterday = new Date(now);
+            dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
+            
+            const lastDateStr = new Date(game.lastCheckIn).toDateString();
+
+            if (lastDateStr === yesterday.toDateString() || lastDateStr === dayBeforeYesterday.toDateString()) {
+              // 1-day grace period: if they missed yesterday but came day before, streak continues
               game.streak++;
             } else {
+              // Missed 2+ days: reset
               game.streak = 1;
             }
 
