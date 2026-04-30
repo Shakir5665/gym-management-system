@@ -59,7 +59,7 @@ export default function Scanner() {
       // Smooth start and end to avoid clicking sounds
       gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
       gainNode.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 0.05); // High volume
-      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5); // Fade out at 1.5s
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5); // Fade out at 0.5s
 
       oscillator.connect(gainNode);
       gainNode.connect(audioCtx.destination);
@@ -68,7 +68,7 @@ export default function Scanner() {
       setTimeout(() => {
         oscillator.stop();
         audioCtx.close();
-      }, 1500); // 1.5 seconds duration
+      }, 500); // 0.5 seconds duration
     } catch (e) {
       console.warn("Audio not supported or blocked:", e);
     }
