@@ -31,10 +31,10 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  const toggleStatus = async (gymId, currentStatus) => {
+  const updateStatus = async (gymId, payload) => {
     try {
-      await API.put(`/super/gyms/${gymId}/status`, { isActive: !currentStatus });
-      setGyms(prev => prev.map(g => g._id === gymId ? { ...g, isActive: !currentStatus } : g));
+      await API.put(`/super/gyms/${gymId}/status`, payload);
+      setGyms(prev => prev.map(g => g._id === gymId ? { ...g, ...payload } : g));
     } catch (err) {
       alert("Failed to update status");
     }
@@ -119,7 +119,11 @@ export default function SuperAdminDashboard() {
                     <Badge variant="brand">{gym.memberCount} members</Badge>
                   </td>
                   <td className="px-6 py-4">
-                    {gym.isActive ? (
+                    {!gym.isApproved ? (
+                      <span className="flex items-center gap-1.5 text-yellow-500 font-medium">
+                        <Activity className="h-4 w-4" /> Pending Approval
+                      </span>
+                    ) : gym.isActive ? (
                       <span className="flex items-center gap-1.5 text-green-500 font-medium">
                         <ShieldCheck className="h-4 w-4" /> Active
                       </span>
@@ -130,14 +134,28 @@ export default function SuperAdminDashboard() {
                     )}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Button 
-                      variant={gym.isActive ? "danger" : "primary"}
-                      size="sm"
-                      onClick={() => toggleStatus(gym._id, gym.isActive)}
-                      className="text-[10px] py-1 px-3"
-                    >
-                      {gym.isActive ? "Deactivate" : "Activate"}
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      {!gym.isApproved && (
+                        <Button 
+                          variant="primary"
+                          size="sm"
+                          onClick={() => updateStatus(gym._id, { isApproved: true, isActive: true })}
+                          className="text-[10px] py-1 px-3 bg-green-600 hover:bg-green-700 border-none"
+                        >
+                          Approve Gym
+                        </Button>
+                      )}
+                      {gym.isApproved && (
+                        <Button 
+                          variant={gym.isActive ? "danger" : "primary"}
+                          size="sm"
+                          onClick={() => updateStatus(gym._id, { isActive: !gym.isActive })}
+                          className="text-[10px] py-1 px-3"
+                        >
+                          {gym.isActive ? "Deactivate" : "Activate"}
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

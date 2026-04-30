@@ -13,13 +13,13 @@ export default function DeactivatedNotice() {
           <ShieldAlert className="w-10 h-10 text-danger-500 animate-pulse" />
         </div>
 
-        <h1 className="text-2xl font-black text-[color:var(--text)] mb-2 tracking-tight">
-          ACCOUNT DEACTIVATED
+        <h1 className="text-2xl font-black text-[color:var(--text)] mb-2 tracking-tight uppercase">
+          Access Restricted
         </h1>
 
         <p className="text-[color:var(--muted)] text-sm mb-8 leading-relaxed">
-          Your gym's access to the <strong>Smart Gym OS</strong> has been restricted by the system administrator.
-          Please settle any pending dues or contact support to restore your access.
+          Your gym's access to the <strong>Smart Gym OS</strong> is currently restricted. 
+          This may be because your account is <strong>pending approval</strong> or has been <strong>deactivated</strong> by the system administrator.
         </p>
 
         <div className="space-y-3 mb-8">

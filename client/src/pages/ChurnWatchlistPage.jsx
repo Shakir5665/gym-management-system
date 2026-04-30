@@ -101,7 +101,7 @@ export default function ChurnWatchlistPage() {
         {watchlist.length === 0 ? (
           <Card className="p-10 text-center">
             <div className="text-sm font-semibold text-[color:var(--text)]">
-              No members at risk
+              No members in watchlist
             </div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">
               Great news! All members are actively engaged.

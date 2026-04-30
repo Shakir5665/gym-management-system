@@ -28,12 +28,16 @@ export const getGyms = async (req, res) => {
 export const toggleGymStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { isActive } = req.body;
+    const { isActive, isApproved } = req.body;
 
-    const gym = await Gym.findByIdAndUpdate(id, { isActive }, { new: true });
+    const updateData = {};
+    if (typeof isActive !== "undefined") updateData.isActive = isActive;
+    if (typeof isApproved !== "undefined") updateData.isApproved = isApproved;
+
+    const gym = await Gym.findByIdAndUpdate(id, updateData, { new: true });
     if (!gym) return res.status(404).json({ message: "Gym not found" });
 
-    res.json({ message: `Gym ${isActive ? "activated" : "deactivated"} successfully`, gym });
+    res.json({ message: "Gym status updated successfully", gym });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

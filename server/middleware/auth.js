@@ -16,9 +16,9 @@ export default async function (req, res, next) {
 
     if (decoded.gymId) {
       const Gym = (await import("../models/Gym.js")).default;
-      const gym = await Gym.findById(decoded.gymId).select("isActive");
-      if (gym && gym.isActive === false) {
-        return res.status(403).json({ message: "Gym account deactivated" });
+      const gym = await Gym.findById(decoded.gymId).select("isActive isApproved");
+      if (gym && (gym.isActive === false || gym.isApproved === false)) {
+        return res.status(403).json({ message: "Gym account deactivated or pending approval" });
       }
     }
 

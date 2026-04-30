@@ -6,7 +6,7 @@ import AppShell from "./components/layout/AppShell";
 import DashboardPage from "./pages/DashboardPage";
 import MembersPage from "./pages/MembersPage";
 import TopMembersPage from "./pages/TopMembersPage";
-import AtRiskMembersPage from "./pages/AtRiskMembersPage";
+import ChurnWatchlistPage from "./pages/ChurnWatchlistPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import Scanner from "./pages/Scanner";
 import Payments from "./pages/Payments";
@@ -57,7 +57,7 @@ function App() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="members" element={<MembersPage />} />
         <Route path="members/top" element={<TopMembersPage />} />
-        <Route path="members/churn-watchlist" element={<AtRiskMembersPage />} />
+        <Route path="members/churn-watchlist" element={<ChurnWatchlistPage />} />
         <Route path="member/:id" element={<MemberProfilePage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="scanner" element={<Scanner />} />
