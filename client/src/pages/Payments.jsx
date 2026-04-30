@@ -7,9 +7,21 @@ import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
 import Modal from "../components/ui/Modal";
 
+function toDateInput(d) {
+  return new Date(d).toISOString().slice(0, 10);
+}
+
+function monthRange() {
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), 1);
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return { from: toDateInput(from), to: toDateInput(to) };
+}
+
 export default function Payments() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [range, setRange] = useState(monthRange());
   const [memberId, setMemberId] = useState("");
   const [amount, setAmount] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -23,11 +35,11 @@ export default function Payments() {
   const showPaymentForm =
     String(searchParams.get("action") || "").toLowerCase() === "pay";
 
-  const loadReport = async () => {
+  const loadReport = async (from = range.from, to = range.to) => {
     try {
       setLoadingReport(true);
       setReportError("");
-      const res = await API.get("/payments?limit=150");
+      const res = await API.get(`/payments?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&limit=500`);
       setPayments(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       setReportError(
@@ -87,16 +99,44 @@ export default function Payments() {
         <div className="mt-0.5 text-xs text-[color:var(--muted)]">
           Recent payments across all members.
         </div>
-        <div className="mt-4 flex items-center gap-3 text-xs">
-          <Badge variant="brand">{payments.length} records</Badge>
-          <span className="text-[color:var(--muted)]">
-            Total:{" "}
-            <span className="font-semibold text-[color:var(--text)]">
-              {`${totalCollected.toLocaleString("en-LK", {
-                maximumFractionDigits: 0,
-              })} LKR`}
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="flex items-center gap-3 text-xs">
+            <Badge variant="brand">{payments.length} records</Badge>
+            <span className="text-[color:var(--muted)]">
+              Total Collected:{" "}
+              <span className="font-semibold text-[color:var(--text)]">
+                {`${totalCollected.toLocaleString("en-LK", {
+                  maximumFractionDigits: 0,
+                })} LKR`}
+              </span>
             </span>
-          </span>
+          </div>
+          <div className="flex items-end gap-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                label="From"
+                type="date"
+                value={range.from}
+                onChange={(e) => {
+                  const newFrom = e.target.value;
+                  setRange((p) => {
+                    const newTo = new Date(p.to) < new Date(newFrom) ? newFrom : p.to;
+                    return { from: newFrom, to: newTo };
+                  });
+                }}
+              />
+              <Input
+                label="To"
+                type="date"
+                min={range.from}
+                value={range.to}
+                onChange={(e) => setRange((p) => ({ ...p, to: e.target.value }))}
+              />
+            </div>
+            <Button variant="ghost" onClick={() => loadReport(range.from, range.to)}>
+              Apply
+            </Button>
+          </div>
         </div>
       </Card>
 

@@ -74,10 +74,23 @@ export const getPaymentReport = async (req, res) => {
       return res.status(400).json({ message: "Invalid gym id" });
     }
     const gymId = new mongoose.Types.ObjectId(gymIdRaw);
-    const limit = Math.max(1, Math.min(Number(req.query.limit || 100), 300));
+    const limit = Math.max(1, Math.min(Number(req.query.limit || 100), 500));
+    const { from, to } = req.query;
+
+    const matchStage = { gymId };
+
+    if (from || to) {
+      matchStage.createdAt = {};
+      if (from) matchStage.createdAt.$gte = new Date(from);
+      if (to) {
+        const toDate = new Date(to);
+        toDate.setHours(23, 59, 59, 999);
+        matchStage.createdAt.$lte = toDate;
+      }
+    }
 
     const rows = await Payment.aggregate([
-      { $match: { gymId } },
+      { $match: matchStage },
       { $sort: { createdAt: -1, _id: -1 } },
       { $limit: limit },
       {
