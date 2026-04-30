@@ -347,9 +347,9 @@ export default function MemberProfilePage() {
         </Card>
       )}
 
-      <Card className="p-5 md:p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
+      <Card className="p-5 md:p-6 overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+          <div className="min-w-0 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => navigate(-1)}
@@ -366,18 +366,18 @@ export default function MemberProfilePage() {
               {member?.phone || " "}
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full sm:w-auto">
             {qrCodeUrl ? (
               <button
                 type="button"
                 onClick={() => setQrModalOpen(true)}
-                className="flex flex-col items-center p-1 rounded bg-white shadow-sm border border-[color:var(--control-border)] hover:scale-105 transition-transform"
+                className="flex flex-col items-center p-1 rounded bg-white shadow-sm border border-[color:var(--control-border)] hover:scale-105 transition-transform self-start sm:self-auto"
                 title="View QR Code"
               >
                 <img src={qrCodeUrl} alt="Member QR Code" className="w-10 h-10 object-contain" />
               </button>
             ) : null}
-            <div className="flex flex-row items-center justify-end gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+            <div className="flex flex-row flex-wrap items-center justify-start sm:justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
               <Button variant="danger" onClick={() => member?.isBanned ? handleUnban() : setBanOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all">
                 {member?.isBanned ? <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> : <Ban className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />}
                 <span className="text-[11px] sm:text-sm font-semibold">{member?.isBanned ? "Unban" : "Ban"}</span>
