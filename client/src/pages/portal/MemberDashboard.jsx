@@ -19,7 +19,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
+import { socket } from "../../socket";
 
 export default function MemberDashboard() {
   const { user } = useAuth();
@@ -30,7 +30,6 @@ export default function MemberDashboard() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [lbLoading, setLbLoading] = useState(false);
   const navigate = useNavigate();
-  const socketRef = useRef(null);
 
   const fetchDashboard = async (silent = false) => {
     try {
@@ -59,44 +58,38 @@ export default function MemberDashboard() {
   useEffect(() => {
     fetchDashboard();
 
-    // 🔌 Initialize Socket Connection
-    const socketURL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000";
-    console.log("Connecting to socket at:", socketURL);
-    
-    const socket = io(socketURL, {
-      transports: ["websocket", "polling"]
-    });
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      console.log("✅ Member Real-time Sync Connected");
-    });
-
-    // Handle check-in/out updates
-    socket.on("attendance:new", (payload) => {
-      console.log("🔔 Attendance Event:", payload);
-      // memberId could be in payload.memberId
+    // 🔌 Use Shared Socket
+    const onConnect = () => console.log("✅ Live Dashboard Connected");
+    const onAttendance = (payload) => {
       if (user?.memberId && payload.memberId === user.memberId) {
-        console.log("🔄 Auto-updating dashboard for check-in...");
+        console.log("🔄 Live Update: Attendance recorded");
         fetchDashboard(true);
-      }
-    });
-
-    // Handle points/streak updates
-    socket.on("gamification:update", (payload) => {
-      console.log("🎮 Gamification Event:", payload);
-      if (user?.memberId && payload.memberId === user.memberId) {
-        console.log("🔄 Auto-updating gamification stats...");
-        fetchDashboard(true);
-      }
-    });
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
       }
     };
-  }, [user?.memberId]);
+    const onGamification = (payload) => {
+      if (user?.memberId && payload.memberId === user.memberId) {
+        console.log("🔄 Live Update: Gamification earned");
+        fetchDashboard(true);
+        if (leaderboardOpen) fetchLeaderboard();
+      }
+    };
+    // Global leaderboard update (optional: if someone else checksin, rank might change)
+    const onGlobalGamification = () => {
+      if (leaderboardOpen) fetchLeaderboard();
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("attendance:new", onAttendance);
+    socket.on("gamification:update", onGamification);
+    socket.on("leaderboard:refresh", onGlobalGamification);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("attendance:new", onAttendance);
+      socket.off("gamification:update", onGamification);
+      socket.off("leaderboard:refresh", onGlobalGamification);
+    };
+  }, [user?.memberId, leaderboardOpen]);
 
   useEffect(() => {
     if (leaderboardOpen) {
@@ -276,7 +269,7 @@ export default function MemberDashboard() {
                   }`}
                   style={{ height: visited ? "100%" : "12px" }}
                 />
-                <span className={`text-[10px] font-bold ${visited ? "text-brand-600" : "text-[color:var(--muted)]"}`}>
+                <span className={`text-[10px] font-bold ${visited ? "text-brand-600" : "text-[color:var(--text)]"}`}>
                   {dateLabel}
                 </span>
               </div>

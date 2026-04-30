@@ -104,8 +104,9 @@ export const getMemberProfile = async (req, res) => {
     const gamification = await Gamification.findOne({ memberId, gymId });
 
     // 3. Attendance Trend (Last 7 Days)
+    const days = 7;
     const now = new Date();
-    const start = startOfDay(addDays(now, -6));
+    const start = startOfDay(addDays(now, -(days - 1)));
     
     const attendanceRows = await Attendance.aggregate([
       {
@@ -125,23 +126,15 @@ export const getMemberProfile = async (req, res) => {
       },
     ]);
 
-    // Convert rows to a simple map for easy lookup
-    const trendMap = {};
-    attendanceRows.forEach(row => {
-      trendMap[row._id] = row.count;
-    });
-
+    const map = new Map(attendanceRows.map((r) => [r._id, r.count]));
     const attendanceTrend = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < days; i++) {
       const d = addDays(start, i);
       const key = d.toISOString().slice(0, 10);
-      attendanceTrend.push({ 
-        date: key, 
-        count: trendMap[key] || 0 
-      });
+      attendanceTrend.push({ date: key, count: map.get(key) || 0 });
     }
     
-    console.log(`[Chart Debug] Member: ${member.name}, Found ${attendanceRows.length} activity days in range.`);
+    console.log(`[Dashboard Sync] Member: ${member.name}, ID: ${memberId}, Trend Points: ${attendanceRows.length}`);
     
     res.json({
       member,

@@ -2,26 +2,40 @@ import { useState, useEffect } from "react";
 import API from "../../api/api";
 import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
-import { CreditCard, Calendar, ArrowUpRight } from "lucide-react";
+import { CreditCard, Calendar } from "lucide-react";
+import { socket } from "../../socket";
+import { useAuth } from "../../context/AuthContext";
 
 export default function MemberPayments() {
+  const { user } = useAuth();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchPayments = async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const res = await API.get("/portal/payments");
+      setPayments(res.data);
+    } catch (err) {
+      console.error("Failed to load payments");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchPayments = async () => {
-      try {
-        setLoading(true);
-        const res = await API.get("/portal/payments");
-        setPayments(res.data);
-      } catch (err) {
-        console.error("Failed to load payments");
-      } finally {
-        setLoading(false);
+    fetchPayments();
+
+    const onPaymentUpdate = (payload) => {
+      if (user?.memberId && payload.memberId === user.memberId) {
+        console.log("🔄 Live Update: Payment history");
+        fetchPayments(true);
       }
     };
-    fetchPayments();
-  }, []);
+
+    socket.on("payment:update", onPaymentUpdate);
+    return () => socket.off("payment:update", onPaymentUpdate);
+  }, [user?.memberId]);
 
   if (loading) return <div className="p-10 text-center animate-pulse text-[color:var(--muted)] font-bold">Loading Payments...</div>;
 
