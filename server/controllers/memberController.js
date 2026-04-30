@@ -1,5 +1,8 @@
 import Member from "../models/Member.js";
+import Payment from "../models/Payment.js";
+import Gym from "../models/Gym.js";
 import QRCode from "qrcode";
+import { sendPaymentReminder } from "../services/mailService.js";
 
 function normalizeMemberPayload(payload = {}) {
   const fullLegalName = String(payload.fullLegalName ?? payload.name ?? "").trim();
@@ -197,3 +200,69 @@ export const unfineMember = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const getExpiringMembers = async (req, res) => {
+  try {
+    if (!req.user.gymId) {
+      return res.status(403).json({ message: "You must create a gym first" });
+    }
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const dayAfterTomorrow = new Date(tomorrow);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+
+    const members = await Member.find({
+      gymId: req.user.gymId,
+      subscriptionEnd: {
+        $gte: tomorrow,
+        $lt: dayAfterTomorrow,
+      },
+    });
+
+    res.json(members);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const sendMemberReminder = async (req, res) => {
+  try {
+    if (!req.user.gymId) {
+      return res.status(403).json({ message: "You must create a gym first" });
+    }
+
+    const member = await Member.findOne({ _id: req.params.id, gymId: req.user.gymId });
+    if (!member) return res.status(404).json({ message: "Member not found" });
+
+    if (!member.email) {
+      return res.status(400).json({ message: "Member does not have an email address" });
+    }
+
+    // Get last payment
+    const lastPayment = await Payment.findOne({ memberId: member._id, gymId: req.user.gymId }).sort({ createdAt: -1 });
+
+    if (!lastPayment) {
+      return res.status(400).json({ message: "No payment history found for this member" });
+    }
+
+    // Get Gym Name
+    const gym = await Gym.findById(req.user.gymId);
+    const gymName = gym?.name || "Our Gym";
+
+    await sendPaymentReminder(member.email, {
+      memberName: member.fullLegalName || member.name,
+      lastPaidAt: lastPayment.createdAt,
+      endAt: member.subscriptionEnd,
+      amount: lastPayment.amount,
+      gymName,
+    });
+
+    res.json({ message: "Reminder sent successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+

@@ -82,7 +82,7 @@ export default function Sidebar() {
         <div className="mt-3 h-px bg-[color:var(--control-border)]" />
         <div className="mt-3 text-[11px] text-[color:var(--subtle)]">
           Tip: Keep an eye on{" "}
-          <span className="text-[color:var(--muted)] font-semibold">Risk</span>{" "}
+          <span className="text-[color:var(--muted)] font-semibold">Churn Probability</span>{" "}
           to prevent churn.
         </div>
       </div>

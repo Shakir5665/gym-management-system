@@ -43,15 +43,23 @@ export default function Scanner() {
     }
   };
 
-  const playBeep = () => {
+  const playBeep = async () => {
     try {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") {
+        await audioCtx.resume();
+      }
+      
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
 
       oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime); // 1000 Hz for a sharper beep
-      gainNode.gain.setValueAtTime(1.0, audioCtx.currentTime); // Loud volume (100%)
+      oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); // Sharper frequency
+      
+      // Smooth start and end to avoid clicking sounds
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 0.05); // High volume
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5); // Fade out at 1.5s
 
       oscillator.connect(gainNode);
       gainNode.connect(audioCtx.destination);
@@ -60,7 +68,7 @@ export default function Scanner() {
       setTimeout(() => {
         oscillator.stop();
         audioCtx.close();
-      }, 300); // Longer beep duration (300ms)
+      }, 1500); // 1.5 seconds duration
     } catch (e) {
       console.warn("Audio not supported or blocked:", e);
     }

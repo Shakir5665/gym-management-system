@@ -49,7 +49,7 @@ function App() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="members" element={<MembersPage />} />
         <Route path="members/top" element={<TopMembersPage />} />
-        <Route path="members/at-risk" element={<AtRiskMembersPage />} />
+        <Route path="members/churn-watchlist" element={<AtRiskMembersPage />} />
         <Route path="member/:id" element={<MemberProfilePage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="scanner" element={<Scanner />} />

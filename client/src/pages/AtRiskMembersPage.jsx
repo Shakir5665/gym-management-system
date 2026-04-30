@@ -7,37 +7,37 @@ import Badge from "../components/ui/Badge";
 import { ArrowLeft } from "lucide-react";
 import { socket } from "../socket";
 
-export default function AtRiskMembersPage() {
+export default function ChurnWatchlistPage() {
   const navigate = useNavigate();
-  const [atRiskMembers, setAtRiskMembers] = useState([]);
+  const [watchlist, setWatchlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchAtRiskMembers = async () => {
+  const fetchWatchlist = async () => {
     try {
       setLoading(true);
       setError("");
       const res = await API.get("/dashboard/lists?limit=50");
-      setAtRiskMembers(res.data?.atRiskMembers || []);
+      setWatchlist(res.data?.highChurnMembers || []);
     } catch {
-      setError("Failed to load at-risk members");
+      setError("Failed to load churn watchlist");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAtRiskMembers();
+    fetchWatchlist();
 
     // Listen for updates
-    socket.on("attendance:new", fetchAtRiskMembers);
-    socket.on("gamification:update", fetchAtRiskMembers);
-    socket.on("payment:update", fetchAtRiskMembers);
+    socket.on("attendance:new", fetchWatchlist);
+    socket.on("gamification:update", fetchWatchlist);
+    socket.on("payment:update", fetchWatchlist);
 
     return () => {
-      socket.off("attendance:new", fetchAtRiskMembers);
-      socket.off("gamification:update", fetchAtRiskMembers);
-      socket.off("payment:update", fetchAtRiskMembers);
+      socket.off("attendance:new", fetchWatchlist);
+      socket.off("gamification:update", fetchWatchlist);
+      socket.off("payment:update", fetchWatchlist);
     };
   }, []);
 
@@ -65,16 +65,16 @@ export default function AtRiskMembersPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-sm font-bold text-[color:var(--text)]">
-              At-risk members
+              Churn Watchlist
             </div>
             <div className="text-xs text-[color:var(--muted)] mt-0.5">
-              Members with low activity showing signs of churn
+              Members with high churn probability based on low activity
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
-              onClick={fetchAtRiskMembers}
+              onClick={fetchWatchlist}
               disabled={loading}
             >
               Refresh
@@ -98,17 +98,17 @@ export default function AtRiskMembersPage() {
       ) : null}
 
       <div className="grid gap-3">
-        {atRiskMembers.length === 0 ? (
+        {watchlist.length === 0 ? (
           <Card className="p-10 text-center">
             <div className="text-sm font-semibold text-[color:var(--text)]">
-              No at-risk members
+              No members at risk
             </div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">
               Great news! All members are actively engaged.
             </div>
           </Card>
         ) : (
-          atRiskMembers.map((m) => (
+          watchlist.map((m) => (
             <button
               key={m.memberId}
               type="button"
@@ -121,10 +121,10 @@ export default function AtRiskMembersPage() {
                     {m.name}
                   </div>
                   <div className="mt-0.5 text-xs text-[color:var(--muted)]">
-                    Risk Level: <span className="font-semibold">{m.risk}</span>
+                    Churn Probability: <span className="font-semibold">{m.probability}</span>
                   </div>
                   <div className="mt-1 text-xs text-[color:var(--subtle)]">
-                    Last seen • N/A
+                    Requires immediate engagement
                   </div>
                 </div>
                 <Badge variant="danger" className="flex-shrink-0">

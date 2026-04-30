@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "../api/api";
+import { useAuth } from "../context/AuthContext";
 import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
@@ -8,14 +9,14 @@ import Input from "../components/ui/Input";
 import Modal from "../components/ui/Modal";
 import Select from "../components/ui/Select";
 import AreaSpark from "../components/charts/AreaSpark";
-import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning, Ban, ShieldCheck, Receipt, CheckCircle, Edit3, Download } from "lucide-react";
+import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning, Ban, ShieldCheck, Receipt, CheckCircle, Edit3, Download, Mail } from "lucide-react";
 import QRCode from "qrcode";
 import { socket } from "../socket";
 
-function riskVariant(risk) {
-  if (risk === "HIGH") return "danger";
-  if (risk === "MEDIUM") return "warning";
-  if (risk === "LOW") return "success";
+function churnVariant(prob) {
+  if (prob === "HIGH") return "danger";
+  if (prob === "MEDIUM") return "warning";
+  if (prob === "LOW") return "success";
   return "neutral";
 }
 
@@ -27,6 +28,7 @@ function formatMoneyLKR(amount) {
 export default function MemberProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { gymName } = useAuth();
 
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ export default function MemberProfilePage() {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
 
   const [game, setGame] = useState({});
-  const [risk, setRisk] = useState("");
+  const [churnProb, setChurnProb] = useState("");
   const [trend, setTrend] = useState([]);
   const [activity, setActivity] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -56,6 +58,8 @@ export default function MemberProfilePage() {
   const [fineOpen, setFineOpen] = useState(false);
   const [fineForm, setFineForm] = useState({ amount: "", reason: "" });
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [reminderOpen, setReminderOpen] = useState(false);
+  const [reminderSuccess, setReminderSuccess] = useState("");
 
   const downloadQrCode = () => {
     if (!qrCodeUrl) return;
@@ -73,7 +77,7 @@ export default function MemberProfilePage() {
       const [mRes, gRes, rRes, tRes, aRes, pRes] = await Promise.all([
         API.get(`/members/${id}`),
         API.get(`/gamification/${id}`),
-        API.get(`/retention/${id}`),
+        API.get(`/churn/${id}`),
         API.get(`/attendance/trend/${id}?days=14`),
         API.get(`/members/${id}/activity?limit=20`),
         API.get(`/payments/member/${id}`),
@@ -81,7 +85,7 @@ export default function MemberProfilePage() {
 
       setMember(mRes.data || null);
       setGame(gRes.data || {});
-      setRisk(rRes.data?.risk || "");
+      setChurnProb(rRes.data?.probability || "");
       setTrend((tRes.data?.series || []).map((x) => x.count));
       setActivity(Array.isArray(aRes.data?.items) ? aRes.data.items : []);
       setPayments(Array.isArray(pRes.data) ? pRes.data : []);
@@ -230,6 +234,24 @@ export default function MemberProfilePage() {
     }
   }
 
+  async function handleSendReminder() {
+    try {
+      setSaving(true);
+      setError("");
+      setReminderSuccess("");
+      await API.post(`/members/${id}/send-reminder`);
+      setReminderSuccess("Payment reminder email sent successfully!");
+      setReminderOpen(false);
+      // Auto hide success message after 5 seconds
+      setTimeout(() => setReminderSuccess(""), 5000);
+    } catch (e) {
+      setError(e?.response?.data?.message || "Failed to send reminder");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+
   const metricCard =
     "glass p-5 md:p-6 transition hover:border-[color:var(--glass-border-strong)] hover:bg-[color:var(--control-bg)] hover:-translate-y-[1px] will-change-transform";
 
@@ -262,9 +284,15 @@ export default function MemberProfilePage() {
 
   return (
     <div className="grid gap-4 md:gap-6">
-      {(member?.isBanned || member?.hasFine || isPaymentExpired) && (
+      {(member?.isBanned || member?.hasFine || isPaymentExpired || reminderSuccess) && (
         <Card className="p-5 md:p-6 bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/20 shadow-lg">
           <div className="flex flex-col gap-4">
+            {reminderSuccess && (
+              <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 p-4 rounded-xl animate-in fade-in slide-in-from-top-2">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <span className="text-sm font-semibold text-green-700 dark:text-green-300">{reminderSuccess}</span>
+              </div>
+            )}
             {member?.isBanned && (
               <div className="flex items-center gap-4 bg-white/60 dark:bg-black/20 p-4 rounded-xl border border-red-500/30">
                 <div className="p-3 bg-red-500/20 rounded-full shadow-inner">
@@ -362,6 +390,16 @@ export default function MemberProfilePage() {
                 <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                 <span className="text-[11px] sm:text-sm font-semibold">Edit</span>
               </Button>
+              <Button
+                variant="brand"
+                onClick={() => setReminderOpen(true)}
+                disabled={saving || !member?.email}
+                className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all"
+                title={!member?.email ? "No email address" : "Send email reminder"}
+              >
+                <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="text-[11px] sm:text-sm font-semibold">Reminder</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -443,14 +481,14 @@ export default function MemberProfilePage() {
         <div className={metricCard}>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-xs text-[color:var(--muted)] font-semibold">Risk</div>
+              <div className="text-xs text-[color:var(--muted)] font-semibold">Churn Probability</div>
               <div className="mt-2 flex items-center gap-2">
                 <div className="text-3xl font-black tracking-tight text-[color:var(--text)]">
-                  {risk || "N/A"}
+                  {churnProb || "N/A"}
                 </div>
-                <Badge variant={riskVariant(risk)}>{String(riskVariant(risk)).toUpperCase()}</Badge>
+                <Badge variant={churnVariant(churnProb)}>{String(churnVariant(churnProb)).toUpperCase()}</Badge>
               </div>
-              <div className="mt-1 text-xs text-[color:var(--subtle)]">Retention level</div>
+              <div className="mt-1 text-xs text-[color:var(--subtle)]">Retention status</div>
             </div>
             <div className="rounded-2xl bg-[color:var(--danger-soft-bg)] border border-[color:var(--danger-soft-border)] p-2.5">
               <ShieldAlert className="h-5 w-5 text-[color:var(--danger-ink)]" />
@@ -652,6 +690,34 @@ export default function MemberProfilePage() {
             <Button variant="primary" onClick={downloadQrCode} className="flex-1 flex justify-center items-center gap-2">
               <Download className="w-4 h-4" />
               Download
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={reminderOpen} onClose={() => setReminderOpen(false)} title="Email Reminder Preview">
+        <div className="grid gap-4">
+          <div className="rounded-xl border border-[color:var(--control-border)] bg-[color:var(--bg2)] p-4">
+            <div className="text-[11px] text-[color:var(--muted)] uppercase font-bold tracking-wider mb-3">Message Preview</div>
+            <div className="space-y-3 text-xs text-[color:var(--text)] leading-relaxed">
+              <p>Hi <strong>{member?.fullLegalName || member?.name}</strong>,</p>
+              <p>This is a formal reminder regarding your gym payment.</p>
+              <div className="bg-[color:var(--control-bg)] p-3 rounded-lg border border-[color:var(--control-border)] space-y-1">
+                <p>• <strong>Last Payment:</strong> {latestPayment ? new Date(latestPayment.createdAt).toLocaleDateString() : "N/A"}</p>
+                <p>• <strong>Expiration:</strong> <span className="text-danger-500">{member?.subscriptionEnd ? new Date(member.subscriptionEnd).toLocaleDateString() : "N/A"}</span></p>
+                <p>• <strong>Amount:</strong> {latestPayment ? formatMoneyLKR(latestPayment.amount) : "N/A"}</p>
+              </div>
+              <p>Please ensure your subscription is renewed to continue enjoying our facilities.</p>
+              <p className="pt-2">Best regards,<br /><strong>{gymName || "Our Gym"}</strong></p>
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setReminderOpen(false)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button variant="brand" onClick={handleSendReminder} disabled={saving} className="gap-2">
+              <Mail className="h-4 w-4" />
+              {saving ? "Sending..." : "Confirm & Send"}
             </Button>
           </div>
         </div>

@@ -15,6 +15,7 @@ import gymRoutes from "./routes/gymRoutes.js";
 import retentionRoutes from "./routes/retentionRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import accountingRoutes from "./routes/accountingRoutes.js";
+import { initAutomation } from "./services/automationService.js";
 
 
 // 🔹 Middleware
@@ -48,7 +49,7 @@ app.use(express.json({ limit: "5mb" }));
 
 // 🔹 Health Check
 app.get("/", (req, res) => {
-  res.send("🚀 Gym SaaS API Running");
+  res.send("SMART GYM API Running");
 });
 
 // 🔹 UptimeRobot Ping Route
@@ -63,7 +64,7 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/gamification", gamificationRoutes);
 app.use("/api/gym", gymRoutes);
-app.use("/api/retention", retentionRoutes);
+app.use("/api/churn", retentionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/accounting", accountingRoutes);
 
@@ -80,15 +81,15 @@ const io = new Server(server, {
   }
 });
 
-// 🔥 Attach io globally
+// Attach io globally
 app.set("io", io);
 
 // 🔹 Socket connection
 io.on("connection", (socket) => {
-  console.log("🔌 User connected:", socket.id);
+  console.log("User connected:", socket.id);
 
   socket.on("disconnect", () => {
-    console.log("❌ User disconnected:", socket.id);
+    console.log("User disconnected:", socket.id);
   });
 });
 
@@ -98,12 +99,13 @@ const mongoDbName = process.env.MONGO_DB_NAME || "gymsystem";
 mongoose
   .connect(process.env.MONGO_URI, { dbName: mongoDbName })
   .then(() => {
-    console.log(`✅ MongoDB Connected (db: ${mongoDbName})`);
+    console.log(`MongoDB Connected (db: ${mongoDbName})`);
 
     server.listen(process.env.PORT || 5000, () => {
-      console.log(`🚀 Server running on port ${process.env.PORT || 5000}`);
+      console.log(`Server running on port ${process.env.PORT || 5000}`);
+      initAutomation(io);
     });
   })
   .catch((err) => {
-    console.error("❌ DB Error:", err.message);
+    console.error("DB Error:", err.message);
   });

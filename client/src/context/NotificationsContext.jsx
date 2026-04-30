@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { socket } from "../socket";
+import API from "../api/api";
 
 const NotificationsContext = createContext(null);
 
@@ -37,24 +38,89 @@ export function NotificationsProvider({ children }) {
 
   const push = useCallback((n) => {
     const notif = normalizeNotification(n);
-    setItems((prev) => [notif, ...prev].slice(0, 50));
+    
+    // Check if this notification was previously marked as read in localStorage
+    const readIds = JSON.parse(localStorage.getItem("readNotifications") || "[]");
+    if (readIds.includes(notif.id)) {
+      notif.read = true;
+    }
+
+    setItems((prev) => {
+      const exists = prev.find((item) => item.id === notif.id);
+      if (exists) {
+        // If it exists but its read status has changed in state, we keep the state version
+        return prev;
+      }
+      return [notif, ...prev].slice(0, 50);
+    });
   }, []);
 
   const markRead = useCallback((id) => {
     setItems((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
+    
+    // Persist read status
+    const readIds = JSON.parse(localStorage.getItem("readNotifications") || "[]");
+    if (!readIds.includes(id)) {
+      readIds.push(id);
+      localStorage.setItem("readNotifications", JSON.stringify(readIds.slice(-200))); // Keep last 200
+    }
   }, []);
 
   const markAllRead = useCallback(() => {
-    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
+    setItems((prev) => {
+      const newItems = prev.map((n) => ({ ...n, read: true }));
+      const readIds = JSON.parse(localStorage.getItem("readNotifications") || "[]");
+      newItems.forEach(n => {
+        if (!readIds.includes(n.id)) readIds.push(n.id);
+      });
+      localStorage.setItem("readNotifications", JSON.stringify(readIds.slice(-200)));
+      return newItems;
+    });
   }, []);
 
   const clear = useCallback(() => setItems([]), []);
+  
+  useEffect(() => {
+    const handler = (data) => {
+      push({
+        id: `churn-email-${data.memberId}-${Date.now()}`,
+        title: "Churn Email Sent",
+        message: `Encouragement email sent to ${data.memberName}.`,
+        variant: "success",
+        meta: { memberId: data.memberId }
+      });
+    };
+    socket.on("notification:churn-email", handler);
+    return () => socket.off("notification:churn-email", handler);
+  }, [push]);
 
   useEffect(() => {
-    // Removed notifications for attendance and gamification to reduce noise
-    // Users can check these in their respective pages
+    // Fetch members whose subscription ends tomorrow
+    async function fetchExpiring() {
+      try {
+        const res = await API.get("/members/expiring-tomorrow");
+        if (Array.isArray(res.data)) {
+          res.data.forEach((m) => {
+            push({
+              id: `expiring-${m._id}-${new Date().toDateString()}`,
+              title: "Subscription Ending",
+              message: `${m.name}'s payment will be expired on ${new Date(m.subscriptionEnd).toLocaleDateString()}`,
+              variant: "warning",
+              meta: { memberId: m._id },
+            });
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch expiring members:", err);
+      }
+    }
+
+    fetchExpiring();
+    // Re-check every hour to keep it fresh
+    const interval = setInterval(fetchExpiring, 1000 * 60 * 60);
+    return () => clearInterval(interval);
   }, [push]);
 
   const unreadCount = useMemo(

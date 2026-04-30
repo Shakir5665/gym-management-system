@@ -193,14 +193,14 @@ export default function DashboardPage() {
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           <button
             type="button"
-            onClick={() => navigate("/app/members/at-risk")}
+            onClick={() => navigate("/app/members/churn-watchlist")}
             className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition"
           >
             <div className="text-xs font-semibold text-[color:var(--muted)]">
-              At-risk members
+              Churn Probability (High)
             </div>
             <div className="mt-2 text-2xl font-black text-[color:var(--text)]">
-              {summary?.alerts?.atRiskCount ?? 0}
+              {summary?.alerts?.highChurnCount ?? 0}
             </div>
           </button>
           <button

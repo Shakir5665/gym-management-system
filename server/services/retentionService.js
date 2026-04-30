@@ -1,6 +1,6 @@
 import Attendance from "../models/Attendance.js";
 
-export const getUserRisk = async (memberId, gymId) => {
+export const getChurnProbability = async (memberId, gymId) => {
   const query = gymId ? { memberId, gymId } : { memberId };
   const last = await Attendance.findOne(query).sort({ checkInTime: -1 });
 

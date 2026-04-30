@@ -20,7 +20,8 @@ const memberSchema = new mongoose.Schema({
   subscriptionEnd: Date,
   qrCode: String,
   gymId: { type: mongoose.Schema.Types.ObjectId, ref: "Gym" },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  lastChurnEmailSent: Date,
 
 });
 

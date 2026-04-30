@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
@@ -14,7 +15,15 @@ const variantToBadge = {
 
 export default function NotificationsPage() {
   const { items, unreadCount, markAllRead, clear, markRead } = useNotifications();
+  const navigate = useNavigate();
   const rows = useMemo(() => items, [items]);
+
+  const handleItemClick = (n) => {
+    markRead(n.id);
+    if (n.meta?.memberId) {
+      navigate(`/app/member/${n.meta.memberId}`);
+    }
+  };
 
   return (
     <div className="grid gap-4 md:gap-6">
@@ -23,7 +32,7 @@ export default function NotificationsPage() {
           <div>
             <div className="text-sm font-bold text-[color:var(--text)]">Notifications</div>
             <div className="mt-0.5 text-xs text-[color:var(--muted)]">
-              Live updates from attendance and gamification events.
+              Live updates from attendance, gamification, and subscription reminders.
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
@@ -53,7 +62,7 @@ export default function NotificationsPage() {
             <button
               key={n.id}
               type="button"
-              onClick={() => markRead(n.id)}
+              onClick={() => handleItemClick(n)}
               className="text-left glass p-4 transition hover:bg-[color:var(--control-bg)] hover:border-[color:var(--glass-border-strong)] focus:outline-none focus-visible:focus-ring"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">

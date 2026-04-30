@@ -4,7 +4,7 @@ import { socket } from "../socket";
 
 export default function Dashboard({ memberId }) {
   const [game, setGame] = useState({});
-  const [risk, setRisk] = useState("");
+  const [churnProb, setChurnProb] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -15,11 +15,11 @@ export default function Dashboard({ memberId }) {
 
       const [gRes, rRes] = await Promise.all([
         API.get(`/gamification/${memberId}`),
-        API.get(`/retention/${memberId}`),
+        API.get(`/churn/${memberId}`),
       ]);
 
       setGame(gRes.data || {});
-      setRisk(rRes.data.risk || "");
+      setChurnProb(rRes.data.probability || "");
     } catch {
       setError("Failed to load dashboard data");
     } finally {
@@ -68,8 +68,8 @@ export default function Dashboard({ memberId }) {
     );
   }
 
-  const getRiskColor = (riskLevel) => {
-    switch (riskLevel) {
+  const getChurnColor = (prob) => {
+    switch (prob) {
       case "HIGH":
         return "text-red-400 bg-red-500/10 border-red-500/30";
       case "MEDIUM":
@@ -115,17 +115,17 @@ export default function Dashboard({ memberId }) {
           </p>
         </div>
 
-        {/* Risk Level Card */}
+        {/* Churn Probability Card */}
         <div
-          className={`bg-gradient-to-br p-6 rounded-xl border shadow-lg ${getRiskColor(risk)}`}
+          className={`bg-gradient-to-br p-6 rounded-xl border shadow-lg ${getChurnColor(churnProb)}`}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Risk Level</p>
-              <h2 className="text-4xl font-bold mt-2">{risk || "N/A"}</h2>
+              <p className="text-sm font-medium">Churn Probability</p>
+              <h2 className="text-4xl font-bold mt-2">{churnProb || "N/A"}</h2>
             </div>
             <div className="text-5xl">
-              {risk === "HIGH" ? "⚠️" : risk === "MEDIUM" ? "⏱️" : "✅"}
+              {churnProb === "HIGH" ? "⚠️" : churnProb === "MEDIUM" ? "⏱️" : "✅"}
             </div>
           </div>
           <p className="text-xs mt-3 opacity-70">Member retention status</p>

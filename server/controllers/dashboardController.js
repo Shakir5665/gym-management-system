@@ -2,7 +2,7 @@ import Attendance from "../models/Attendance.js";
 import Member from "../models/Member.js";
 import Payment from "../models/Payment.js";
 import Gamification from "../models/Gamification.js";
-import { getUserRisk } from "../services/retentionService.js";
+import { getChurnProbability } from "../services/retentionService.js";
 import mongoose from "mongoose";
 
 function startOfDay(d) {
@@ -112,13 +112,13 @@ export async function getDashboardSummary(req, res) {
       getLastCheckinByMember(gymObjectId || gymId),
     ]);
 
-    const riskCounts = { LOW: 0, MEDIUM: 0, HIGH: 0 };
+    const probabilityCounts = { LOW: 0, MEDIUM: 0, HIGH: 0 };
     for (const r of lastCheckins) {
       const diffDays = Math.floor((now - new Date(r.lastCheckIn)) / (1000 * 60 * 60 * 24));
-      const risk = diffDays > 10 ? "HIGH" : diffDays >= 5 ? "MEDIUM" : "LOW";
-      riskCounts[risk] += 1;
+      const prob = diffDays > 10 ? "HIGH" : diffDays >= 5 ? "MEDIUM" : "LOW";
+      probabilityCounts[prob] += 1;
     }
-    const atRiskCount = riskCounts.HIGH + Math.max(0, totalMembers - lastCheckins.length);
+    const highChurnCount = probabilityCounts.HIGH + Math.max(0, totalMembers - lastCheckins.length);
 
     res.json({
       activeNow,
@@ -127,7 +127,7 @@ export async function getDashboardSummary(req, res) {
       todayCheckins,
       revenueThisMonth: monthRevenue,
       alerts: {
-        atRiskCount,
+        highChurnCount,
         paymentsDueCount,
         newMembersCount,
       },
@@ -179,7 +179,7 @@ export async function getCheckinTrend(req, res) {
   }
 }
 
-export async function getRiskDistribution(req, res) {
+export async function getChurnDistribution(req, res) {
   try {
     const { gymId, gymObjectId } = resolveGymIds(req.user?.gymId);
     if (!gymId) return res.status(403).json({ message: "You must create a gym first" });
@@ -191,8 +191,8 @@ export async function getRiskDistribution(req, res) {
     const counts = { LOW: 0, MEDIUM: 0, HIGH: 0 };
     for (const r of last) {
       const diffDays = Math.floor((now - new Date(r.lastCheckIn)) / (1000 * 60 * 60 * 24));
-      const risk = diffDays > 10 ? "HIGH" : diffDays >= 5 ? "MEDIUM" : "LOW";
-      counts[risk] += 1;
+      const prob = diffDays > 10 ? "HIGH" : diffDays >= 5 ? "MEDIUM" : "LOW";
+      counts[prob] += 1;
     }
     counts.HIGH += Math.max(0, totalMembersCount - last.length);
     const total = Math.max(1, counts.LOW + counts.MEDIUM + counts.HIGH);
@@ -248,24 +248,24 @@ export async function getDashboardLists(req, res) {
       .filter(Boolean)
       .slice(0, limit);
 
-    // At-risk: highest days-since-checkin (fallback to HIGH via retentionService if no attendance)
-    const withRisk = await Promise.all(
+    // High Churn Probability: highest days-since-checkin (fallback to HIGH via retentionService if no attendance)
+    const withProb = await Promise.all(
       members.map(async (m) => {
         const last = lastMap.get(String(m._id));
         const diffDays = last ? Math.floor((now - new Date(last)) / (1000 * 60 * 60 * 24)) : null;
-        const risk = diffDays == null ? await getUserRisk(m._id, gymId) : diffDays > 10 ? "HIGH" : diffDays >= 5 ? "MEDIUM" : "LOW";
-        return { memberId: String(m._id), name: m.name, phone: m.phone, risk, diffDays: diffDays ?? 9999 };
+        const prob = diffDays == null ? await getChurnProbability(m._id, gymId) : diffDays > 10 ? "HIGH" : diffDays >= 5 ? "MEDIUM" : "LOW";
+        return { memberId: String(m._id), name: m.name, phone: m.phone, probability: prob, diffDays: diffDays ?? 9999 };
       }),
     );
 
-    const atRiskMembers = withRisk
-      .filter((x) => x.risk === "HIGH")
+    const highChurnMembers = withProb
+      .filter((x) => x.probability === "HIGH")
       .sort((a, b) => b.diffDays - a.diffDays)
       .slice(0, limit);
 
     res.json({
       topMembers,
-      atRiskMembers,
+      highChurnMembers,
       paymentsDueMembers: dueMembers.map((m) => ({
         memberId: String(m._id),
         name: m.name,

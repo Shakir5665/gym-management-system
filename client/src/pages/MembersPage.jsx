@@ -115,8 +115,8 @@ export default function MembersPage() {
       const all = Array.isArray(membersRes.data) ? membersRes.data : [];
       const lists = listsRes.data || {};
 
-      const riskSet = new Set(
-        (lists.atRiskMembers || []).map((x) => String(x.memberId)),
+      const probabilitySet = new Set(
+        (lists.highChurnMembers || []).map((x) => String(x.memberId)),
       );
       const dueSet = new Set(
         (lists.paymentsDueMembers || []).map((x) => String(x.memberId)),
@@ -172,7 +172,7 @@ export default function MembersPage() {
 
       const matchesMemberType = memberType === "ALL" || category === memberType;
 
-      if (view === "atrisk") {
+      if (view === "churn") {
         return matchesQuery && matchesMemberType && (m?.isBanned || m?.hasFine);
       }
       if (view === "paymentsdue") {
@@ -250,12 +250,12 @@ export default function MembersPage() {
         </button>
         <button
           type="button"
-          onClick={() => navigate("/app/members/at-risk")}
+          onClick={() => navigate("/app/members/churn-watchlist")}
           className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition flex items-center justify-between"
         >
           <div>
             <div className="text-xs font-semibold text-[color:var(--muted)]">
-              At-risk members
+              Churn Probability (High)
             </div>
             <div className="mt-1 text-sm font-bold text-[color:var(--text)]">
               Low activity members
