@@ -378,7 +378,7 @@ export default function MemberProfilePage() {
               </button>
             ) : null}
             <div className="flex flex-row flex-wrap items-center justify-start sm:justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-              <Button variant="danger" onClick={() => member?.isBanned ? handleUnban() : setBanOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all">
+              <Button variant="warning" onClick={() => member?.isBanned ? handleUnban() : setBanOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all">
                 {member?.isBanned ? <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> : <Ban className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />}
                 <span className="text-[11px] sm:text-sm font-semibold">{member?.isBanned ? "Unban" : "Ban"}</span>
               </Button>
@@ -386,7 +386,7 @@ export default function MemberProfilePage() {
                 {member?.hasFine ? <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> : <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />}
                 <span className="text-[11px] sm:text-sm font-semibold">{member?.hasFine ? "Unfine" : "Fine"}</span>
               </Button>
-              <Button variant="solid" onClick={() => setEditOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all">
+              <Button variant="brand" onClick={() => setEditOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all">
                 <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                 <span className="text-[11px] sm:text-sm font-semibold">Edit</span>
               </Button>
