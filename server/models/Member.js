@@ -22,6 +22,7 @@ const memberSchema = new mongoose.Schema({
   gymId: { type: mongoose.Schema.Types.ObjectId, ref: "Gym" },
   createdAt: { type: Date, default: Date.now },
   lastChurnEmailSent: Date,
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
 });
 

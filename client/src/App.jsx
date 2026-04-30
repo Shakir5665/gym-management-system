@@ -15,11 +15,17 @@ import AccountingPage from "./pages/AccountingPage";
 import ProfilePage from "./pages/ProfilePage";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperRoute from "./components/SuperRoute";
+import PortalRoute from "./components/PortalRoute";
+import MemberShell from "./components/layout/MemberShell";
+import MemberDashboard from "./pages/portal/MemberDashboard";
+import MemberProfile from "./pages/portal/MemberProfile";
+import MemberPayments from "./pages/portal/MemberPayments";
+import MemberAttendance from "./pages/portal/MemberAttendance";
 import DeactivatedNotice from "./components/ui/DeactivatedNotice";
 
 function App() {
   // ✅ Hooks must be inside component
-  const { token, loading, isDeactivated } = useAuth();
+  const { token, role, loading, isDeactivated } = useAuth();
 
   // 🔥 Show Deactivated Notice if account is locked
   if (isDeactivated) {
@@ -42,7 +48,13 @@ function App() {
     <Routes>
       <Route
         path="/"
-        element={token ? <Navigate to="/app/dashboard" replace /> : <Landing />}
+        element={
+          token 
+            ? role === "MEMBER" 
+              ? <Navigate to="/portal/dashboard" replace /> 
+              : <Navigate to="/app/dashboard" replace /> 
+            : <Landing />
+        }
       />
 
       <Route
@@ -72,6 +84,21 @@ function App() {
             </SuperRoute>
           } 
         />
+      </Route>
+
+      <Route
+        path="/portal"
+        element={
+          <PortalRoute>
+            <MemberShell />
+          </PortalRoute>
+        }
+      >
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<MemberDashboard />} />
+        <Route path="profile" element={<MemberProfile />} />
+        <Route path="payments" element={<MemberPayments />} />
+        <Route path="attendance" element={<MemberAttendance />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -35,7 +35,7 @@ export default function Landing() {
               </div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
                 {mode === "login"
-                  ? "Sign in to manage your gym in seconds."
+                  ? "Sign in to access your portal."
                   : mode === "forgot-password"
                   ? "Recover access to your account securely."
                   : "Set up your gym and start tracking members."}

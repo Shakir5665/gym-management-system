@@ -1,6 +1,8 @@
 import Member from "../models/Member.js";
 import Payment from "../models/Payment.js";
 import Gym from "../models/Gym.js";
+import User from "../models/User.js";
+import bcrypt from "bcryptjs";
 import QRCode from "qrcode";
 import { sendPaymentReminder } from "../services/mailService.js";
 
@@ -261,6 +263,55 @@ export const sendMemberReminder = async (req, res) => {
     });
 
     res.json({ message: "Reminder sent successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const setMemberCredentials = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email, password } = req.body;
+    const gymId = req.user.gymId;
+
+    if (!gymId) return res.status(403).json({ message: "Gym not identified" });
+    if (!email || !password) return res.status(400).json({ message: "Email and password are required" });
+
+    const member = await Member.findOne({ _id: id, gymId });
+    if (!member) return res.status(404).json({ message: "Member not found" });
+
+    // 1. Check if user already exists
+    let user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (user && user.role !== "MEMBER") {
+      return res.status(400).json({ message: "This email is already associated with an Admin account" });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    if (user) {
+      // Update existing user
+      user.password = hashed;
+      user.name = member.fullLegalName || member.name;
+      user.gymId = gymId;
+      await user.save();
+    } else {
+      // Create new member user
+      user = await User.create({
+        name: member.fullLegalName || member.name,
+        email: email.toLowerCase(),
+        password: hashed,
+        role: "MEMBER",
+        gymId: gymId
+      });
+    }
+
+    // Link member record if not already linked
+    member.userId = user._id;
+    member.email = email.toLowerCase(); // Ensure member record has the same email
+    await member.save();
+
+    res.json({ message: "Member portal credentials set successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

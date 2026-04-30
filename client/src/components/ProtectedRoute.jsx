@@ -3,7 +3,7 @@ import SetupGym from "../pages/SetupGym";
 import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({ children }) {
-  const { token, hasGym, loading } = useAuth();
+  const { token, hasGym, role, loading } = useAuth();
 
   if (loading) {
     return (
@@ -18,7 +18,7 @@ export default function ProtectedRoute({ children }) {
 
   if (!token) return <Navigate to="/" replace />;
 
-  if (!hasGym) return <SetupGym />;
+  if (!hasGym && role !== "MEMBER" && role !== "SUPER_ADMIN") return <SetupGym />;
 
   return children;
 }

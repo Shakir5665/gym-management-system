@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   googleId: String,
   provider: { type: String, default: "local" },
   gymId: { type: mongoose.Schema.Types.ObjectId, ref: "Gym" },
-  role: { type: String, enum: ["ADMIN", "SUPER_ADMIN"], default: "ADMIN" },
+  role: { type: String, enum: ["ADMIN", "SUPER_ADMIN", "MEMBER"], default: "ADMIN" },
   resetPasswordOtp: String,
   resetPasswordExpires: Date
 });

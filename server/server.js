@@ -16,6 +16,7 @@ import retentionRoutes from "./routes/retentionRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import accountingRoutes from "./routes/accountingRoutes.js";
 import superRoutes from "./routes/superRoutes.js";
+import memberPortalRoutes from "./routes/memberPortalRoutes.js";
 import { initAutomation } from "./services/automationService.js";
 
 
@@ -69,6 +70,7 @@ app.use("/api/churn", retentionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/accounting", accountingRoutes);
 app.use("/api/super", superRoutes);
+app.use("/api/portal", memberPortalRoutes);
 
 // 🔹 Error handler
 app.use(errorHandler);

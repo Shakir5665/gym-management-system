@@ -10,6 +10,7 @@ import {
   unfineMember,
   getExpiringMembers,
   sendMemberReminder,
+  setMemberCredentials,
 } from "../controllers/memberController.js";
 import auth from "../middleware/auth.js";
 import { getMemberActivity } from "../controllers/memberInsightsController.js";
@@ -26,6 +27,7 @@ router.put("/:id/ban", auth, banMember);
 router.put("/:id/unban", auth, unbanMember);
 router.put("/:id/fine", auth, fineMember);
 router.put("/:id/unfine", auth, unfineMember);
+router.post("/:id/credentials", auth, setMemberCredentials);
 router.get("/:id/activity", auth, getMemberActivity);
 
 export default router;

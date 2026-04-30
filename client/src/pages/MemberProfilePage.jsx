@@ -9,7 +9,7 @@ import Input from "../components/ui/Input";
 import Modal from "../components/ui/Modal";
 import Select from "../components/ui/Select";
 import AreaSpark from "../components/charts/AreaSpark";
-import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning, Ban, ShieldCheck, Receipt, CheckCircle, Edit3, Download, Mail } from "lucide-react";
+import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning, Ban, ShieldCheck, Receipt, CheckCircle, Edit3, Download, Mail, Lock } from "lucide-react";
 import QRCode from "qrcode";
 import { socket } from "../socket";
 
@@ -60,6 +60,10 @@ export default function MemberProfilePage() {
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
   const [reminderSuccess, setReminderSuccess] = useState("");
+
+  const [portalOpen, setPortalOpen] = useState(false);
+  const [portalForm, setPortalForm] = useState({ email: "", password: "" });
+  const [portalMessage, setPortalMessage] = useState("");
 
   const downloadQrCode = () => {
     if (!qrCodeUrl) return;
@@ -246,6 +250,26 @@ export default function MemberProfilePage() {
       setTimeout(() => setReminderSuccess(""), 5000);
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to send reminder");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSetPortal() {
+    if (!portalForm.email || !portalForm.password) {
+      setError("Email and password are required for portal access");
+      return;
+    }
+    try {
+      setSaving(true);
+      setError("");
+      await API.post(`/members/${id}/credentials`, portalForm);
+      setPortalMessage("Portal credentials updated successfully!");
+      setPortalOpen(false);
+      await fetchAll();
+      setTimeout(() => setPortalMessage(""), 5000);
+    } catch (e) {
+      setError(e?.response?.data?.message || "Failed to set portal credentials");
     } finally {
       setSaving(false);
     }
@@ -445,6 +469,34 @@ export default function MemberProfilePage() {
             </div>
           </div>
         </div>
+      </Card>
+
+      <Card className="p-5 md:p-6 border-brand-500/20 bg-brand-500/5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-brand-500 rounded-lg text-white">
+              <Lock className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-[color:var(--text)]">Portal Access</div>
+              <div className="text-xs text-[color:var(--muted)] mt-0.5">
+                {member?.userId ? "Member has active portal access" : "No portal account linked"}
+              </div>
+            </div>
+          </div>
+          <Button variant="brand" onClick={() => {
+            setPortalForm({ email: member?.email || "", password: "" });
+            setPortalOpen(true);
+          }}>
+            {member?.userId ? "Update Access" : "Enable Access"}
+          </Button>
+        </div>
+        {portalMessage && (
+          <div className="mt-3 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-600 text-xs font-bold flex items-center gap-2">
+            <CheckCircle className="h-4 w-4" />
+            {portalMessage}
+          </div>
+        )}
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -718,6 +770,36 @@ export default function MemberProfilePage() {
             <Button variant="brand" onClick={handleSendReminder} disabled={saving} className="gap-2">
               <Mail className="h-4 w-4" />
               {saving ? "Sending..." : "Confirm & Send"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={portalOpen} onClose={() => setPortalOpen(false)} title="Manage Portal Access">
+        <div className="grid gap-4">
+          <p className="text-xs text-[color:var(--muted)]">
+            Set the login credentials for <strong>{member?.fullLegalName || member?.name}</strong>. 
+            They will use these to log in to the Member Portal.
+          </p>
+          <Input 
+            label="Portal Email (Username)" 
+            value={portalForm.email} 
+            onChange={(e) => setPortalForm(p => ({ ...p, email: e.target.value }))}
+            placeholder="member@email.com"
+          />
+          <Input 
+            label="Portal Password" 
+            type="password"
+            value={portalForm.password} 
+            onChange={(e) => setPortalForm(p => ({ ...p, password: e.target.value }))}
+            placeholder="Minimum 8 characters"
+          />
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setPortalOpen(false)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button variant="brand" onClick={handleSetPortal} disabled={saving}>
+              {saving ? "Setting Access..." : "Save Credentials"}
             </Button>
           </div>
         </div>
