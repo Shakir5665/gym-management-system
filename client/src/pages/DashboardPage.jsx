@@ -5,7 +5,8 @@ import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
 import AreaSpark from "../components/charts/AreaSpark";
-import { Flame, TrendingUp, Users, Wallet } from "lucide-react";
+import { Flame, TrendingUp, Users, Wallet, Phone, Clock } from "lucide-react";
+import Modal from "../components/ui/Modal";
 import { socket } from "../socket";
 
 function formatMoneyLKR(amount) {
@@ -13,13 +14,15 @@ function formatMoneyLKR(amount) {
   return `${n.toLocaleString("en-LK", { maximumFractionDigits: 0 })} LKR`;
 }
 
-function StatCard({ icon: Icon, label, value, sub, className, iconColor }) {
+function StatCard({ icon: Icon, label, value, sub, className, iconColor, onClick }) {
   return (
     <Card
       className={
-        "p-5 md:p-6 border border-[color:var(--glass-border)] " +
+        "p-5 md:p-6 border border-[color:var(--glass-border)] transition-all " +
+        (onClick ? "cursor-pointer hover:border-[color:var(--brand)] hover:shadow-xl active:scale-[0.98] " : "") +
         (className || "")
       }
+      onClick={onClick}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -49,6 +52,23 @@ export default function DashboardPage() {
 
   const [summary, setSummary] = useState(null);
   const [trend, setTrend] = useState([]);
+
+  const [activeListOpen, setActiveListOpen] = useState(false);
+  const [activeMembers, setActiveMembers] = useState([]);
+  const [loadingActive, setLoadingActive] = useState(false);
+
+  async function loadActiveList() {
+    try {
+      setLoadingActive(true);
+      setActiveListOpen(true);
+      const res = await API.get("/dashboard/active-list");
+      setActiveMembers(res.data);
+    } catch (e) {
+      console.error("Failed to load active members", e);
+    } finally {
+      setLoadingActive(false);
+    }
+  }
 
   async function load(isInitial = false) {
     if (isInitial) setLoading(true);
@@ -158,6 +178,7 @@ export default function DashboardPage() {
           label="Active now"
           value={summary?.activeNow ?? 0}
           sub={`${changeLabel} vs yesterday`}
+          onClick={loadActiveList}
         />
         <StatCard
           icon={Users}
@@ -261,6 +282,64 @@ export default function DashboardPage() {
           ))}
         </div>
       </Card>
+
+      <Modal 
+        open={activeListOpen} 
+        onClose={() => setActiveListOpen(false)} 
+        title="Active Members Now"
+        className="max-w-md"
+      >
+        <div className="space-y-4">
+          {loadingActive ? (
+            <div className="py-12 text-center text-sm text-[color:var(--muted)] font-black uppercase tracking-[0.2em] animate-pulse">
+              Fetching active list...
+            </div>
+          ) : activeMembers.length === 0 ? (
+            <div className="py-12 text-center">
+              <div className="text-4xl mb-4">🏠</div>
+              <div className="text-sm font-bold text-[color:var(--text)]">Gym is empty</div>
+              <div className="text-xs text-[color:var(--muted)] mt-1">No members are currently checked in.</div>
+            </div>
+          ) : (
+            <div className="divide-y divide-[color:var(--glass-border)]">
+              {activeMembers.map((m) => (
+                <div key={m.attendanceId} className="py-4 first:pt-0 last:pb-0 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-[color:var(--brand)] overflow-hidden shadow-lg shrink-0 flex items-center justify-center font-black text-white">
+                    {m.profilePicture ? (
+                      <img src={m.profilePicture} alt={m.name} className="h-full w-full object-cover" />
+                    ) : (
+                      m.name.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-black text-[color:var(--text)] truncate">
+                      {m.name}
+                    </div>
+                    <div className="flex flex-col gap-1 mt-1">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-[color:var(--muted)] uppercase tracking-wider">
+                        <Clock className="h-3 w-3" />
+                        In at {new Date(m.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-[color:var(--subtle)]">
+                        <Phone className="h-3 w-3" />
+                        {m.phone}
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => navigate(`/app/member/${m.memberId}`)}
+                    className="shrink-0 text-xs px-3 py-1.5"
+                  >
+                    View
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

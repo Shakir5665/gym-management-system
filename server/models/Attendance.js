@@ -2,8 +2,8 @@
 import mongoose from "mongoose";
 
 const schema = new mongoose.Schema({
-  memberId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  gymId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  memberId: { type: mongoose.Schema.Types.ObjectId, ref: "Member", required: true },
+  gymId: { type: mongoose.Schema.Types.ObjectId, ref: "Gym", required: true },
   status: String,
   reason: String,
   checkInTime: { type: Date, default: Date.now },

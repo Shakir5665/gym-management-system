@@ -68,7 +68,7 @@ export default function MemberAttendance() {
                 </div>
                 <div>
                   <div className="font-bold text-sm text-[color:var(--text)]">
-                    {new Date(log.checkInTime || log.createdAt).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                    {new Date(log.checkInTime || log.createdAt).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                   </div>
                   <div className="text-[10px] text-[color:var(--muted)] font-bold uppercase tracking-wider mt-0.5">
                     Check-in at {new Date(log.checkInTime || log.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}

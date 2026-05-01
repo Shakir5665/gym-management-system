@@ -120,7 +120,7 @@ export default function MemberShell() {
 
         {/* 📱 MOBILE BOTTOM SHEET DRAWER */}
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-[60] lg:hidden">
+          <div className="fixed inset-0 z-[110] lg:hidden">
             {/* Backdrop */}
             <div
               className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -158,7 +158,7 @@ export default function MemberShell() {
               </div>
 
               {/* Nav Items */}
-              <nav className="px-5 space-y-2 flex-1">
+              <nav className="px-5 space-y-2 flex-1 overflow-y-auto">
                 {navItems.map((item) => {
                   const isActive = location.pathname.startsWith(item.path);
                   return (
@@ -186,7 +186,7 @@ export default function MemberShell() {
               </nav>
 
               {/* Logout */}
-              <div className="mx-5 mt-4 mb-10 pt-4 border-t border-white/[0.06]">
+              <div className="mx-5 mt-4 mb-24 pt-4 border-t border-white/[0.06]">
                 <button
                   onClick={logout}
                   className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-red-400 bg-red-500/[0.06] hover:bg-red-500/10 transition-all duration-200 active:scale-[0.98] font-black text-sm"

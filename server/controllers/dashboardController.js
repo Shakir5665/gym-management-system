@@ -309,3 +309,38 @@ export async function getDashboardLists(req, res) {
   }
 }
 
+export async function getActiveMembersList(req, res) {
+  try {
+    const { gymId, gymObjectId } = resolveGymIds(req.user?.gymId);
+    if (!gymId) return res.status(403).json({ message: "You must create a gym first" });
+
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const tomorrowStart = addDays(todayStart, 1);
+
+    const activeAttendances = await Attendance.find({
+      gymId: gymObjectId || gymId,
+      status: "SUCCESS",
+      checkInTime: { $gte: todayStart, $lt: tomorrowStart },
+      checkOutTime: null
+    }).populate("memberId", "name phone profilePicture fullLegalName email").lean();
+
+    const list = activeAttendances.map(a => {
+      const m = a.memberId;
+      return {
+        attendanceId: a._id,
+        memberId: m?._id,
+        name: m ? (m.fullLegalName || m.name || "Unnamed Member") : "Unknown Member",
+        phone: m?.phone || "N/A",
+        email: m?.email || "N/A",
+        profilePicture: m?.profilePicture,
+        checkInTime: a.checkInTime
+      };
+    });
+
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
