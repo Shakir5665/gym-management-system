@@ -105,7 +105,6 @@ export default function MemberShell() {
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-black truncate">{user?.name}</div>
-                <div className="text-[10px] text-white/30 truncate uppercase font-black tracking-widest">Elite Member</div>
               </div>
             </div>
             <Button
@@ -155,7 +154,6 @@ export default function MemberShell() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-black text-white truncate">{user?.name}</div>
-                  <div className="text-[10px] text-white/30 uppercase font-bold tracking-widest mt-0.5">Elite Member</div>
                 </div>
               </div>
 
@@ -170,11 +168,10 @@ export default function MemberShell() {
                         navigate(item.path);
                         setIsMobileMenuOpen(false);
                       }}
-                      className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all duration-200 active:scale-[0.98] ${
-                        isActive
+                      className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all duration-200 active:scale-[0.98] ${isActive
                           ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30"
                           : "text-white/40 bg-white/[0.03] hover:bg-white/[0.06] hover:text-white/70"
-                      }`}
+                        }`}
                     >
                       <div className={`transition-transform duration-200 ${isActive ? "scale-110" : ""}`}>
                         <item.icon className="h-5 w-5" />

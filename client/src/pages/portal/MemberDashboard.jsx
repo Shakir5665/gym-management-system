@@ -182,7 +182,7 @@ export default function MemberDashboard() {
                   <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
                     <div className="text-[10px] font-bold text-red-500/60 uppercase tracking-widest mb-1">Ban Period</div>
                     <div className="text-red-300 text-sm font-semibold">
-                      {new Date(member.banFrom).toLocaleDateString()} 
+                      {new Date(member.banFrom).toLocaleDateString()}
                       {member.banTo ? ` → ${new Date(member.banTo).toLocaleDateString()}` : ' → Indefinite'}
                     </div>
                   </div>
@@ -264,7 +264,7 @@ export default function MemberDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
         <div className="space-y-1">
           <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
-            Welcome, {member.name.split(' ')[0]}
+            Welcome, {member.name}
           </h1>
           <p className="text-white/40 text-sm md:text-lg font-medium">
             Manage your session at <span className="text-white font-black tracking-tight text-lg md:text-xl">{member.gymId?.name}</span>
@@ -390,8 +390,8 @@ export default function MemberDashboard() {
             member.isBanned
               ? <ShieldAlert className="h-4 w-4 text-red-500" />
               : member.hasFine
-              ? <ShieldAlert className="h-4 w-4 text-yellow-500" />
-              : <Activity className="h-4 w-4 text-green-500" />
+                ? <ShieldAlert className="h-4 w-4 text-yellow-500" />
+                : <Activity className="h-4 w-4 text-green-500" />
           }
         />
       </div>
@@ -406,34 +406,31 @@ export default function MemberDashboard() {
           <div className="rounded-3xl border border-white/5 bg-black/40 overflow-hidden shadow-2xl">
             <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
               {lbLoading ? (
-                <div className="p-20 text-center text-white/10 font-black text-sm uppercase tracking-[0.3em]">Calibrating Elite...</div>
+                <div className="p-20 text-center text-white/10 font-black text-sm uppercase tracking-[0.3em]">Calibrating</div>
               ) : leaderboard.length > 0 ? (
                 <div className="divide-y divide-white/5">
                   {leaderboard.map((m, idx) => (
-                    <div 
-                      key={m._id} 
-                      className={`flex items-center justify-between p-6 ${
-                        m.memberId === member._id ? 'bg-brand-500/[0.03]' : ''
-                      }`}
+                    <div
+                      key={m._id}
+                      className={`flex items-center justify-between p-6 ${m.memberId === member._id ? 'bg-brand-500/[0.03]' : ''
+                        }`}
                     >
                       <div className="flex items-center gap-5">
                         {/* 🎖️ RANKING BADGE */}
-                        <div className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center font-black text-sm shadow-lg ${
-                          idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-black' :
-                          idx === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-black' :
-                          idx === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-700 text-black' :
-                          'bg-white/5 text-white/30 border border-white/5'
-                        }`}>
+                        <div className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center font-black text-sm shadow-lg ${idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-black' :
+                            idx === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-black' :
+                              idx === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-700 text-black' :
+                                'bg-white/5 text-white/30 border border-white/5'
+                          }`}>
                           {idx + 1}
                         </div>
 
                         {/* 👤 AVATAR & NAME */}
                         <div className="flex items-center gap-3">
-                          <div className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-black border-2 ${
-                            idx === 0 ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500' :
-                            m.memberId === member._id ? 'border-brand-500/50 bg-brand-500/10 text-brand-500' :
-                            'border-white/10 bg-white/5 text-white/40'
-                          }`}>
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-black border-2 ${idx === 0 ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500' :
+                              m.memberId === member._id ? 'border-brand-500/50 bg-brand-500/10 text-brand-500' :
+                                'border-white/10 bg-white/5 text-white/40'
+                            }`}>
                             {m.name.slice(0, 1).toUpperCase()}
                           </div>
                           <div>
