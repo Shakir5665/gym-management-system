@@ -119,44 +119,93 @@ export default function MemberShell() {
           </div>
         </aside>
 
-        {/* 📱 MOBILE NAV OVERLAY */}
+        {/* 📱 MOBILE BOTTOM SHEET DRAWER */}
         {isMobileMenuOpen && (
           <div className="fixed inset-0 z-[60] lg:hidden">
-            <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setIsMobileMenuOpen(false)} />
-            <div className="absolute right-0 top-0 bottom-0 w-[85%] bg-[#0a0a0a] p-8 shadow-2xl animate-in slide-in-from-right duration-500">
-              <div className="flex justify-between items-center mb-12">
-                <img src={logo} alt="Logo" className="h-12 w-auto object-contain" />
-                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-white/40"><X className="h-8 w-8" /></button>
-              </div>
-              <nav className="space-y-4">
-                {navItems.map((item) => (
-                  <button
-                    key={item.path}
-                    onClick={() => {
-                      navigate(item.path);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-5 px-6 py-5 rounded-[2rem] font-black transition-all duration-300 ${location.pathname === item.path
-                      ? "bg-brand-500 text-white shadow-2xl shadow-brand-500/40"
-                      : "text-white/40 bg-white/5"
-                      }`}
-                  >
-                    <item.icon className="h-7 w-7" />
-                    <span className="text-lg">{item.label}</span>
-                  </button>
-                ))}
-              </nav>
-              <div className="absolute bottom-10 left-8 right-8 pt-8 border-t border-white/10">
-                <Button
-                  variant="ghost"
-                  onClick={logout}
-                  className="w-full justify-start gap-5 text-red-500 h-16 rounded-[2rem]"
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            {/* Right Side Drawer Panel */}
+            <div
+              className="absolute right-0 top-0 bottom-0 w-[82%] max-w-sm bg-[#0f0f0f] shadow-[−20px_0_60px_rgba(0,0,0,0.8)] border-l border-white/[0.06] flex flex-col"
+              style={{ animation: "slideRight 0.3s cubic-bezier(0.32,0.72,0,1)" }}
+            >
+              {/* Header with close button */}
+              <div className="flex items-center justify-between px-5 pt-6 pb-4">
+                <img src={logo} alt="Logo" className="h-10 w-auto object-contain" />
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="h-9 w-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center"
                 >
-                  <LogOut className="h-7 w-7" />
-                  <span className="text-lg font-black">Logout</span>
-                </Button>
+                  <X className="h-4 w-4 text-white/50" />
+                </button>
+              </div>
+
+              {/* Member Identity Card */}
+              <div className="mx-5 mt-2 mb-6 p-4 rounded-2xl bg-white/[0.04] border border-white/[0.07] flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-brand-500 overflow-hidden flex items-center justify-center font-black text-white text-lg shadow-lg shrink-0">
+                  {user?.profilePicture ? (
+                    <img src={user.profilePicture} alt="Profile" className="h-full w-full object-cover" />
+                  ) : (
+                    user?.name?.slice(0, 1).toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-black text-white truncate">{user?.name}</div>
+                  <div className="text-[10px] text-white/30 uppercase font-bold tracking-widest mt-0.5">Elite Member</div>
+                </div>
+              </div>
+
+              {/* Nav Items */}
+              <nav className="px-5 space-y-2 flex-1">
+                {navItems.map((item) => {
+                  const isActive = location.pathname.startsWith(item.path);
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => {
+                        navigate(item.path);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all duration-200 active:scale-[0.98] ${
+                        isActive
+                          ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30"
+                          : "text-white/40 bg-white/[0.03] hover:bg-white/[0.06] hover:text-white/70"
+                      }`}
+                    >
+                      <div className={`transition-transform duration-200 ${isActive ? "scale-110" : ""}`}>
+                        <item.icon className="h-5 w-5" />
+                      </div>
+                      <span className="font-black tracking-tight">{item.label}</span>
+                      {isActive && (
+                        <div className="ml-auto h-1.5 w-1.5 rounded-full bg-white/60" />
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+
+              {/* Logout */}
+              <div className="mx-5 mt-4 mb-10 pt-4 border-t border-white/[0.06]">
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-red-400 bg-red-500/[0.06] hover:bg-red-500/10 transition-all duration-200 active:scale-[0.98] font-black text-sm"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Sign Out</span>
+                </button>
               </div>
             </div>
+
+            <style>{`
+              @keyframes slideRight {
+                from { transform: translateX(100%); }
+                to { transform: translateX(0); }
+              }
+            `}</style>
           </div>
         )}
 
