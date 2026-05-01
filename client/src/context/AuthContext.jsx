@@ -163,6 +163,13 @@ export const AuthProvider = ({ children }) => {
     };
   }, [token]);
 
+  const updateUser = (newData) => {
+    if (newData) {
+      setUser(newData);
+      localStorage.setItem("user", JSON.stringify(newData));
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -178,6 +185,7 @@ export const AuthProvider = ({ children }) => {
         setGymLogo,
         login,
         logout,
+        updateUser,
         loading,
       }}
     >

@@ -11,6 +11,7 @@ import {
   getExpiringMembers,
   sendMemberReminder,
   setMemberCredentials,
+  getFullMemberProfile,
 } from "../controllers/memberController.js";
 import auth from "../middleware/auth.js";
 import { getMemberActivity } from "../controllers/memberInsightsController.js";
@@ -29,5 +30,6 @@ router.put("/:id/fine", auth, fineMember);
 router.put("/:id/unfine", auth, unfineMember);
 router.post("/:id/credentials", auth, setMemberCredentials);
 router.get("/:id/activity", auth, getMemberActivity);
+router.get("/:id/full-profile", auth, getFullMemberProfile);
 
 export default router;

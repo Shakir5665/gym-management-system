@@ -6,50 +6,80 @@ import Button from "../../components/ui/Button";
 import Select from "../../components/ui/Select";
 import { User, Phone, MapPin, ShieldAlert, Save, Lock } from "lucide-react";
 
+import { useAuth } from "../../context/AuthContext";
+
 export default function MemberProfile() {
+  const { user: authUser, updateUser } = useAuth();
   const [form, setForm] = useState({
-    name: "",
+    name: authUser?.name || "",
     phone: "",
     homeAddress: "",
     emergencyPhone: "",
     gender: "",
-    email: "",
-    password: ""
+    email: authUser?.email || "",
+    password: "",
+    profilePicture: authUser?.profilePicture || ""
   });
-  const [loading, setLoading] = useState(true);
+  // If we have authUser, we can show the UI immediately and just fetch details in BG
+  const [loading, setLoading] = useState(!authUser);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        setLoading(true);
-        const res = await API.get("/portal/profile");
+        const res = await API.get("/portal/me");
         const m = res.data.member;
-        setForm({
-          name: m.name || "",
+        setForm(prev => ({
+          ...prev,
+          name: m.name || prev.name,
           phone: m.phone || "",
           homeAddress: m.homeAddress || "",
           emergencyPhone: m.emergencyPhone || "",
           gender: m.gender || "",
-          email: m.email || "",
-          password: ""
-        });
+          email: m.email || prev.email,
+        }));
       } catch (err) {
-        setMessage({ type: "error", text: "Failed to load profile" });
+        if (!authUser) setMessage({ type: "error", text: "Failed to load profile" });
       } finally {
         setLoading(false);
       }
     };
     fetchProfile();
-  }, []);
+  }, [authUser]);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setMessage({ type: "error", text: "Image must be less than 2MB" });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm({ ...form, profilePicture: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
       setSaving(true);
       setMessage({ type: "", text: "" });
-      await API.put("/portal/profile", form);
+      const res = await API.put("/portal/profile", form);
+      
+      // Update global auth state so sidebar/topbar refresh immediately
+      if (updateUser) {
+        updateUser({ 
+          ...authUser, 
+          name: form.name, 
+          email: form.email, 
+          profilePicture: form.profilePicture 
+        });
+      }
+      
       setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (err) {
       setMessage({ type: "error", text: err.response?.data?.message || "Failed to update profile" });
@@ -58,22 +88,35 @@ export default function MemberProfile() {
     }
   };
 
-  if (loading) return <div className="p-10 text-center animate-pulse text-[color:var(--muted)] font-bold">Loading Profile...</div>;
+  if (loading) return <div className="p-10 text-center text-white/20 font-bold tracking-widest uppercase">Fetching Profile...</div>;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-3xl bg-brand-500 text-white flex items-center justify-center text-3xl font-black shadow-xl shadow-brand-500/20">
-          {form.name.slice(0, 1).toUpperCase()}
+      <div className="flex flex-col md:flex-row items-center gap-8 mb-8">
+        <div className="relative group">
+          <div className="h-28 w-28 rounded-full border-2 border-white/10 p-1 bg-[#0a0a0a] overflow-hidden">
+            {form.profilePicture ? (
+              <img src={form.profilePicture} alt="Profile" className="h-full w-full object-cover rounded-full" />
+            ) : (
+              <div className="h-full w-full rounded-full bg-brand-500 text-white flex items-center justify-center text-4xl font-black shadow-inner">
+                {form.name.slice(0, 1).toUpperCase()}
+              </div>
+            )}
+          </div>
+          <label className="absolute bottom-0 right-0 h-10 w-10 rounded-full bg-white text-black border-2 border-[#050505] flex items-center justify-center cursor-pointer shadow-xl">
+            <User className="h-5 w-5" />
+            <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+          </label>
         </div>
-        <div>
-          <h1 className="text-2xl font-black text-[color:var(--text)]">Edit Profile</h1>
-          <p className="text-sm text-[color:var(--muted)] font-medium">Keep your details up to date.</p>
+
+        <div className="text-center md:text-left">
+          <h1 className="text-3xl font-black text-white tracking-tight">Profile Settings</h1>
+          <p className="text-sm text-white/40 font-medium mt-1">Manage your identity and security.</p>
         </div>
       </div>
 
       {message.text && (
-        <div className={`p-4 rounded-2xl border flex items-center gap-3 text-sm font-bold animate-slide-in-top ${
+        <div className={`p-4 rounded-2xl border flex items-center gap-3 text-sm font-bold ${
           message.type === "success" 
             ? "bg-green-500/10 border-green-500/20 text-green-500" 
             : "bg-red-500/10 border-red-500/20 text-red-500"
@@ -83,7 +126,7 @@ export default function MemberProfile() {
         </div>
       )}
 
-      <Card className="p-6 md:p-8 border-[color:var(--control-border)]">
+      <Card className="p-6 md:p-8 border-white/5 bg-white/[0.02]">
         <form onSubmit={handleUpdate} className="grid gap-5">
           <Input 
             label="Full Name"
@@ -150,12 +193,12 @@ export default function MemberProfile() {
             </div>
           </div>
 
-          <div className="pt-4">
-            <Button type="submit" variant="primary" className="w-full gap-2" disabled={saving}>
+          <div className="pt-6 mb-10">
+            <Button type="submit" variant="primary" className="w-full gap-2 h-14 rounded-2xl shadow-2xl shadow-brand-500/20" disabled={saving}>
               {saving ? "Saving Changes..." : (
                 <>
-                  <Save className="h-4 w-4" />
-                  Update Profile
+                  <Save className="h-5 w-5" />
+                  <span className="font-black tracking-tight">Save Profile Changes</span>
                 </>
               )}
             </Button>

@@ -137,27 +137,34 @@ export async function getAccountingReport(req, res) {
 
     const { from, to } = parseDateRange(req);
 
-    const [gym, newMembers, revenueAgg, expensesAgg, expenseBreakdownAgg, avgPaymentAgg] =
+    const ninetyDaysAgo = new Date(now);
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const [gym, newMembers, revenueAgg, expensesAgg, expenseBreakdownAgg, avgPaymentAgg, activeMembersCount] =
       await Promise.all([
         Gym.findById(gymIdRaw).select("name").lean(),
-        Member.countDocuments({ gymId: gymIdRaw, createdAt: { $gte: from, $lte: to } }),
+        Member.countDocuments({ gymId: gymIdRaw, createdAt: { $gte: from, $lte: to } }).lean(),
         Payment.aggregate([
           { $match: { gymId, createdAt: { $gte: from, $lte: to } } },
           { $group: { _id: null, total: { $sum: "$amount" } } },
-        ]),
+        ]).exec(),
         Expense.aggregate([
           { $match: { gymId, spentAt: { $gte: from, $lte: to } } },
           { $group: { _id: null, total: { $sum: "$amount" } } },
-        ]),
+        ]).exec(),
         Expense.aggregate([
           { $match: { gymId, spentAt: { $gte: from, $lte: to } } },
           { $group: { _id: "$reason", amount: { $sum: "$amount" } } },
           { $sort: { amount: -1, _id: 1 } },
-        ]),
+        ]).exec(),
         Payment.aggregate([
-          { $match: { gymId } },
+          { $match: { gymId, createdAt: { $gte: ninetyDaysAgo } } },
           { $group: { _id: null, avgAmount: { $avg: "$amount" } } },
-        ]),
+        ]).exec(),
+        Member.countDocuments({
+          gymId: gymIdRaw,
+          isBanned: { $ne: true },
+        }).lean(),
       ]);
 
     const totalRevenue = money(revenueAgg?.[0]?.total || 0);
@@ -165,12 +172,6 @@ export async function getAccountingReport(req, res) {
     const netProfit = money(totalRevenue - totalExpenses);
 
     const avgMonthlyFee = Number(avgPaymentAgg?.[0]?.avgAmount || 0);
-    
-    // Calculate Monthly fees (month end) based on total active (non-banned) members
-    const activeMembersCount = await Member.countDocuments({
-      gymId: gymIdRaw,
-      isBanned: { $ne: true },
-    });
     const monthlyFeesMonthEnd = money(activeMembersCount * avgMonthlyFee);
 
     const expenseBreakdown = expenseBreakdownAgg.map((r) => ({

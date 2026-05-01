@@ -155,7 +155,7 @@ export default function Payments() {
             Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="h-14 rounded-xl bg-[color:var(--control-bg)] animate-pulse"
+                className="h-14 rounded-xl bg-white/5"
               />
             ))
           ) : reportError ? (

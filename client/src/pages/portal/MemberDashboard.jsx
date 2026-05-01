@@ -5,18 +5,19 @@ import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import { useAuth } from "../../context/AuthContext";
-import { 
-  Trophy, 
-  Activity, 
-  Calendar, 
-  ChevronRight, 
-  QrCode, 
+import {
+  Trophy,
+  Activity,
+  Calendar,
+  ChevronRight,
+  QrCode,
   Info,
   ShieldCheck,
   ShieldAlert,
   Flame,
   Star,
-  BarChart3
+  Bell,
+  X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../../socket";
@@ -29,18 +30,48 @@ export default function MemberDashboard() {
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
   const [lbLoading, setLbLoading] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [readNotifications, setReadNotifications] = useState(() => {
+    return JSON.parse(localStorage.getItem(`read_notifications_${user?.memberId}`) || "[]");
+  });
+  const notificationRef = useRef(null);
   const navigate = useNavigate();
 
   const fetchDashboard = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
+      console.time("Dashboard Fetch");
       const res = await API.get("/portal/profile");
+      console.timeEnd("Dashboard Fetch");
       setData(res.data);
     } catch (err) {
+      console.timeEnd("Dashboard Fetch");
       setError(err.response?.data?.message || "Failed to load dashboard");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Close panel on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Handle Mark as Read
+  const handleToggleNotifications = () => {
+    if (!showNotifications && data?.notifications) {
+      const ids = data.notifications.map(n => n.id);
+      const newRead = Array.from(new Set([...readNotifications, ...ids]));
+      setReadNotifications(newRead);
+      localStorage.setItem(`read_notifications_${user?.memberId}`, JSON.stringify(newRead));
+    }
+    setShowNotifications(!showNotifications);
   };
 
   const fetchLeaderboard = async () => {
@@ -59,19 +90,17 @@ export default function MemberDashboard() {
     fetchDashboard();
 
     // 🔌 Use Shared Socket
-    const onConnect = () => console.log("✅ Live Dashboard Connected");
+    const onConnect = () => { };
     const onAttendance = (payload) => {
       if (user?.memberId && payload.memberId === user.memberId) {
-        console.log("🔄 Live Update: Attendance recorded");
         fetchDashboard(true);
       }
     };
     const onGamification = (payload) => {
       if (user?.memberId && payload.memberId === user.memberId) {
-        console.log("🔄 Live Update: Gamification earned");
         fetchDashboard(true);
-        if (leaderboardOpen) fetchLeaderboard();
       }
+      if (leaderboardOpen) fetchLeaderboard();
     };
     // Global leaderboard update (optional: if someone else checksin, rank might change)
     const onGlobalGamification = () => {
@@ -89,7 +118,7 @@ export default function MemberDashboard() {
       socket.off("gamification:update", onGamification);
       socket.off("leaderboard:refresh", onGlobalGamification);
     };
-  }, [user?.memberId, leaderboardOpen]);
+  }, [user?.memberId]);
 
   useEffect(() => {
     if (leaderboardOpen) {
@@ -99,10 +128,10 @@ export default function MemberDashboard() {
 
   if (loading) {
     return (
-      <div className="grid gap-6 animate-pulse p-6">
-        <div className="h-40 bg-[color:var(--control-bg)] rounded-3xl" />
+      <div className="grid gap-6 p-6">
+        <div className="h-40 bg-white/5 rounded-3xl" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => <div key={i} className="h-28 bg-[color:var(--control-bg)] rounded-2xl" />)}
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-white/5 rounded-2xl" />)}
         </div>
       </div>
     );
@@ -117,231 +146,234 @@ export default function MemberDashboard() {
     );
   }
 
-  const { member, stats } = data;
-  const isExpired = new Date(member.subscriptionEnd) < new Date();
+  const { member, stats, notifications = [] } = data;
+
+  const hasUnread = notifications.some(n => !readNotifications.includes(n.id));
+  const isExpired = member.subscriptionEnd && new Date(member.subscriptionEnd) < new Date();
 
   return (
-    <div className="grid gap-6 p-4 md:p-6 pb-20 md:pb-6">
-      {/* 👋 WELCOME HEADER */}
-      <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
+    <div className="max-w-5xl mx-auto space-y-12">
+
+      {/* 🏛️ CLEAN HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black tracking-tight text-[color:var(--text)]">
-            Hey, {member.name.split(' ')[0]}! 👋
+          <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+            Welcome, {member.name.split(' ')[0]}
           </h1>
-          <p className="text-[color:var(--muted)] font-medium">
-            Ready for your session at <span className="text-brand-500">{member.gymId?.name}</span>?
+          <p className="text-white/40 text-sm md:text-lg font-medium">
+            Manage your session at <span className="text-white font-black tracking-tight text-lg md:text-xl">{member.gymId?.name}</span>
           </p>
         </div>
-        
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <Button 
-            variant="outline" 
-            className="flex-1 md:flex-none border-brand-500/20 text-brand-600 hover:bg-brand-500/5 gap-2"
-            onClick={() => setLeaderboardOpen(true)}
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleToggleNotifications}
+            className="relative h-12 w-12 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center"
           >
-            <Trophy className="h-4 w-4" /> Leaderboard
-          </Button>
-          <Badge 
-            variant={isExpired ? "danger" : "success"}
-            className="text-sm px-4 py-1.5 rounded-full"
+            <Bell className="h-5 w-5 text-white/50" />
+            {hasUnread && (
+              <span className="absolute top-3.5 right-3.5 h-2 w-2 bg-brand-500 rounded-full" />
+            )}
+          </button>
+
+          <button
+            onClick={() => {
+              setLeaderboardOpen(true);
+              fetchLeaderboard();
+            }}
+            className="h-12 px-6 rounded-xl bg-white text-black font-bold text-sm flex items-center gap-2"
           >
-            {isExpired ? "Expired" : "Active"}
-          </Badge>
+            <Trophy className="h-4 w-4" />
+            Leaderboard
+          </button>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* 🤳 QR ACCESS CARD */}
-        <Card className="lg:col-span-2 p-8 bg-gradient-to-br from-brand-500 to-brand-700 text-white border-none shadow-xl shadow-brand-500/20 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-500">
-            <QrCode size={200} />
-          </div>
-          
-          <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-            <div className="bg-white p-4 rounded-3xl shadow-2xl">
-              {member.qrCode ? (
-                <img src={member.qrCode} alt="Member QR" className="w-40 h-40 object-contain" />
-              ) : (
-                <div className="w-40 h-40 flex items-center justify-center bg-gray-100 text-gray-400 rounded-2xl">
-                  <QrCode size={48} />
-                </div>
-              )}
-            </div>
-            
-            <div className="text-center md:text-left space-y-4">
-              <div>
-                <h2 className="text-2xl font-black">Scan to Check-in</h2>
-                <p className="text-brand-100 text-sm mt-1">Show this at the reception scanner.</p>
-              </div>
-              <div className="flex flex-wrap justify-center md:justify-start gap-2">
-                <div className="px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-xl text-[10px] font-bold uppercase tracking-wider">
-                  Member ID: {member._id.slice(-6).toUpperCase()}
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* 🏆 STATUS & QUICK ACTIONS */}
-        <Card className="p-6 border-[color:var(--control-border)]">
-          <h3 className="font-bold text-[color:var(--text)] mb-4 flex items-center gap-2">
-            <Info className="h-4 w-4 text-brand-500" />
-            Membership Info
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-[color:var(--control-bg)]/50">
-              <span className="text-xs text-[color:var(--muted)] font-bold uppercase">Expires On</span>
-              <span className={`text-sm font-black ${isExpired ? "text-danger-500" : "text-[color:var(--text)]"}`}>
-                {new Date(member.subscriptionEnd).toLocaleDateString(undefined, { dateStyle: 'medium' })}
-              </span>
-            </div>
-            
-            <button 
-              onClick={() => navigate("/portal/profile")}
-              className="w-full flex items-center justify-between p-4 rounded-2xl bg-brand-500/5 hover:bg-brand-500/10 border border-brand-500/10 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-brand-500 text-white flex items-center justify-center">
-                  <Activity className="h-4 w-4" />
-                </div>
-                <span className="text-sm font-bold text-brand-600">My Profile</span>
-              </div>
-              <ChevronRight className="h-4 w-4 text-brand-500 group-hover:translate-x-1 transition-transform" />
+      {/* 📯 MINIMAL NOTIFICATION DRAWER */}
+      {showNotifications && (
+        <div
+          ref={notificationRef}
+          className="absolute top-24 right-4 md:right-2 w-[calc(100%-2rem)] md:w-80 bg-[#0f0f0f] p-5 z-[110] border border-white/10 shadow-2xl rounded-2xl"
+        >
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+            <h3 className="font-bold text-sm text-white/80">Notifications</h3>
+            <button onClick={() => setShowNotifications(false)} className="text-white/30 hover:text-white">
+              <X className="h-4 w-4" />
             </button>
           </div>
-        </Card>
-      </div>
 
-      {/* 📊 REAL-TIME STATS GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-        <StatCard 
-          icon={<Star className="text-yellow-500" />} 
-          label="Points" 
-          value={stats.points} 
-          sub="Loyalty"
-          highlight
-        />
-        <StatCard 
-          icon={<Flame className="text-orange-500" />} 
-          label="Streak" 
-          value={`${stats.streak} Days`} 
-          sub="Active"
-          highlight
-        />
-        <StatCard 
-          icon={<Calendar className="text-blue-500" />} 
-          label="Visits" 
-          value={stats.totalCheckins} 
-          sub="Total"
-        />
-        <StatCard 
-          icon={member.isBanned || member.hasFine ? <ShieldAlert className="text-red-500" /> : <ShieldCheck className="text-green-500" />} 
-          label="Status" 
-          value={member.isBanned ? "Banned" : member.hasFine ? "Fine" : "Good"} 
-          sub="Standing"
-        />
-      </div>
-
-      {/* 📈 ATTENDANCE TREND CHART */}
-      <Card className="p-6 border-[color:var(--control-border)]">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h3 className="font-bold text-[color:var(--text)] flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-brand-500" />
-              Attendance Trend
-            </h3>
-            <p className="text-[10px] text-[color:var(--muted)] uppercase font-bold mt-1 tracking-wider">Last 7 Days Activity</p>
-          </div>
-        </div>
-
-        <div className="h-40 flex items-end justify-between gap-2 px-2">
-          {stats.attendanceTrend.map((day, idx) => {
-            const visited = day.count > 0;
-            const dateLabel = new Date(day.date).toLocaleDateString(undefined, { weekday: 'short' });
-            
-            return (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-3 group relative">
-                <div 
-                  className={`w-full max-w-[40px] rounded-t-xl transition-all duration-700 ${
-                    visited 
-                      ? "bg-gradient-to-t from-brand-500 to-brand-400 opacity-90 shadow-lg shadow-brand-500/20" 
-                      : "bg-[color:var(--control-bg)] opacity-30"
-                  }`}
-                  style={{ height: visited ? "100%" : "12px" }}
-                />
-                <span className={`text-[10px] font-bold ${visited ? "text-brand-600" : "text-[color:var(--text)]"}`}>
-                  {dateLabel}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* 🏆 LEADERBOARD MODAL */}
-      <Modal 
-        open={leaderboardOpen} 
-        onClose={() => setLeaderboardOpen(false)} 
-        title="Gym Leaderboard"
-      >
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--bg2)]">
-            {lbLoading ? (
-              <div className="p-8 text-center animate-pulse text-[color:var(--muted)] text-sm">Ranking members...</div>
-            ) : leaderboard.length > 0 ? (
-              <div className="divide-y divide-[color:var(--control-border)]">
-                {leaderboard.map((m, i) => (
-                  <div key={i} className={`flex items-center justify-between p-4 ${m.memberId === member._id ? "bg-brand-500/5" : ""}`}>
-                    <div className="flex items-center gap-4">
-                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-black text-xs ${
-                        i === 0 ? "bg-yellow-500 text-white" : 
-                        i === 1 ? "bg-slate-400 text-white" :
-                        i === 2 ? "bg-orange-600 text-white" :
-                        "bg-[color:var(--control-bg)] text-[color:var(--muted)]"
-                      }`}>
-                        {i + 1}
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-[color:var(--text)] flex items-center gap-2">
-                          {m.name}
-                          {m.memberId === member._id && <Badge variant="primary" className="text-[9px] py-0 px-1">YOU</Badge>}
-                        </div>
-                        <div className="flex items-center gap-3 mt-0.5">
-                          <span className="text-[10px] text-[color:var(--muted)] flex items-center gap-1">
-                            <Flame className="h-3 w-3 text-orange-500" /> {m.streak} Day Streak
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-black text-brand-600">{m.points}</div>
-                      <div className="text-[9px] font-bold text-[color:var(--muted)] uppercase tracking-wider">Points</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+            {notifications.length === 0 ? (
+              <p className="py-8 text-center text-xs text-white/20 font-medium">No new alerts</p>
             ) : (
-              <div className="p-8 text-center text-[color:var(--muted)] text-sm font-medium">No activity yet. Be the first!</div>
+              notifications.map(n => (
+                <div key={n.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                  <div className={`text-[9px] font-bold uppercase tracking-widest mb-1 ${n.type === 'DANGER' ? 'text-red-500' : 'text-brand-500'}`}>
+                    {n.title}
+                  </div>
+                  <p className="text-xs text-white/50 leading-relaxed font-medium">{n.message}</p>
+                </div>
+              ))
             )}
           </div>
-          <Button variant="primary" className="w-full" onClick={() => setLeaderboardOpen(false)}>Close</Button>
+        </div>
+      )}
+
+      <div className="grid lg:grid-cols-12 gap-8">
+        {/* 🤳 THE ACCESS HUB */}
+        <div className="lg:col-span-7 p-8 md:p-12 bg-white/[0.02] border border-white/10 rounded-3xl flex flex-col md:flex-row items-center gap-10 md:gap-14 shadow-sm">
+          <div className="bg-white p-4 rounded-2xl shadow-2xl shrink-0">
+            {member.qrCode ? (
+              <img src={member.qrCode} alt="Member QR" className="w-40 h-40 md:w-48 md:h-48 object-contain" />
+            ) : (
+              <div className="w-40 h-40 md:w-48 md:h-48 flex items-center justify-center bg-gray-50 text-gray-300">
+                <QrCode size={48} />
+              </div>
+            )}
+          </div>
+
+          <div className="text-center md:text-left space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold text-white tracking-tight">Quick Access</h2>
+              <p className="text-white/40 text-sm leading-relaxed max-w-[240px]">
+                Scan this at the reception for instant entry.
+              </p>
+            </div>
+            <div className="inline-block px-4 py-2 bg-white/5 rounded-lg border border-white/5 text-[10px] font-bold text-white/60 tracking-widest uppercase">
+              ID: {member._id.slice(-6).toUpperCase()}
+            </div>
+          </div>
+        </div>
+
+        {/* 💳 MEMBERSHIP SUMMARY */}
+        <div className="lg:col-span-5 p-8 bg-white/[0.02] border border-white/10 rounded-3xl flex flex-col justify-between shadow-sm">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Membership</span>
+              <div className={`h-2 w-2 rounded-full ${isExpired ? 'bg-red-500' : 'bg-brand-500'}`} />
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-white/40 text-xs font-semibold">Valid Until</div>
+              <div className={`text-2xl font-bold tracking-tight ${isExpired ? "text-red-500" : "text-white"}`}>
+                {new Date(member.subscriptionEnd).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => navigate("/portal/profile")}
+            className="mt-8 w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 text-white/80 font-bold text-sm"
+          >
+            Manage Account
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* 📊 KEY STATS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <MetricCard label="Points" value={stats.points} sub="Loyalty" icon={<Star className="h-4 w-4 text-yellow-500" />} />
+        <MetricCard label="Streak" value={stats.streak} sub="Days" icon={<Flame className="h-4 w-4 text-orange-500" />} />
+        <MetricCard label="Visits" value={stats.totalCheckins} sub="Total" icon={<Calendar className="h-4 w-4 text-blue-500" />} />
+        <MetricCard
+          label="Status"
+          value={member.isBanned ? "Banned" : "Good"}
+          sub="Standing"
+          icon={member.isBanned ? <ShieldAlert className="h-4 w-4 text-red-500" /> : <Activity className="h-4 w-4 text-green-500" />}
+        />
+      </div>
+
+      {/* 🏆 LEADERBOARD MODAL */}
+      <Modal
+        open={leaderboardOpen}
+        onClose={() => setLeaderboardOpen(false)}
+        title="Leaderboard"
+      >
+        <div className="space-y-6 pt-4">
+          <div className="rounded-3xl border border-white/5 bg-black/40 overflow-hidden shadow-2xl">
+            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {lbLoading ? (
+                <div className="p-20 text-center text-white/10 font-black text-sm uppercase tracking-[0.3em]">Calibrating Elite...</div>
+              ) : leaderboard.length > 0 ? (
+                <div className="divide-y divide-white/5">
+                  {leaderboard.map((m, idx) => (
+                    <div 
+                      key={m._id} 
+                      className={`flex items-center justify-between p-6 ${
+                        m.memberId === member._id ? 'bg-brand-500/[0.03]' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-5">
+                        {/* 🎖️ RANKING BADGE */}
+                        <div className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center font-black text-sm shadow-lg ${
+                          idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-black' :
+                          idx === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-black' :
+                          idx === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-700 text-black' :
+                          'bg-white/5 text-white/30 border border-white/5'
+                        }`}>
+                          {idx + 1}
+                        </div>
+
+                        {/* 👤 AVATAR & NAME */}
+                        <div className="flex items-center gap-3">
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-black border-2 ${
+                            idx === 0 ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500' :
+                            m.memberId === member._id ? 'border-brand-500/50 bg-brand-500/10 text-brand-500' :
+                            'border-white/10 bg-white/5 text-white/40'
+                          }`}>
+                            {m.name.slice(0, 1).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="text-sm font-black text-white flex items-center gap-2">
+                              {m.name}
+                              {m.memberId === member._id && (
+                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-brand-500 text-white shadow-lg shadow-brand-500/20">
+                                  YOU
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <Flame className={`h-3 w-3 ${m.streak > 0 ? 'text-orange-500' : 'text-white/10'}`} />
+                              <span className="text-[10px] text-white/30 font-bold uppercase tracking-wider">{m.streak} Day Streak</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 💎 POINTS */}
+                      <div className="text-right">
+                        <div className="text-lg font-black text-brand-500 leading-none">{m.points}</div>
+                        <div className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] mt-1">Points</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-20 text-center text-white/10 text-xs font-black uppercase tracking-widest">Awaiting Champions</div>
+              )}
+            </div>
+          </div>
+          <button className="w-full h-12 rounded-xl bg-white text-black font-bold text-sm hover:bg-brand-500 hover:text-white transition-all" onClick={() => setLeaderboardOpen(false)}>
+            Close
+          </button>
         </div>
       </Modal>
     </div>
   );
 }
 
-function StatCard({ icon, label, value, sub, highlight }) {
+function MetricCard({ label, value, sub, icon }) {
   return (
-    <Card className={`p-5 flex flex-col gap-3 transition-all border-[color:var(--control-border)] ${highlight ? "bg-brand-500/[0.03] border-brand-500/10" : ""}`}>
-      <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${highlight ? "bg-white border-brand-500/20" : "bg-[color:var(--control-bg)] border-[color:var(--control-border)]"}`}>
+    <div className="p-6 bg-white/[0.02] border border-white/10 rounded-2xl space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">{label}</span>
         {icon}
       </div>
       <div>
-        <div className="text-[10px] font-bold text-[color:var(--muted)] uppercase tracking-wider">{label}</div>
-        <div className={`text-xl font-black mt-0.5 ${highlight ? "text-brand-600" : "text-[color:var(--text)]"}`}>{value}</div>
-        {sub && <div className="text-[10px] text-[color:var(--subtle)] mt-1">{sub}</div>}
+        <div className="text-2xl font-bold text-white tracking-tight">{value}</div>
+        <div className="text-[10px] text-white/30 font-semibold uppercase mt-0.5">{sub}</div>
       </div>
-    </Card>
+    </div>
   );
 }

@@ -107,31 +107,8 @@ export default function MembersPage() {
     try {
       setLoading(true);
       setError("");
-      const [membersRes, listsRes] = await Promise.all([
-        API.get("/members"),
-        API.get("/dashboard/lists?limit=50"),
-      ]);
-
-      const all = Array.isArray(membersRes.data) ? membersRes.data : [];
-      const lists = listsRes.data || {};
-
-      const probabilitySet = new Set(
-        (lists.highChurnMembers || []).map((x) => String(x.memberId)),
-      );
-      const dueSet = new Set(
-        (lists.paymentsDueMembers || []).map((x) => String(x.memberId)),
-      );
-      const newSet = new Set(
-        (lists.newMembers || []).map((x) => String(x.memberId)),
-      );
-
-      setMembers(
-        all.map((m) => ({
-          ...m,
-          paymentDue: dueSet.has(String(m._id)),
-          isNew: newSet.has(String(m._id)),
-        })),
-      );
+      const res = await API.get("/members");
+      setMembers(Array.isArray(res.data) ? res.data : []);
     } catch {
       setError("Failed to load members");
     } finally {
@@ -157,6 +134,12 @@ export default function MembersPage() {
   const filtered = useMemo(() => {
     const view = String(searchParams.get("view") || "");
     const q = query.trim().toLowerCase();
+    const now = new Date();
+    const soonDue = new Date();
+    soonDue.setDate(soonDue.getDate() + 3);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
     return members.filter((m) => {
       const name = String(m?.fullLegalName || m?.name || "").toLowerCase();
       const phone = String(m?.phone || "").toLowerCase();
@@ -168,7 +151,7 @@ export default function MembersPage() {
       let category = "ACTIVE";
       if (m?.isBanned) category = "BANNED";
       else if (m?.hasFine) category = "FINED";
-      else if (m?.subscriptionEnd && new Date(m.subscriptionEnd) < new Date()) category = "EXPIRED";
+      else if (m?.subscriptionEnd && new Date(m.subscriptionEnd) < now) category = "EXPIRED";
 
       const matchesMemberType = memberType === "ALL" || category === memberType;
 
@@ -176,10 +159,12 @@ export default function MembersPage() {
         return matchesQuery && matchesMemberType && (m?.isBanned || m?.hasFine);
       }
       if (view === "paymentsdue") {
-        return matchesQuery && matchesMemberType && Boolean(m?.paymentDue);
+        const isDue = m?.subscriptionEnd && new Date(m.subscriptionEnd) <= soonDue;
+        return matchesQuery && matchesMemberType && isDue;
       }
       if (view === "new") {
-        return matchesQuery && matchesMemberType && Boolean(m?.isNew);
+        const isNew = m?.createdAt && new Date(m.createdAt) >= sevenDaysAgo;
+        return matchesQuery && matchesMemberType && isNew;
       }
       return matchesQuery && matchesMemberType;
     });
@@ -234,7 +219,7 @@ export default function MembersPage() {
         <button
           type="button"
           onClick={() => navigate("/app/members/top")}
-          className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition flex items-center justify-between"
+          className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-4 py-3 flex items-center justify-between"
         >
           <div>
             <div className="text-xs font-semibold text-[color:var(--muted)]">
@@ -251,7 +236,7 @@ export default function MembersPage() {
         <button
           type="button"
           onClick={() => navigate("/app/members/churn-watchlist")}
-          className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition flex items-center justify-between"
+          className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-4 py-3 flex items-center justify-between"
         >
           <div>
             <div className="text-xs font-semibold text-[color:var(--muted)]">
@@ -337,7 +322,7 @@ export default function MembersPage() {
           Array.from({ length: 6 }).map((_, i) => (
             <Card
               key={i}
-              className="h-[170px] bg-[color:var(--control-bg)] animate-pulse"
+              className="h-[170px] bg-white/5"
             />
           ))
         ) : filtered.length === 0 ? (
@@ -351,10 +336,9 @@ export default function MembersPage() {
           </Card>
         ) : (
           filtered.map((m) => (
-            <button
-              type="button"
+            <div
               key={m._id}
-              className="text-left glass p-5 transition hover:bg-[color:var(--control-bg)] hover:border-[color:var(--glass-border-strong)] hover:-translate-y-[1px] focus:outline-none focus-visible:focus-ring"
+              className="text-left glass p-5 focus:outline-none focus-visible:focus-ring cursor-pointer"
               onClick={() => navigate(`/app/member/${m._id}`)}
             >
               <div className="flex items-start justify-between gap-3">
@@ -416,7 +400,7 @@ export default function MembersPage() {
                   </Button>
                 </div>
               </div>
-            </button>
+            </div>
           ))
         )}
       </div>

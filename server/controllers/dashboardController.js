@@ -265,15 +265,23 @@ export async function getDashboardLists(req, res) {
       .filter(Boolean)
       .slice(0, limit);
 
-    // High Churn Probability: highest days-since-checkin (fallback to HIGH via retentionService if no attendance)
-    const withProb = await Promise.all(
-      members.map(async (m) => {
-        const last = lastMap.get(String(m._id));
-        const diffDays = last ? Math.floor((now - new Date(last)) / (1000 * 60 * 60 * 24)) : null;
-        const prob = diffDays == null ? await getChurnProbability(m._id, gymId) : diffDays > 10 ? "HIGH" : diffDays >= 5 ? "MEDIUM" : "LOW";
-        return { memberId: String(m._id), name: m.name, phone: m.phone, probability: prob, diffDays: diffDays ?? 9999 };
-      }),
-    );
+    // Calculate churn probability without N+1 queries
+    const withProb = members.map((m) => {
+      const last = lastMap.get(String(m._id));
+      let prob = "LOW";
+      let diffDays = 0;
+      
+      if (!last) {
+        // If they never checked in, they are HIGH risk by definition
+        prob = "HIGH";
+        diffDays = 9999;
+      } else {
+        diffDays = Math.floor((now - new Date(last)) / (1000 * 60 * 60 * 24));
+        prob = diffDays > 10 ? "HIGH" : diffDays >= 5 ? "MEDIUM" : "LOW";
+      }
+      
+      return { memberId: String(m._id), name: m.name, phone: m.phone, probability: prob, diffDays };
+    });
 
     const highChurnMembers = withProb
       .filter((x) => x.probability === "HIGH")

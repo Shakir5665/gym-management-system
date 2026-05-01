@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   password: String,
   gymId: { type: mongoose.Schema.Types.ObjectId, ref: "Gym" },
   role: { type: String, enum: ["ADMIN", "SUPER_ADMIN", "MEMBER"], default: "ADMIN" },
+  profilePicture: String,
   resetPasswordOtp: String,
   resetPasswordExpires: Date
 });

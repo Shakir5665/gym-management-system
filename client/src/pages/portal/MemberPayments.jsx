@@ -28,7 +28,6 @@ export default function MemberPayments() {
 
     const onPaymentUpdate = (payload) => {
       if (user?.memberId && payload.memberId === user.memberId) {
-        console.log("🔄 Live Update: Payment history");
         fetchPayments(true);
       }
     };
@@ -37,7 +36,16 @@ export default function MemberPayments() {
     return () => socket.off("payment:update", onPaymentUpdate);
   }, [user?.memberId]);
 
-  if (loading) return <div className="p-10 text-center animate-pulse text-[color:var(--muted)] font-bold">Loading Payments...</div>;
+  if (loading) {
+    return (
+      <div className="grid gap-6">
+        <div className="h-10 w-48 bg-white/5 rounded-xl" />
+        <div className="grid gap-4">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-white/5 rounded-2xl" />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6">
@@ -53,7 +61,7 @@ export default function MemberPayments() {
           </Card>
         ) : (
           payments.map((p) => (
-            <Card key={p._id} className="p-5 flex items-center justify-between hover:bg-[color:var(--control-bg)]/40 transition">
+            <Card key={p._id} className="p-5 flex items-center justify-between border-white/5">
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-2xl bg-green-500/10 text-green-500 flex items-center justify-center border border-green-500/10">
                   <CreditCard className="h-6 w-6" />

@@ -8,4 +8,7 @@ const schema = new mongoose.Schema({
   nextDueDate: Date
 }, { timestamps: true });
 
+schema.index({ memberId: 1, gymId: 1 });
+schema.index({ memberId: 1, createdAt: -1 });
+schema.index({ gymId: 1, createdAt: -1 });
 export default mongoose.model("Payment", schema);

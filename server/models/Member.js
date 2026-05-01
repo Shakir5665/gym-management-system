@@ -19,11 +19,16 @@ const memberSchema = new mongoose.Schema({
   fineReason: String,
   subscriptionEnd: Date,
   qrCode: String,
+  profilePicture: String,
   gymId: { type: mongoose.Schema.Types.ObjectId, ref: "Gym" },
   createdAt: { type: Date, default: Date.now },
   lastChurnEmailSent: Date,
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", index: true },
 
 });
+
+memberSchema.index({ gymId: 1, createdAt: -1 });
+memberSchema.index({ gymId: 1, subscriptionEnd: 1 });
+memberSchema.index({ gymId: 1, isBanned: 1, lastCheckIn: 1 }); // Prep for future churn optimization
 
 export default mongoose.model("Member", memberSchema);

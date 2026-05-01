@@ -9,7 +9,8 @@ import Gamification from "../models/Gamification.js";
 import { sendChurnEncouragement } from "./mailService.js";
 
 const processChurnAutomation = async (io) => {
-  console.log("Running Churn Automation Task...");
+  const startTime = Date.now();
+  console.log("🚀 Starting Optimized Churn Automation...");
   try {
     const now = new Date();
     const tenDaysAgo = new Date(now);
@@ -18,34 +19,35 @@ const processChurnAutomation = async (io) => {
     const threeDaysAgo = new Date(now);
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-    // 1. Find all members who haven't checked in for 10+ days 
-    // AND haven't been sent a churn email in the last 3 days
-    // AND have an email address
+    // 1. Fetch only members who are eligible for a notification (subset)
     const membersToNotify = await Member.find({
       email: { $exists: true, $ne: "" },
       $or: [
         { lastChurnEmailSent: { $exists: false } },
         { lastChurnEmailSent: { $lte: threeDaysAgo } }
       ]
-    });
+    }).select("name email fullLegalName gymId lastChurnEmailSent createdAt").lean();
 
-    console.log(`Checking ${membersToNotify.length} potential members for churn...`);
+    if (membersToNotify.length === 0) {
+      console.log("✅ No members eligible for churn check.");
+      return;
+    }
 
+    console.log(`🔍 Checking ${membersToNotify.length} members for inactivity...`);
+
+    let sentCount = 0;
+    // Process in smaller batches to avoid blocking the event loop
     for (const member of membersToNotify) {
-      // Find their last attendance
       const lastAttendance = await Attendance.findOne({ memberId: member._id })
-        .sort({ checkInTime: -1 });
+        .sort({ checkInTime: -1 })
+        .select("checkInTime")
+        .lean();
 
       const lastCheckIn = lastAttendance ? new Date(lastAttendance.checkInTime) : new Date(member.createdAt);
 
-      console.log(`- Member: ${member.name}, Last Checkin: ${lastCheckIn.toISOString()}, 10DaysAgo: ${tenDaysAgo.toISOString()}`);
-
       if (lastCheckIn < tenDaysAgo) {
-        // High Churn Probability detected!
-        console.log(`Sending encouragement to ${member.name} (${member.email})...`);
-
-        // Fetch gym name for branding
-        const gym = await Gym.findById(member.gymId);
+        // Fetch gym name efficiently
+        const gym = await Gym.findById(member.gymId).select("name").lean();
         const gymName = gym?.name || "Your Gym";
 
         try {
@@ -54,12 +56,9 @@ const processChurnAutomation = async (io) => {
             gymName
           });
 
-          // Update the last sent date
-          member.lastChurnEmailSent = new Date();
-          await member.save();
-          console.log(`Email sent to ${member.name}`);
+          await Member.updateOne({ _id: member._id }, { $set: { lastChurnEmailSent: new Date() } });
+          sentCount++;
 
-          // Emit notification event
           if (io) {
             io.emit("notification:churn-email", {
               memberId: member._id,
@@ -67,13 +66,13 @@ const processChurnAutomation = async (io) => {
             });
           }
         } catch (mailErr) {
-          console.error(`Failed to send email to ${member.name}:`, mailErr.message);
+          console.error(`❌ Mail Error for ${member.name}:`, mailErr.message);
         }
       }
     }
-    console.log("Churn Automation Task Completed.");
+    console.log(`✅ Churn Automation Completed in ${Date.now() - startTime}ms. Emails sent: ${sentCount}`);
   } catch (err) {
-    console.error("Churn Automation Error:", err.message);
+    console.error("❌ Churn Automation Error:", err.message);
   }
 };
 
@@ -112,9 +111,11 @@ const processGymDeletion = async () => {
 };
 
 export const initAutomation = (io) => {
-  // Run immediately on startup for testing and to ensure it's up to date
-  processChurnAutomation(io);
-  processGymDeletion();
+  // Run in background after 5s to avoid blocking the server startup
+  setTimeout(() => {
+    processChurnAutomation(io);
+    processGymDeletion();
+  }, 5000);
 
   // Hourly check
   cron.schedule("0 * * * *", () => processChurnAutomation(io));

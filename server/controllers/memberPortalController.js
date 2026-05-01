@@ -87,67 +87,75 @@ export const memberRegister = async (req, res) => {
   }
 };
 
+export const getBasicProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    // 🚀 EXCLUDE heavy profilePicture for instant text load
+    const member = await Member.findOne({ userId })
+      .select("-profilePicture")
+      .populate("gymId", "name logo")
+      .lean();
+      
+    if (!member) return res.status(404).json({ message: "Member record not found" });
+    res.json({ member });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export const getMemberProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const member = await Member.findOne({ userId }).populate("gymId", "name logo");
+    const member = await Member.findOne({ userId })
+      .select("-profilePicture")
+      .populate("gymId", "name logo")
+      .lean();
     
     if (!member) return res.status(404).json({ message: "Member record not found" });
 
-    const gymId = member.gymId._id;
     const memberId = member._id;
+    const gymId = member.gymId._id;
 
-    // 1. Basic Stats
-    const totalCheckins = await Attendance.countDocuments({ memberId, status: "SUCCESS" });
+    // 🏎️ PARALLEL EXECUTION (Much faster)
+    const [totalCheckins, gamification] = await Promise.all([
+      Attendance.countDocuments({ memberId, status: "SUCCESS" }),
+      Gamification.findOne({ memberId, gymId })
+    ]);
     
-    // 2. Gamification Stats
-    const gamification = await Gamification.findOne({ memberId, gymId });
+    // 3. Notifications Logic (Non-blocking)
+    const notifications = [];
+    if (member.subscriptionEnd) {
+      const end = new Date(member.subscriptionEnd);
+      const now = new Date();
+      const diffDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
 
-    // 3. Attendance Trend (Last 7 Days)
-    const days = 7;
-    const now = new Date();
-    
-    // Start exactly 6 days ago from today's date
-    const startForQuery = new Date(now);
-    startForQuery.setHours(0, 0, 0, 0);
-    startForQuery.setDate(startForQuery.getDate() - 6);
-    
-    // For the loop labels, we use Noon to ensure ISO string date matches local date
-    const startForLoop = new Date(startForQuery);
-    startForLoop.setHours(12, 0, 0, 0);
-    
-    const attendanceRows = await Attendance.find({
-      memberId,
-      status: "SUCCESS",
-      checkInTime: { $gte: startForQuery },
-    }).lean();
-
-    // Group by YYYY-MM-DD in local time
-    const countMap = {};
-    attendanceRows.forEach((row) => {
-      const d = new Date(row.checkInTime);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      countMap[key] = (countMap[key] || 0) + 1;
-    });
-
-    const attendanceTrend = [];
-    for (let i = 0; i < days; i++) {
-      const d = new Date(startForLoop);
-      d.setDate(d.getDate() + i);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      attendanceTrend.push({ date: key, count: countMap[key] || 0 });
+      if (diffDays <= 0) {
+        notifications.push({
+          id: "pay_expired",
+          type: "DANGER",
+          title: "Subscription Expired",
+          message: "Your subscription has ended. Please renew to continue using the gym.",
+          daysLeft: diffDays
+        });
+      } else if (diffDays <= 2) {
+        notifications.push({
+          id: "pay_soon",
+          type: "WARNING",
+          title: "Payment Due Soon",
+          message: `Your subscription will expire in ${diffDays} day${diffDays > 1 ? 's' : ''}.`,
+          daysLeft: diffDays
+        });
+      }
     }
-    
-    console.log(`[Dashboard Sync] Member: ${member.name}, ID: ${memberId}, Trend Points: ${attendanceRows.length}`);
-    
+
     res.json({
       member,
       stats: {
         totalCheckins,
         points: gamification?.points || 0,
-        streak: gamification?.streak || 0,
-        attendanceTrend
-      }
+        streak: gamification?.streak || 0
+      },
+      notifications
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -185,7 +193,7 @@ export const getLeaderboard = async (req, res) => {
 export const updateMemberProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { name, phone, homeAddress, emergencyPhone, gender, email, password } = req.body;
+    const { name, phone, homeAddress, emergencyPhone, gender, email, password, profilePicture } = req.body;
 
     const member = await Member.findOne({ userId });
     if (!member) return res.status(404).json({ message: "Member not found" });
@@ -196,6 +204,7 @@ export const updateMemberProfile = async (req, res) => {
     member.homeAddress = homeAddress || member.homeAddress;
     member.emergencyPhone = emergencyPhone || member.emergencyPhone;
     member.gender = gender || member.gender;
+    member.profilePicture = profilePicture || member.profilePicture;
     if (email) member.email = email.toLowerCase();
     
     await member.save();
@@ -205,6 +214,7 @@ export const updateMemberProfile = async (req, res) => {
     if (user) {
       if (name) user.name = name;
       if (email) user.email = email.toLowerCase();
+      if (profilePicture) user.profilePicture = profilePicture;
       if (password) {
         if (!strongPasswordRegex.test(password)) {
           return res.status(400).json({ 
@@ -225,10 +235,12 @@ export const updateMemberProfile = async (req, res) => {
 export const getMemberPayments = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const member = await Member.findOne({ userId });
+    const member = await Member.findOne({ userId }).select("_id").lean();
     if (!member) return res.status(404).json({ message: "Member record not found" });
 
-    const payments = await Payment.find({ memberId: member._id }).sort({ createdAt: -1 });
+    const payments = await Payment.find({ memberId: member._id })
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(payments);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -238,10 +250,13 @@ export const getMemberPayments = async (req, res) => {
 export const getMemberAttendance = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const member = await Member.findOne({ userId });
+    const member = await Member.findOne({ userId }).select("_id").lean();
     if (!member) return res.status(404).json({ message: "Member record not found" });
 
-    const attendance = await Attendance.find({ memberId: member._id }).sort({ createdAt: -1 }).limit(50);
+    const attendance = await Attendance.find({ memberId: member._id })
+      .sort({ checkInTime: -1 })
+      .limit(50)
+      .lean();
     res.json(attendance);
   } catch (err) {
     res.status(500).json({ message: err.message });

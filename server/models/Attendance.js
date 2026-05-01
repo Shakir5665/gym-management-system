@@ -11,5 +11,6 @@ const schema = new mongoose.Schema({
 });
 
 schema.index({ memberId: 1, gymId: 1, checkInTime: -1 });
+schema.index({ gymId: 1, checkInTime: -1 });
 
 export default mongoose.model("Attendance", schema);

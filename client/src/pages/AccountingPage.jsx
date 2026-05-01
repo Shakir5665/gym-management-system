@@ -345,7 +345,7 @@ export default function AccountingPage() {
           <div className="mt-4 space-y-2 max-h-[420px] overflow-auto pr-1">
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-12 rounded-xl bg-[color:var(--control-bg)] animate-pulse" />
+                <div key={i} className="h-12 rounded-xl bg-white/5" />
               ))
             ) : expenses.length === 0 ? (
               <div className="text-xs text-[color:var(--muted)]">No expenses in selected range.</div>
@@ -366,14 +366,14 @@ export default function AccountingPage() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleEditExpense(x)}
-                        className="p-1.5 text-[color:var(--muted)] hover:text-brand-500 hover:bg-[color:var(--control-bg-hover)] rounded-lg transition-colors"
+                        className="p-1.5 text-[color:var(--muted)] hover:text-brand-500 hover:bg-[color:var(--control-bg-hover)] rounded-lg"
                         title="Edit"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDeleteExpense(x)}
-                        className="p-1.5 text-[color:var(--muted)] hover:text-danger-500 hover:bg-danger-500/10 rounded-lg transition-colors"
+                        className="p-1.5 text-[color:var(--muted)] hover:text-danger-500 hover:bg-danger-500/10 rounded-lg"
                         title="Delete"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

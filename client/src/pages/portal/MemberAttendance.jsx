@@ -28,7 +28,6 @@ export default function MemberAttendance() {
 
     const onAttendance = (payload) => {
       if (user?.memberId && payload.memberId === user.memberId) {
-        console.log("🔄 Live Update: Attendance list");
         fetchAttendance(true);
       }
     };
@@ -37,7 +36,16 @@ export default function MemberAttendance() {
     return () => socket.off("attendance:new", onAttendance);
   }, [user?.memberId]);
 
-  if (loading) return <div className="p-10 text-center animate-pulse text-[color:var(--muted)] font-bold">Loading History...</div>;
+  if (loading) {
+    return (
+      <div className="grid gap-6">
+        <div className="h-10 w-48 bg-white/5 rounded-xl" />
+        <div className="grid gap-4">
+          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 bg-white/5 rounded-2xl" />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6">
@@ -53,7 +61,7 @@ export default function MemberAttendance() {
           </Card>
         ) : (
           logs.map((log) => (
-            <Card key={log._id} className="p-4 flex items-center justify-between hover:bg-[color:var(--control-bg)]/40 transition">
+            <Card key={log._id} className="p-4 flex items-center justify-between border-white/5">
               <div className="flex items-center gap-4">
                 <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center border border-blue-500/10">
                   <Clock className="h-5 w-5" />

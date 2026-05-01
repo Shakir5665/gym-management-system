@@ -2,8 +2,11 @@ import Member from "../models/Member.js";
 import Payment from "../models/Payment.js";
 import Gym from "../models/Gym.js";
 import User from "../models/User.js";
+import Attendance from "../models/Attendance.js";
+import Gamification from "../models/Gamification.js";
 import bcrypt from "bcryptjs";
 import QRCode from "qrcode";
+import mongoose from "mongoose";
 import { sendPaymentReminder } from "../services/mailService.js";
 
 function normalizeMemberPayload(payload = {}) {
@@ -83,7 +86,10 @@ export const getMembers = async (req, res) => {
       ];
     }
 
-    let query = Member.find(filter);
+    let query = Member.find(filter)
+      .select("-qrCode -profilePicture")
+      .lean();
+    
     if (limit) query = query.limit(limit);
     const data = await query;
     res.json(data);
@@ -313,6 +319,75 @@ export const setMemberCredentials = async (req, res) => {
 
     res.json({ message: "Member portal credentials set successfully" });
   } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getFullMemberProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const gymId = req.user.gymId;
+
+    if (!gymId) return res.status(403).json({ message: "Gym not identified" });
+    if (!id || !mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid Member ID" });
+    }
+
+    const days = 14;
+    const now = new Date();
+    const start = new Date(now);
+    start.setDate(start.getDate() - (days - 1));
+    start.setHours(0, 0, 0, 0);
+
+    const [member, game, attendanceRows, activity, payments] = await Promise.all([
+      Member.findOne({ _id: id, gymId }).lean(),
+      Gamification.findOne({ memberId: id, gymId }).lean(),
+      Attendance.aggregate([
+        { 
+          $match: { 
+            memberId: new mongoose.Types.ObjectId(id), 
+            status: "SUCCESS", 
+            checkInTime: { $exists: true, $ne: null, $gte: start } 
+          } 
+        },
+        { 
+          $group: { 
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$checkInTime", timezone: "+05:30" } }, 
+            count: { $sum: 1 } 
+          } 
+        }
+      ]).exec(),
+      Attendance.find({ memberId: id, gymId }).sort({ checkInTime: -1 }).limit(20).lean(),
+      Payment.find({ memberId: id, gymId }).sort({ createdAt: -1 }).limit(20).lean()
+    ]);
+
+    if (!member) return res.status(404).json({ message: "Member not found" });
+
+    // Calculate Churn Probability
+    const lastCheckin = activity?.[0]?.checkInTime;
+    let probability = "LOW";
+    if (!lastCheckin) {
+      probability = "HIGH";
+    } else {
+      const diffDays = Math.floor((new Date() - new Date(lastCheckin)) / (1000 * 60 * 60 * 24));
+      probability = diffDays > 10 ? "HIGH" : diffDays >= 5 ? "MEDIUM" : "LOW";
+    }
+
+    res.json({
+      member,
+      game: game || { points: 0, streak: 0 },
+      churn: { probability },
+      trend: { series: (attendanceRows || []).map(r => ({ date: r._id, count: r.count })) },
+      activity: { 
+        items: [
+          ...(activity || []).map(a => ({ type: "CHECKIN", at: a.checkInTime, status: a.status })),
+          ...(payments || []).map(p => ({ type: "PAYMENT", at: p.createdAt, amount: p.amount }))
+        ].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 20)
+      },
+      payments: payments || []
+    });
+  } catch (err) {
+    console.error("FULL_PROFILE_ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };

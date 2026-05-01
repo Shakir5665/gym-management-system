@@ -78,21 +78,28 @@ export default function MemberProfilePage() {
   async function fetchAll() {
     try {
       setError("");
-      const [mRes, gRes, rRes, tRes, aRes, pRes] = await Promise.all([
-        API.get(`/members/${id}`),
-        API.get(`/gamification/${id}`),
-        API.get(`/churn/${id}`),
-        API.get(`/attendance/trend/${id}?days=14`),
-        API.get(`/members/${id}/activity?limit=20`),
-        API.get(`/payments/member/${id}`),
-      ]);
+      const res = await API.get(`/members/${id}/full-profile`);
+      const d = res.data;
 
-      setMember(mRes.data || null);
-      setGame(gRes.data || {});
-      setChurnProb(rRes.data?.probability || "");
-      setTrend((tRes.data?.series || []).map((x) => x.count));
-      setActivity(Array.isArray(aRes.data?.items) ? aRes.data.items : []);
-      setPayments(Array.isArray(pRes.data) ? pRes.data : []);
+      setMember(d.member || null);
+      setGame(d.game || {});
+      setChurnProb(d.churn?.probability || "");
+      
+      // Handle trend series
+      const trendData = d.trend?.series || [];
+      const trendMap = new Map(trendData.map(x => [x.date, x.count]));
+      const series = [];
+      const now = new Date();
+      for(let i=13; i>=0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const key = date.toISOString().slice(0, 10);
+        series.push(trendMap.get(key) || 0);
+      }
+      setTrend(series);
+
+      setActivity(d.activity?.items || []);
+      setPayments(d.payments || []);
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to load member profile");
     } finally {
@@ -276,16 +283,15 @@ export default function MemberProfilePage() {
   }
 
 
-  const metricCard =
-    "glass p-5 md:p-6 transition hover:border-[color:var(--glass-border-strong)] hover:bg-[color:var(--control-bg)] hover:-translate-y-[1px] will-change-transform";
+  const metricCard = "glass p-5 md:p-6";
 
   const activityRows = useMemo(() => activity.slice(0, 12), [activity]);
 
   if (loading) {
     return (
       <Card className="p-6">
-        <div className="h-6 w-64 rounded bg-[color:var(--control-bg)] animate-pulse" />
-        <div className="mt-4 h-24 rounded bg-[color:var(--control-bg)] animate-pulse" />
+        <div className="h-6 w-64 rounded bg-white/5" />
+        <div className="mt-4 h-24 rounded bg-white/5" />
       </Card>
     );
   }
@@ -418,7 +424,7 @@ export default function MemberProfilePage() {
                 variant="brand"
                 onClick={() => setReminderOpen(true)}
                 disabled={saving || !member?.email}
-                className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all"
+                className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5"
                 title={!member?.email ? "No email address" : "Send email reminder"}
               >
                 <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />

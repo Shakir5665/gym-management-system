@@ -7,17 +7,28 @@ import bcrypt from "bcryptjs";
 
 export const getGyms = async (req, res) => {
   try {
-    const gyms = await Gym.find().sort({ createdAt: -1 });
+    const gyms = await Gym.find().sort({ createdAt: -1 }).lean();
     
-    // Enrich gyms with member counts
-    const enrichedGyms = await Promise.all(gyms.map(async (gym) => {
-      const memberCount = await Member.countDocuments({ gymId: gym._id });
-      const owner = await User.findById(gym.ownerId).select("name email");
-      return {
-        ...gym.toObject(),
-        memberCount,
-        owner
-      };
+    // 🚀 BATCH ENRICHMENT (Avoids N+1 queries)
+    const gymIds = gyms.map(g => g._id);
+    const ownerIds = gyms.map(g => g.ownerId).filter(Boolean);
+
+    const [memberCounts, owners] = await Promise.all([
+      Member.aggregate([
+        { $match: { gymId: { $in: gymIds } } },
+        { $group: { _id: "$gymId", count: { $sum: 1 } } }
+      ]),
+      User.find({ _id: { $in: ownerIds } }).select("name email").lean()
+    ]);
+
+    // Create lookup maps for instant access
+    const countMap = Object.fromEntries(memberCounts.map(c => [c._id.toString(), c.count]));
+    const ownerMap = Object.fromEntries(owners.map(o => [o._id.toString(), o]));
+
+    const enrichedGyms = gyms.map(gym => ({
+      ...gym,
+      memberCount: countMap[gym._id.toString()] || 0,
+      owner: ownerMap[gym.ownerId?.toString()]
     }));
 
     res.json(enrichedGyms);
@@ -46,18 +57,14 @@ export const toggleGymStatus = async (req, res) => {
 
 export const getGlobalStats = async (req, res) => {
   try {
-    const [totalGyms, totalMembers, totalPayments, totalCheckins] = await Promise.all([
-      Gym.countDocuments(),
-      Member.countDocuments(),
-      Payment.aggregate([{ $group: { _id: null, total: { $sum: "$amount" } } }]),
-      Attendance.countDocuments({ status: "SUCCESS" })
+    const [totalGyms, totalMembers] = await Promise.all([
+      Gym.countDocuments().lean(),
+      Member.countDocuments().lean()
     ]);
 
     res.json({
       totalGyms,
-      totalMembers,
-      totalRevenue: totalPayments[0]?.total || 0,
-      totalCheckins
+      totalMembers
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

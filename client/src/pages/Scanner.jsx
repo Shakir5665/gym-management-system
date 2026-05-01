@@ -148,11 +148,19 @@ export default function Scanner() {
   };
 
   useEffect(() => {
-    // 📸 Discover Cameras
+    // 📸 Smart Camera Discovery
     Html5Qrcode.getCameras().then(devices => {
       if (devices && devices.length > 0) {
-        setCameras(devices);
-        setSelectedCam(devices[0].id);
+        // Filter for "back" cameras or external "usb" cameras
+        const filtered = devices.filter(d => {
+          const label = d.label.toLowerCase();
+          return label.includes("back") || label.includes("environment") || label.includes("usb") || label.includes("external");
+        });
+        
+        // Fallback to all devices if filter is too strict
+        const finalDevices = filtered.length > 0 ? filtered : devices;
+        setCameras(finalDevices);
+        setSelectedCam(finalDevices[0].id);
       }
     }).catch(err => {
       console.warn("Camera discovery failed:", err);
@@ -197,52 +205,71 @@ export default function Scanner() {
 
   return (
     <div className="grid gap-4 md:gap-6">
-      <Card className="p-5 md:p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="text-sm font-bold text-[color:var(--text)]">Check-in Terminal</div>
-            <div className="flex items-center gap-2 mt-1">
-              <button
-                onClick={() => { stop(); setMode("camera"); }}
-                className={`text-[11px] px-3 py-1 rounded-full border transition ${mode === "camera" ? "bg-brand-500 text-white border-brand-500" : "bg-[color:var(--control-bg)] text-[color:var(--muted)] border-[color:var(--control-border)]"}`}
-              >
-                Camera Mode
-              </button>
-              <button
-                onClick={() => { stop(); setMode("usb"); }}
-                className={`text-[11px] px-3 py-1 rounded-full border transition ${mode === "usb" ? "bg-brand-500 text-white border-brand-500" : "bg-[color:var(--control-bg)] text-[color:var(--muted)] border-[color:var(--control-border)]"}`}
-              >
-                USB Scanner Mode
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {mode === "camera" && (
-              <>
-                <select
-                  value={selectedCam}
-                  onChange={(e) => { setSelectedCam(e.target.value); if(running) { stop(); } }}
-                  className="text-xs bg-[color:var(--control-bg)] border border-[color:var(--control-border)] rounded-xl px-3 py-2 outline-none focus:ring-2 ring-brand-500/20"
+      <Card className="p-0 overflow-hidden border-white/5">
+        <div className="bg-white/[0.02] p-5 border-b border-white/5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-black text-white tracking-tight">Check-in Terminal</h2>
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={() => { stop(); setMode("camera"); }}
+                  className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border transition-all ${
+                    mode === "camera" 
+                      ? "bg-brand-500 text-white border-brand-500 shadow-lg shadow-brand-500/20" 
+                      : "bg-white/5 text-white/30 border-white/10 hover:bg-white/10"
+                  }`}
                 >
-                  {cameras.map(cam => (
-                    <option key={cam.id} value={cam.id}>{cam.label || `Camera ${cam.id.slice(0, 5)}`}</option>
-                  ))}
-                </select>
-                {running ? (
-                  <Button variant="danger" onClick={stop}>Stop</Button>
-                ) : (
-                  <Button variant="primary" onClick={start} className="gap-2">
-                    <Camera className="h-4 w-4" /> Start
-                  </Button>
-                )}
-              </>
-            )}
-            {mode === "usb" && (
-              <div className="flex items-center gap-2 text-xs font-bold text-green-500 bg-green-500/10 px-3 py-2 rounded-xl border border-green-500/20">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                READY FOR USB SCAN
+                  Lens Mode
+                </button>
+                <button
+                  onClick={() => { stop(); setMode("usb"); }}
+                  className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border transition-all ${
+                    mode === "usb" 
+                      ? "bg-brand-500 text-white border-brand-500 shadow-lg shadow-brand-500/20" 
+                      : "bg-white/5 text-white/30 border-white/10 hover:bg-white/10"
+                  }`}
+                >
+                  Scanner Mode
+                </button>
               </div>
-            )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              {mode === "camera" && (
+                <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/5 w-full sm:w-auto">
+                  <select
+                    value={selectedCam}
+                    onChange={(e) => { setSelectedCam(e.target.value); if(running) { stop(); } }}
+                    className="flex-1 sm:w-64 text-[12px] font-black bg-[#1a1a1a] text-white px-4 py-2 outline-none cursor-pointer rounded-xl appearance-none"
+                  >
+                    {cameras.length === 0 ? (
+                      <option className="text-white/30">Searching for lenses...</option>
+                    ) : (
+                      cameras.map(cam => (
+                        <option key={cam.id} value={cam.id} className="bg-[#1a1a1a] text-white">
+                          {cam.label || `Camera ${cam.id.slice(0, 5)}`}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  {running ? (
+                    <Button variant="danger" size="sm" onClick={stop} className="px-6 rounded-xl font-black uppercase text-[10px] tracking-widest">
+                      Stop
+                    </Button>
+                  ) : (
+                    <Button variant="primary" size="sm" onClick={start} className="px-6 rounded-xl font-black uppercase text-[10px] tracking-widest gap-2">
+                      <Camera className="h-3 w-3" /> Start
+                    </Button>
+                  )}
+                </div>
+              )}
+              {mode === "usb" && (
+                <div className="flex items-center gap-2 text-[10px] font-black text-brand-500 bg-brand-500/10 px-4 py-2.5 rounded-2xl border border-brand-500/20 uppercase tracking-widest">
+                  <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                  Ready to Receive
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </Card>

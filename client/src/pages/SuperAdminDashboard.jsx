@@ -117,12 +117,12 @@ export default function SuperAdminDashboard() {
     g.owner?.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) return <div className="p-8 text-center text-[color:var(--muted)]">Loading System Data...</div>;
+  if (loading) return <div className="p-20 text-center text-white/20 font-black tracking-[0.3em] uppercase">Accessing Global Systems...</div>;
 
   return (
     <div className="grid gap-6 p-4 md:p-6 max-w-7xl mx-auto">
       {/* 🚀 Header Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
         <StatCard 
           icon={<Building2 className="text-brand-500" />} 
           title="Total Gyms" 
@@ -132,16 +132,6 @@ export default function SuperAdminDashboard() {
           icon={<Users className="text-blue-500" />} 
           title="Total Members" 
           value={stats?.totalMembers || 0} 
-        />
-        <StatCard 
-          icon={<CreditCard className="text-green-500" />} 
-          title="Total Revenue" 
-          value={`${(stats?.totalRevenue || 0).toLocaleString()} LKR`} 
-        />
-        <StatCard 
-          icon={<Activity className="text-purple-500" />} 
-          title="Global Check-ins" 
-          value={stats?.totalCheckins || 0} 
         />
       </div>
 
@@ -161,7 +151,7 @@ export default function SuperAdminDashboard() {
                 placeholder="Search by gym or email..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-[color:var(--control-bg)] border border-[color:var(--control-border)] rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 ring-brand-500/20 outline-none transition-all"
+                className="w-full bg-[color:var(--control-bg)] border border-[color:var(--control-border)] rounded-xl py-2 pl-10 pr-4 text-sm outline-none"
               />
             </div>
             <Button variant="primary" onClick={() => setRegisterOpen(true)} className="flex items-center gap-2 w-full sm:w-auto">
@@ -184,7 +174,7 @@ export default function SuperAdminDashboard() {
             </thead>
             <tbody className="divide-y divide-[color:var(--control-border)]">
               {filteredGyms.map((gym) => (
-                <tr key={gym._id} className="hover:bg-[color:var(--bg2)]/40 transition-colors">
+                <tr key={gym._id} className="border-b border-white/5">
                   <td className="px-6 py-4">
                     <div className="font-bold text-[color:var(--text)]">{gym.name}</div>
                     <div className="text-[10px] text-[color:var(--muted)]">ID: {gym._id.slice(-8)}</div>
@@ -211,7 +201,7 @@ export default function SuperAdminDashboard() {
                         </span>
                       )}
                       {gym.scheduledDeletionAt && (
-                        <div className="mt-1 text-[10px] text-red-400 font-bold animate-pulse">
+                        <div className="mt-1 text-[10px] text-red-400 font-bold">
                           🗑️ Deletion on {new Date(gym.scheduledDeletionAt).toLocaleDateString()}
                         </div>
                       )}

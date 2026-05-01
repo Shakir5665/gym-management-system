@@ -45,12 +45,12 @@ export default function ChurnWatchlistPage() {
     return (
       <div className="grid gap-4 md:gap-6">
         <Card className="p-6">
-          <div className="h-6 w-64 rounded bg-[color:var(--control-bg)] animate-pulse" />
+          <div className="h-6 w-64 rounded bg-white/5" />
           <div className="mt-4 grid gap-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
-                className="h-[80px] rounded-2xl bg-[color:var(--control-bg)] animate-pulse"
+                className="h-[80px] rounded-2xl bg-white/5"
               />
             ))}
           </div>
@@ -113,7 +113,7 @@ export default function ChurnWatchlistPage() {
               key={m.memberId}
               type="button"
               onClick={() => navigate(`/app/member/${m.memberId}`)}
-              className="text-left glass p-5 transition hover:bg-[color:var(--control-bg)] hover:border-[color:var(--glass-border-strong)] hover:-translate-y-[1px] focus:outline-none focus-visible:focus-ring"
+              className="text-left glass p-5 focus:outline-none focus-visible:focus-ring"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">

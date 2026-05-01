@@ -13,7 +13,7 @@ function formatMoneyLKR(amount) {
   return `${n.toLocaleString("en-LK", { maximumFractionDigits: 0 })} LKR`;
 }
 
-function StatCard({ icon: Icon, label, value, sub, className }) {
+function StatCard({ icon: Icon, label, value, sub, className, iconColor }) {
   return (
     <Card
       className={
@@ -33,8 +33,8 @@ function StatCard({ icon: Icon, label, value, sub, className }) {
             <div className="mt-1 text-xs text-[color:var(--subtle)]">{sub}</div>
           ) : null}
         </div>
-        <div className="rounded-2xl bg-[color:var(--control-bg)] border border-[color:var(--control-border)] p-2.5 text-[color:var(--muted)]">
-          <Icon className="h-5 w-5" />
+        <div className="rounded-2xl bg-[color:var(--control-bg)] border border-[color:var(--control-border)] p-2.5">
+          <Icon className={`h-5 w-5 ${iconColor || "text-[color:var(--muted)]"}`} />
         </div>
       </div>
     </Card>
@@ -97,12 +97,12 @@ export default function DashboardPage() {
     return (
       <div className="grid gap-4 md:gap-6">
         <Card className="p-6">
-          <div className="h-6 w-64 rounded bg-[color:var(--control-bg)] animate-pulse" />
+          <div className="h-6 w-64 rounded bg-white/5" />
           <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="h-[120px] rounded-2xl bg-[color:var(--control-bg)] animate-pulse"
+                className="h-[120px] rounded-2xl bg-white/5"
               />
             ))}
           </div>
@@ -154,22 +154,26 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         <StatCard
           icon={TrendingUp}
+          iconColor="text-emerald-500"
           label="Active now"
           value={summary?.activeNow ?? 0}
           sub={`${changeLabel} vs yesterday`}
         />
         <StatCard
           icon={Users}
+          iconColor="text-blue-500"
           label="Total members"
           value={summary?.totalMembers ?? 0}
         />
         <StatCard
           icon={Flame}
+          iconColor="text-orange-500"
           label="Today check-ins"
           value={summary?.todayCheckins ?? 0}
         />
         <StatCard
           icon={Wallet}
+          iconColor="text-amber-500"
           label="Revenue this month"
           value={formatMoneyLKR(summary?.revenueThisMonth ?? 0)}
         />
@@ -194,7 +198,7 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={() => navigate("/app/members/churn-watchlist")}
-            className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition"
+            className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-4 py-3"
           >
             <div className="text-xs font-semibold text-[color:var(--muted)]">
               Churn Probability (High)
@@ -206,7 +210,7 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={() => navigate("/app/members?view=paymentsdue")}
-            className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition"
+            className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-4 py-3"
           >
             <div className="text-xs font-semibold text-[color:var(--muted)]">
               Payments due
@@ -218,7 +222,7 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={() => navigate("/app/members?view=new")}
-            className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] hover:bg-[color:var(--control-bg-hover)] px-4 py-3 transition"
+            className="text-left rounded-2xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-4 py-3"
           >
             <div className="text-xs font-semibold text-[color:var(--muted)]">
               New members (7d)

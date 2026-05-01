@@ -60,7 +60,10 @@ export const getMemberPayments = async (req, res) => {
     const member = await Member.findOne({ _id: memberId, gymId }).select("_id");
     if (!member) return res.status(404).json({ message: "Member not found" });
 
-    const rows = await Payment.find({ gymId, memberId }).sort({ createdAt: -1 }).limit(100);
+    const rows = await Payment.find({ gymId, memberId })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean();
     res.json(rows);
   } catch (err) {
     res.status(500).json({ message: err.message });
