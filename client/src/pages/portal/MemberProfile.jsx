@@ -88,7 +88,22 @@ export default function MemberProfile() {
     }
   };
 
-  if (loading) return <div className="p-10 text-center text-white/20 font-bold tracking-widest uppercase">Fetching Profile...</div>;
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-12">
+        <div className="flex items-center gap-8">
+          <div className="h-28 w-28 rounded-full bg-white/5" />
+          <div className="space-y-2">
+            <div className="h-10 w-48 bg-white/5 rounded-xl" />
+            <div className="h-4 w-64 bg-white/5 rounded-md" />
+          </div>
+        </div>
+        <div className="space-y-6">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-white/5 rounded-2xl" />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">

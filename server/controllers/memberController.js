@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import QRCode from "qrcode";
 import mongoose from "mongoose";
 import { sendPaymentReminder } from "../services/mailService.js";
+import { uploadToCloudinary } from "../services/cloudinaryService.js";
 
 function normalizeMemberPayload(payload = {}) {
   const fullLegalName = String(payload.fullLegalName ?? payload.name ?? "").trim();
@@ -51,8 +52,10 @@ export const createMember = async (req, res) => {
       gymId: req.user.gymId
     });
 
-    const qr = await QRCode.toDataURL(member._id.toString());
-    member.qrCode = qr;
+    const qrBase64 = await QRCode.toDataURL(member._id.toString());
+    const qrUrl = await uploadToCloudinary(qrBase64, 'gym-system/qr-codes');
+    
+    member.qrCode = qrUrl || qrBase64;
     await member.save();
 
     res.json(member);
@@ -87,7 +90,6 @@ export const getMembers = async (req, res) => {
     }
 
     let query = Member.find(filter)
-      .select("-qrCode -profilePicture")
       .lean();
     
     if (limit) query = query.limit(limit);
@@ -133,6 +135,12 @@ export const updateMember = async (req, res) => {
     existing.homeAddress = data.homeAddress;
     existing.gender = data.gender;
     existing.dateOfBirth = data.dateOfBirth || null;
+
+    // Handle Profile Picture Upload
+    if (req.body.profilePicture && req.body.profilePicture.startsWith('data:image')) {
+      const imageUrl = await uploadToCloudinary(req.body.profilePicture, 'gym-system/profiles');
+      if (imageUrl) existing.profilePicture = imageUrl;
+    }
 
     await existing.save();
     res.json(existing);

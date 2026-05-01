@@ -6,6 +6,7 @@ import Attendance from "../models/Attendance.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Gamification from "../models/Gamification.js";
+import { uploadToCloudinary } from "../services/cloudinaryService.js";
 
 const strongPasswordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$/;
 
@@ -92,7 +93,6 @@ export const getBasicProfile = async (req, res) => {
     const userId = req.user.userId;
     // 🚀 EXCLUDE heavy profilePicture for instant text load
     const member = await Member.findOne({ userId })
-      .select("-profilePicture")
       .populate("gymId", "name logo")
       .lean();
       
@@ -107,7 +107,6 @@ export const getMemberProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
     const member = await Member.findOne({ userId })
-      .select("-profilePicture")
       .populate("gymId", "name logo")
       .lean();
     
@@ -204,7 +203,15 @@ export const updateMemberProfile = async (req, res) => {
     member.homeAddress = homeAddress || member.homeAddress;
     member.emergencyPhone = emergencyPhone || member.emergencyPhone;
     member.gender = gender || member.gender;
-    member.profilePicture = profilePicture || member.profilePicture;
+
+    // Handle Profile Picture Upload
+    if (profilePicture && profilePicture.startsWith('data:image')) {
+      const imageUrl = await uploadToCloudinary(profilePicture, 'gym-system/profiles');
+      if (imageUrl) member.profilePicture = imageUrl;
+    } else if (profilePicture) {
+      member.profilePicture = profilePicture;
+    }
+
     if (email) member.email = email.toLowerCase();
     
     await member.save();
@@ -214,7 +221,7 @@ export const updateMemberProfile = async (req, res) => {
     if (user) {
       if (name) user.name = name;
       if (email) user.email = email.toLowerCase();
-      if (profilePicture) user.profilePicture = profilePicture;
+      if (member.profilePicture) user.profilePicture = member.profilePicture;
       if (password) {
         if (!strongPasswordRegex.test(password)) {
           return res.status(400).json({ 

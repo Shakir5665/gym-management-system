@@ -1,6 +1,7 @@
 import Gym from "../models/Gym.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import { uploadToCloudinary } from "../services/cloudinaryService.js";
 
 export const createGym = async (req, res) => {
   try {
@@ -80,7 +81,13 @@ export const updateLogo = async (req, res) => {
     if (!gymId) return res.status(404).json({ message: "No gym linked to user" });
     if (!logo) return res.status(400).json({ message: "Logo is required" });
     
-    const gym = await Gym.findByIdAndUpdate(gymId, { logo }, { new: true });
+    let logoUrl = logo;
+    if (logo.startsWith('data:image')) {
+      const uploaded = await uploadToCloudinary(logo, 'gym-system/branding');
+      if (uploaded) logoUrl = uploaded;
+    }
+
+    const gym = await Gym.findByIdAndUpdate(gymId, { logo: logoUrl }, { new: true });
     if (!gym) return res.status(404).json({ message: "Gym not found" });
     
     res.json({ message: "Logo updated successfully", logo: gym.logo });
