@@ -30,5 +30,6 @@ const memberSchema = new mongoose.Schema({
 memberSchema.index({ gymId: 1, createdAt: -1 });
 memberSchema.index({ gymId: 1, subscriptionEnd: 1 });
 memberSchema.index({ gymId: 1, isBanned: 1, lastCheckIn: 1 }); // Prep for future churn optimization
+memberSchema.index({ email: 1 }); // Fast login & registration lookups
 
 export default mongoose.model("Member", memberSchema);

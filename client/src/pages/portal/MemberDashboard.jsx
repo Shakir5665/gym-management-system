@@ -17,7 +17,9 @@ import {
   Flame,
   Star,
   Bell,
-  X
+  X,
+  AlertTriangle,
+  DollarSign
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { socket } from "../../socket";
@@ -150,9 +152,113 @@ export default function MemberDashboard() {
 
   const hasUnread = notifications.some(n => !readNotifications.includes(n.id));
   const isExpired = member.subscriptionEnd && new Date(member.subscriptionEnd) < new Date();
+  const memberStatus = member.isBanned ? "Banned" : member.hasFine ? "Fined" : "Good";
 
   return (
     <div className="max-w-5xl mx-auto space-y-12">
+
+      {/* 🚨 PERSISTENT BAN ALERT */}
+      {member.isBanned && (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6">
+          <div className="flex items-start gap-4">
+            <div className="h-10 w-10 rounded-xl bg-red-500/20 flex items-center justify-center shrink-0">
+              <ShieldAlert className="h-5 w-5 text-red-500" />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="text-red-400 font-black text-lg tracking-tight">Your Account is Banned</h3>
+                <p className="text-red-300/70 text-sm mt-1">
+                  You have been restricted from accessing gym services. Please contact your gym administrator.
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {member.banReason && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                    <div className="text-[10px] font-bold text-red-500/60 uppercase tracking-widest mb-1">Reason</div>
+                    <div className="text-red-300 text-sm font-semibold">{member.banReason}</div>
+                  </div>
+                )}
+                {member.banFrom && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                    <div className="text-[10px] font-bold text-red-500/60 uppercase tracking-widest mb-1">Ban Period</div>
+                    <div className="text-red-300 text-sm font-semibold">
+                      {new Date(member.banFrom).toLocaleDateString()} 
+                      {member.banTo ? ` → ${new Date(member.banTo).toLocaleDateString()}` : ' → Indefinite'}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 💰 PERSISTENT FINE ALERT */}
+      {member.hasFine && !member.isBanned && (
+        <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6">
+          <div className="flex items-start gap-4">
+            <div className="h-10 w-10 rounded-xl bg-yellow-500/20 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="text-yellow-400 font-black text-lg tracking-tight">Outstanding Fine on Your Account</h3>
+                <p className="text-yellow-300/70 text-sm mt-1">
+                  You have an unpaid fine. Please settle this with your gym administrator at your earliest convenience.
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {member.fineAmount && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
+                    <div className="text-[10px] font-bold text-yellow-500/60 uppercase tracking-widest mb-1">Amount Due</div>
+                    <div className="text-yellow-300 text-xl font-black">Rs. {member.fineAmount.toLocaleString()}</div>
+                  </div>
+                )}
+                {member.fineReason && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3">
+                    <div className="text-[10px] font-bold text-yellow-500/60 uppercase tracking-widest mb-1">Reason</div>
+                    <div className="text-yellow-300 text-sm font-semibold">{member.fineReason}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 📅 PERSISTENT EXPIRED PAYMENT ALERT */}
+      {isExpired && !member.isBanned && (
+        <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 p-6">
+          <div className="flex items-start gap-4">
+            <div className="h-10 w-10 rounded-xl bg-orange-500/20 flex items-center justify-center shrink-0">
+              <Calendar className="h-5 w-5 text-orange-500" />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="text-orange-400 font-black text-lg tracking-tight">Subscription Expired</h3>
+                <p className="text-orange-300/70 text-sm mt-1">
+                  Your gym membership has expired. You may not be able to access gym services until you renew.
+                  Please contact your gym administrator to make a payment.
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
+                  <div className="text-[10px] font-bold text-orange-500/60 uppercase tracking-widest mb-1">Expired On</div>
+                  <div className="text-orange-300 text-sm font-black">
+                    {new Date(member.subscriptionEnd).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </div>
+                </div>
+                <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
+                  <div className="text-[10px] font-bold text-orange-500/60 uppercase tracking-widest mb-1">Days Overdue</div>
+                  <div className="text-orange-300 text-sm font-black">
+                    {Math.abs(Math.ceil((new Date(member.subscriptionEnd) - new Date()) / (1000 * 60 * 60 * 24)))} days
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 🏛️ CLEAN HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
@@ -278,9 +384,15 @@ export default function MemberDashboard() {
         <MetricCard label="Visits" value={stats.totalCheckins} sub="Total" icon={<Calendar className="h-4 w-4 text-blue-500" />} />
         <MetricCard
           label="Status"
-          value={member.isBanned ? "Banned" : "Good"}
+          value={memberStatus}
           sub="Standing"
-          icon={member.isBanned ? <ShieldAlert className="h-4 w-4 text-red-500" /> : <Activity className="h-4 w-4 text-green-500" />}
+          icon={
+            member.isBanned
+              ? <ShieldAlert className="h-4 w-4 text-red-500" />
+              : member.hasFine
+              ? <ShieldAlert className="h-4 w-4 text-yellow-500" />
+              : <Activity className="h-4 w-4 text-green-500" />
+          }
         />
       </div>
 

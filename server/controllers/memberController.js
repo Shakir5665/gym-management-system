@@ -9,6 +9,7 @@ import QRCode from "qrcode";
 import mongoose from "mongoose";
 import { sendPaymentReminder } from "../services/mailService.js";
 import { uploadToCloudinary } from "../services/cloudinaryService.js";
+import cloudinary from "../services/cloudinaryService.js";
 
 function normalizeMemberPayload(payload = {}) {
   const fullLegalName = String(payload.fullLegalName ?? payload.name ?? "").trim();
@@ -47,16 +48,17 @@ export const createMember = async (req, res) => {
       return res.status(403).json({ message: "You must create a gym first" });
     }
 
-    const member = await Member.create({
-      ...data,
-      gymId: req.user.gymId
-    });
-
-    const qrBase64 = await QRCode.toDataURL(member._id.toString());
+    // Generate QR code BEFORE creating member (single DB write instead of two)
+    const tempId = new mongoose.Types.ObjectId();
+    const qrBase64 = await QRCode.toDataURL(tempId.toString());
     const qrUrl = await uploadToCloudinary(qrBase64, 'gym-system/qr-codes');
-    
-    member.qrCode = qrUrl || qrBase64;
-    await member.save();
+
+    const member = await Member.create({
+      _id: tempId,
+      ...data,
+      gymId: req.user.gymId,
+      qrCode: qrUrl || qrBase64
+    });
 
     res.json(member);
   } catch (err) {
@@ -396,6 +398,50 @@ export const getFullMemberProfile = async (req, res) => {
     });
   } catch (err) {
     console.error("FULL_PROFILE_ERROR:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const deleteMember = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const gymId = req.user.gymId;
+
+    if (!gymId) return res.status(403).json({ message: "Gym not identified" });
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid Member ID" });
+    }
+
+    // 1. Find the member first to verify ownership and get linked data
+    const member = await Member.findOne({ _id: id, gymId }).lean();
+    if (!member) return res.status(404).json({ message: "Member not found" });
+
+    // 2. Delete ALL related data in parallel (fast atomic cleanup)
+    await Promise.all([
+      Attendance.deleteMany({ memberId: id }),
+      Payment.deleteMany({ memberId: id }),
+      Gamification.deleteMany({ memberId: id }),
+      // Delete linked User portal account if exists
+      member.userId ? User.findByIdAndDelete(member.userId) : Promise.resolve(),
+      // Delete the member record itself
+      Member.findByIdAndDelete(id),
+    ]);
+
+    // 3. Clean up Cloudinary images (non-blocking — don't fail if this fails)
+    try {
+      if (member.qrCode?.includes('cloudinary')) {
+        const publicId = member.qrCode.split('/').slice(-2).join('/').split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
+      }
+      if (member.profilePicture?.includes('cloudinary')) {
+        const publicId = member.profilePicture.split('/').slice(-2).join('/').split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
+      }
+    } catch (_) { /* Silently ignore Cloudinary cleanup errors */ }
+
+    res.json({ message: "Member and all related data deleted successfully" });
+  } catch (err) {
+    console.error("DELETE_MEMBER_ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };

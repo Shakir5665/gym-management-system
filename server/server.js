@@ -4,6 +4,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
+import rateLimit from "express-rate-limit";
+import compression from "compression";
 
 // Set global timezone to +05:30
 process.env.TZ = "Asia/Colombo";
@@ -25,9 +27,12 @@ import { initAutomation } from "./services/automationService.js";
 
 // 🔹 Middleware
 import errorHandler from "./middleware/errorHandler.js";
+import logger from "./utils/logger.js";
+import { validateConfig } from "./utils/configValidator.js";
 
 // 🔹 Load env
 dotenv.config();
+validateConfig();
 
 const app = express();
 
@@ -43,7 +48,33 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
   optionsSuccessStatus: 200
 }));
-app.use(express.json({ limit: "5mb" }));
+app.use(compression()); // ⚡ gzip compress all responses
+// NOTE: 2mb limit needed because profile pictures are sent as Base64 via API before Cloudinary upload
+// Future improvement: Use Cloudinary's direct client-side upload to reduce this to 50kb
+app.use(express.json({ limit: "2mb" }));
+
+// 🛡️ RATE LIMITING (The Shield)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // Limit each IP to 200 requests per window
+  message: { message: "Too many requests from this IP, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5, // Limit each IP to 5 login/register attempts per minute
+  message: { message: "Too many login attempts. Please wait 1 minute." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply global limiter to all routes
+app.use("/api", globalLimiter);
+// Apply strict limiter to auth routes
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 
 // 🔹 Health Check
 app.get("/", (req, res) => {
@@ -92,19 +123,43 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {});
 });
 
-// 🔹 MongoDB Connection
+// 🔹 MongoDB Connection (The Life Support)
 const mongoDbName = process.env.MONGO_DB_NAME || "gymsystem";
 
-mongoose
-  .connect(process.env.MONGO_URI, { dbName: mongoDbName })
-  .then(() => {
-    console.log(`MongoDB Connected (db: ${mongoDbName})`);
-
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, { 
+      dbName: mongoDbName,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    logger.info(`✅ MongoDB Connected (db: ${mongoDbName})`);
+    
     server.listen(process.env.PORT || 5000, "0.0.0.0", () => {
-      console.log(`Server running on port ${process.env.PORT || 5000}`);
+      logger.info(`🚀 Server running on port ${process.env.PORT || 5000}`);
       initAutomation(io);
     });
-  })
-  .catch((err) => {
-    console.error("DB Error:", err.message);
+  } catch (err) {
+    logger.error("❌ DB Connection Error:", err);
+    logger.info("🔄 Retrying in 5 seconds...");
+    setTimeout(connectDB, 5000);
+  }
+};
+
+connectDB();
+
+// 🛡️ SAFETY NET (Prevent process death)
+process.on("unhandledRejection", (err) => {
+  logger.error("💥 UNHANDLED REJECTION! Shutting down...");
+  logger.error(err);
+  // Give server time to finish active requests before closing
+  server.close(() => {
+    process.exit(1);
   });
+});
+
+process.on("uncaughtException", (err) => {
+  logger.error("💥 UNCAUGHT EXCEPTION! Shutting down...");
+  logger.error(err);
+  process.exit(1);
+});

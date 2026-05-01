@@ -4,13 +4,28 @@ import Member from '../models/Member.js';
 import Gym from '../models/Gym.js';
 import QRCode from 'qrcode';
 import { uploadToCloudinary } from '../services/cloudinaryService.js';
+import readlineSync from 'readline-sync';
 
 dotenv.config();
 
 const migrate = async () => {
   try {
-    console.log('🚀 Starting Cloudinary Migration...');
     const dbName = process.env.MONGO_DB_NAME || 'gymsystem';
+    const isForce = process.argv.includes('--force');
+    
+    if (!isForce) {
+      console.log(`\n⚠️  WARNING: You are about to migrate data in the [${dbName}] database.`);
+      const answer = readlineSync.question('Are you sure you want to proceed? (Type YES to confirm): ');
+      
+      if (answer !== 'YES') {
+        console.log('❌ Migration cancelled by user.');
+        process.exit(0);
+      }
+    } else {
+      console.log(`🚀 Force mode active. Starting migration on [${dbName}]...`);
+    }
+
+    console.log('🚀 Starting Cloudinary Migration...');
     await mongoose.connect(process.env.MONGO_URI, { dbName });
     console.log(`✅ Connected to MongoDB (db: ${dbName})`);
 

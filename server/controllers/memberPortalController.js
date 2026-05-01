@@ -37,16 +37,17 @@ export const memberRegister = async (req, res) => {
       });
     }
 
-    // 1. Check if they are actually a member in ANY gym
-    const memberRecord = await Member.findOne({ email: email.toLowerCase() });
+    // 1 & 2: Run both checks in parallel (faster than sequential)
+    const [memberRecord, existingUser] = await Promise.all([
+      Member.findOne({ email: email.toLowerCase() }),
+      User.findOne({ email: email.toLowerCase() })
+    ]);
+
     if (!memberRecord) {
       return res.status(403).json({ 
         message: "You are not registered as a member in any gym. Please contact your gym administrator." 
       });
     }
-
-    // 2. Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return res.status(400).json({ message: "An account with this email already exists. Please login." });
     }
@@ -192,17 +193,23 @@ export const getLeaderboard = async (req, res) => {
 export const updateMemberProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { name, phone, homeAddress, emergencyPhone, gender, email, password, profilePicture } = req.body;
+    const { name, phone, homeAddress, emergencyPhone, gender, email, password, profilePicture, dateOfBirth } = req.body;
 
     const member = await Member.findOne({ userId });
     if (!member) return res.status(404).json({ message: "Member not found" });
 
     // Update Member record
-    member.name = name || member.name;
+    if (name) {
+      member.name = name;           // Used in portal display
+      member.fullLegalName = name;  // ✅ Fix: Sync with admin page which shows fullLegalName
+    }
     member.phone = phone || member.phone;
     member.homeAddress = homeAddress || member.homeAddress;
     member.emergencyPhone = emergencyPhone || member.emergencyPhone;
     member.gender = gender || member.gender;
+    if (dateOfBirth) {
+      member.dateOfBirth = new Date(dateOfBirth);
+    }
 
     // Handle Profile Picture Upload
     if (profilePicture && profilePicture.startsWith('data:image')) {
@@ -214,10 +221,10 @@ export const updateMemberProfile = async (req, res) => {
 
     if (email) member.email = email.toLowerCase();
     
-    await member.save();
-
-    // Update User record
+    // Save both Member and User records in parallel
     const user = await User.findById(userId);
+    const updatePromises = [member.save()];
+
     if (user) {
       if (name) user.name = name;
       if (email) user.email = email.toLowerCase();
@@ -230,9 +237,10 @@ export const updateMemberProfile = async (req, res) => {
         }
         user.password = await bcrypt.hash(password, 10);
       }
-      await user.save();
+      updatePromises.push(user.save());
     }
 
+    await Promise.all(updatePromises);
     res.json({ message: "Profile updated successfully", member });
   } catch (err) {
     res.status(500).json({ message: err.message });

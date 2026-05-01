@@ -4,7 +4,7 @@ import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import Select from "../../components/ui/Select";
-import { User, Phone, MapPin, ShieldAlert, Save, Lock } from "lucide-react";
+import { User, Phone, MapPin, ShieldAlert, Save, Lock, Calendar } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
 
@@ -18,7 +18,8 @@ export default function MemberProfile() {
     gender: "",
     email: authUser?.email || "",
     password: "",
-    profilePicture: authUser?.profilePicture || ""
+    profilePicture: authUser?.profilePicture || "",
+    dateOfBirth: "",
   });
   // If we have authUser, we can show the UI immediately and just fetch details in BG
   const [loading, setLoading] = useState(!authUser);
@@ -38,6 +39,7 @@ export default function MemberProfile() {
           emergencyPhone: m.emergencyPhone || "",
           gender: m.gender || "",
           email: m.email || prev.email,
+          dateOfBirth: m.dateOfBirth ? new Date(m.dateOfBirth).toISOString().split('T')[0] : "",
         }));
       } catch (err) {
         if (!authUser) setMessage({ type: "error", text: "Failed to load profile" });
@@ -149,6 +151,14 @@ export default function MemberProfile() {
             onChange={(e) => setForm({...form, name: e.target.value})}
             left={<User className="h-4 w-4" />}
             required
+          />
+
+          <Input
+            label="Date of Birth"
+            type="date"
+            value={form.dateOfBirth}
+            onChange={(e) => setForm({...form, dateOfBirth: e.target.value})}
+            left={<Calendar className="h-4 w-4" />}
           />
 
           <div className="grid md:grid-cols-2 gap-5">

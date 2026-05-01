@@ -9,7 +9,7 @@ import Input from "../components/ui/Input";
 import Modal from "../components/ui/Modal";
 import Select from "../components/ui/Select";
 import AreaSpark from "../components/charts/AreaSpark";
-import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning, Ban, ShieldCheck, Receipt, CheckCircle, Edit3, Download, Mail, Lock } from "lucide-react";
+import { ArrowLeft, Flame, ShieldAlert, Star, ChevronDown, Gavel, FileWarning, Ban, ShieldCheck, Receipt, CheckCircle, Edit3, Download, Mail, Lock, Trash2 } from "lucide-react";
 import QRCode from "qrcode";
 import { socket } from "../socket";
 
@@ -64,6 +64,7 @@ export default function MemberProfilePage() {
   const [portalOpen, setPortalOpen] = useState(false);
   const [portalForm, setPortalForm] = useState({ email: "", password: "" });
   const [portalMessage, setPortalMessage] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const downloadQrCode = () => {
     if (!qrCodeUrl) return;
@@ -282,6 +283,19 @@ export default function MemberProfilePage() {
     }
   }
 
+  async function handleDeleteMember() {
+    try {
+      setSaving(true);
+      await API.delete(`/members/${id}`);
+      navigate("/app/members", { replace: true });
+    } catch (e) {
+      setError(e?.response?.data?.message || "Failed to delete member");
+      setDeleteOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
 
   const metricCard = "glass p-5 md:p-6";
 
@@ -388,12 +402,61 @@ export default function MemberProfilePage() {
               <ArrowLeft className="h-4 w-4" />
               Back
             </button>
-            <div className="mt-3 text-sm text-[color:var(--muted)]">Member</div>
-            <div className="text-2xl font-black tracking-tight text-[color:var(--text)] truncate">
-              {member?.fullLegalName || member?.name || "Member"}
-            </div>
-            <div className="mt-1 text-xs text-[color:var(--subtle)] truncate">
-              {member?.phone || " "}
+
+            {/* 👤 PROFESSIONAL AVATAR + NAME IDENTITY */}
+            <div className="mt-4 flex items-center gap-4">
+              {/* Avatar with ring */}
+              <div className={`relative shrink-0 rounded-full p-[2.5px] ${
+                member?.isBanned
+                  ? 'bg-gradient-to-br from-red-500 to-red-700'
+                  : member?.hasFine
+                  ? 'bg-gradient-to-br from-yellow-400 to-orange-500'
+                  : 'bg-gradient-to-br from-emerald-400 to-teal-600'
+              }`}>
+                <div className="rounded-full overflow-hidden w-14 h-14 bg-[color:var(--control-bg)] border-2 border-[color:var(--bg)]">
+                  {member?.profilePicture ? (
+                    <img
+                      src={member.profilePicture}
+                      alt={member?.fullLegalName || member?.name}
+                      className="w-14 h-14 object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className={`w-14 h-14 flex items-center justify-center font-black text-xl ${
+                      member?.isBanned ? 'bg-red-500/20 text-red-400'
+                      : member?.hasFine ? 'bg-yellow-500/20 text-yellow-400'
+                      : 'bg-emerald-500/20 text-emerald-400'
+                    }`}>
+                      {(member?.fullLegalName || member?.name || "?").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                {/* Status dot */}
+                <span className={`absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-[color:var(--bg)] ${
+                  member?.isBanned ? 'bg-red-500'
+                  : member?.hasFine ? 'bg-yellow-400'
+                  : 'bg-emerald-400'
+                }`} />
+              </div>
+
+              {/* Name & details */}
+              <div className="min-w-0">
+                <div className="text-[10px] font-bold text-[color:var(--muted)] uppercase tracking-widest">Member</div>
+                <div className="text-2xl font-black tracking-tight text-[color:var(--text)] truncate leading-tight">
+                  {member?.fullLegalName || member?.name || "Member"}
+                </div>
+                <div className="mt-0.5 flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-[color:var(--subtle)] truncate">
+                    {member?.phone || " "}
+                  </span>
+                  {member?.isBanned && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/20">BANNED</span>
+                  )}
+                  {member?.hasFine && !member?.isBanned && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/20">FINED</span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full sm:w-auto">
@@ -429,6 +492,16 @@ export default function MemberProfilePage() {
               >
                 <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                 <span className="text-[11px] sm:text-sm font-semibold">Reminder</span>
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => setDeleteOpen(true)}
+                disabled={saving}
+                className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20"
+                title="Delete member permanently"
+              >
+                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="text-[11px] sm:text-sm font-semibold">Delete</span>
               </Button>
             </div>
           </div>
@@ -806,6 +879,41 @@ export default function MemberProfilePage() {
             </Button>
             <Button variant="brand" onClick={handleSetPortal} disabled={saving}>
               {saving ? "Setting Access..." : "Save Credentials"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 🗑️ DELETE CONFIRMATION MODAL */}
+      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete Member">
+        <div className="space-y-6 pt-2">
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 space-y-2">
+            <div className="flex items-center gap-3">
+              <Trash2 className="h-5 w-5 text-red-400 shrink-0" />
+              <h3 className="text-red-400 font-black text-base">This action cannot be undone</h3>
+            </div>
+            <p className="text-sm text-red-300/70 leading-relaxed">
+              You are about to permanently delete <span className="text-red-300 font-bold">{member?.fullLegalName || member?.name}</span> and all of their associated data including:
+            </p>
+            <ul className="text-xs text-red-300/60 space-y-1 ml-4 list-disc">
+              <li>All attendance & check-in records</li>
+              <li>All payment history</li>
+              <li>Gamification points & streaks</li>
+              <li>Member portal account (if created)</li>
+              <li>QR code & profile picture from cloud</li>
+            </ul>
+          </div>
+          <div className="flex items-center justify-end gap-3">
+            <Button variant="ghost" onClick={() => setDeleteOpen(false)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteMember}
+              disabled={saving}
+              className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold"
+            >
+              <Trash2 className="h-4 w-4" />
+              {saving ? "Deleting..." : "Yes, Delete Permanently"}
             </Button>
           </div>
         </div>

@@ -8,7 +8,17 @@ import Expense from "../models/Expense.js";
 import Gamification from "../models/Gamification.js";
 import { sendChurnEncouragement } from "./mailService.js";
 
+// 🛡️ CRON OVERLAP GUARD: Prevents the job from running twice simultaneously
+let isChurnRunning = false;
+let isDeletionRunning = false;
+
 const processChurnAutomation = async (io) => {
+  // 🛡️ If a previous run is still in progress, skip this cycle
+  if (isChurnRunning) {
+    console.log("⏩ Churn job already running. Skipping this cycle.");
+    return;
+  }
+  isChurnRunning = true;
   const startTime = Date.now();
   console.log("🚀 Starting Optimized Churn Automation...");
   try {
@@ -35,32 +45,48 @@ const processChurnAutomation = async (io) => {
 
     console.log(`🔍 Checking ${membersToNotify.length} members for inactivity...`);
 
+    // ⚡ BATCH LOAD: Pre-fetch all gyms and attendances to eliminate N+1 queries
+    const uniqueGymIds = [...new Set(membersToNotify.map(m => m.gymId?.toString()).filter(Boolean))];
+    const uniqueMemberIds = membersToNotify.map(m => m._id);
+
+    const [gyms, lastAttendances] = await Promise.all([
+      Gym.find({ _id: { $in: uniqueGymIds } }).select('name').lean(),
+      Attendance.aggregate([
+        { $match: { memberId: { $in: uniqueMemberIds }, status: 'SUCCESS' } },
+        { $sort: { checkInTime: -1 } },
+        { $group: { _id: '$memberId', lastCheckIn: { $first: '$checkInTime' } } }
+      ])
+    ]);
+
+    // Build lookup maps for O(1) access inside the loop
+    const gymMap = new Map(gyms.map(g => [g._id.toString(), g.name]));
+    const attendanceMap = new Map(lastAttendances.map(a => [a._id.toString(), a.lastCheckIn]));
+
     let sentCount = 0;
     // Process in smaller batches to avoid blocking the event loop
     for (const member of membersToNotify) {
-      const lastAttendance = await Attendance.findOne({ memberId: member._id })
-        .sort({ checkInTime: -1 })
-        .select("checkInTime")
-        .lean();
-
-      const lastCheckIn = lastAttendance ? new Date(lastAttendance.checkInTime) : new Date(member.createdAt);
+      const lastCheckIn = attendanceMap.get(member._id.toString()) 
+        ? new Date(attendanceMap.get(member._id.toString())) 
+        : new Date(member.createdAt);
 
       if (lastCheckIn < tenDaysAgo) {
-        // Fetch gym name efficiently
-        const gym = await Gym.findById(member.gymId).select("name").lean();
-        const gymName = gym?.name || "Your Gym";
+        const gymName = gymMap.get(member.gymId?.toString()) || 'Your Gym';
 
         try {
-          await sendChurnEncouragement(member.email, {
-            memberName: member.name || member.fullLegalName,
-            gymName
-          });
+          // ⏱️ EMAIL TIMEOUT: If email takes > 10 seconds, skip it (don't hang the loop)
+          await Promise.race([
+            sendChurnEncouragement(member.email, {
+              memberName: member.name || member.fullLegalName,
+              gymName
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 10000))
+          ]);
 
           await Member.updateOne({ _id: member._id }, { $set: { lastChurnEmailSent: new Date() } });
           sentCount++;
 
           if (io) {
-            io.emit("notification:churn-email", {
+            io.emit('notification:churn-email', {
               memberId: member._id,
               memberName: member.name || member.fullLegalName,
             });
@@ -73,10 +99,19 @@ const processChurnAutomation = async (io) => {
     console.log(`✅ Churn Automation Completed in ${Date.now() - startTime}ms. Emails sent: ${sentCount}`);
   } catch (err) {
     console.error("❌ Churn Automation Error:", err.message);
+  } finally {
+    // 🛡️ Always release the lock, even if an error occurred
+    isChurnRunning = false;
   }
 };
 
 const processGymDeletion = async () => {
+  // 🛡️ Prevent overlap on deletion jobs
+  if (isDeletionRunning) {
+    console.log("⏩ Deletion job already running. Skipping this cycle.");
+    return;
+  }
+  isDeletionRunning = true;
   console.log("Running Gym Deletion Task...");
   try {
     const now = new Date();
@@ -107,6 +142,9 @@ const processGymDeletion = async () => {
     }
   } catch (err) {
     console.error("Gym Deletion Error:", err.message);
+  } finally {
+    // 🛡️ Always release the lock
+    isDeletionRunning = false;
   }
 };
 
