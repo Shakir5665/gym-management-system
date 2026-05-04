@@ -13,8 +13,7 @@ Welcome to the official User Guide for the **Smart Gym Management System**. This
 5. [Payments & Billing](#5-payments--billing)
 6. [Retention & Churn Watchlist](#6-retention--churn-watchlist)
 7. [Notifications & Reminders](#7-notifications--reminders)
-8. [Super Admin Controls](#8-super-admin-controls)
-9. [Terms & Privacy](#9-terms--privacy)
+8. [Terms & Privacy](#8-terms--privacy)
 
 ---
 
@@ -94,15 +93,7 @@ The scanner is designed to be used at the gym entrance.
 
 ---
 
-## 8. Super Admin Controls
-*(Accessible only to Shakir Tech Solutions & Master Admins)*
-- **Gym Registration:** Create and manage multiple gym locations.
-- **System Health:** Monitor active gym subscriptions and payment status of gym owners.
-- **Global Settings:** Update system-wide terms, maintenance modes, and security patches.
-
----
-
-## 9. Terms & Privacy
+## 8. Terms & Privacy
 - All users must adhere to the **Terms of Service**.
 - Data is encrypted and stored securely using MongoDB and Cloudinary for media.
 - Members can view their own data and payment history via the **Member Portal**.
@@ -110,4 +101,4 @@ The scanner is designed to be used at the gym entrance.
 ---
 
 **Designed & Developed by Shakir Tech Solutions**
-*For support or technical assistance, please contact shakir@techsolutions.com*
+
