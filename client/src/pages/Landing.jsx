@@ -3,6 +3,7 @@ import Login from "./Login";
 import ForgotPassword from "./ForgotPassword";
 import LogoLight from "../assets/Logo-Light.png";
 import LogoDark from "../assets/Logo-Dark.png";
+import ShakirLogo from "../assets/shakir_logo.png";
 import { useTheme } from "../context/ThemeContext";
 
 export default function Landing() {
@@ -17,12 +18,33 @@ export default function Landing() {
 
       <div className="relative mx-auto max-w-7xl min-h-screen grid lg:grid-cols-2 gap-6 px-4 py-10 lg:py-0 items-center">
         {/* LEFT: HERO */}
-        <div className="hidden lg:flex items-center justify-center p-10">
-          <img 
-            src={theme === "dark" ? LogoDark : LogoLight} 
-            alt="Gym Management Logo" 
-            className="w-full max-w-xl object-contain drop-shadow-2xl opacity-90 hover:opacity-100 transition-opacity duration-500"
-          />
+        <div className="hidden lg:flex flex-col items-center justify-center p-10">
+          <div className="flex flex-col items-center">
+            <img
+              src={theme === "dark" ? LogoDark : LogoLight}
+              alt="Gym Management Logo"
+              className="w-full max-w-xl object-contain drop-shadow-2xl opacity-90 hover:opacity-100 transition-opacity duration-500"
+            />
+
+            {/* ✍️ Developer Signature - Anchored to Logo Block */}
+            <div className="mt-8 flex justify-center w-full">
+              <div className="flex items-center cursor-default group opacity-70 hover:opacity-100 transition-opacity">
+                <img
+                  src={ShakirLogo}
+                  alt="Shakir Tech Solutions"
+                  className="h-10 w-auto object-contain brightness-110"
+                />
+                <div className="flex flex-col justify-center -ml-1">
+                  <span className="text-[8px] uppercase tracking-tighter text-[color:var(--subtle)] font-black leading-none mb-1">
+                    POWERED BY
+                  </span>
+                  <span className="text-xs font-black tracking-tighter text-[color:var(--text)] leading-none">
+                    Shakir Tech Solutions
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* RIGHT: AUTH */}

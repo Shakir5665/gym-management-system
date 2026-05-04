@@ -23,6 +23,10 @@ import MemberPayments from "./pages/portal/MemberPayments";
 import MemberAttendance from "./pages/portal/MemberAttendance";
 import DeactivatedNotice from "./components/ui/DeactivatedNotice";
 
+import TermsPage from "./pages/TermsPage";
+
+import AboutPage from "./pages/AboutPage";
+
 function App() {
   // ✅ Hooks must be inside component
   const { token, role, loading, isDeactivated } = useAuth();
@@ -57,6 +61,8 @@ function App() {
         }
       />
 
+      <Route path="/terms" element={<TermsPage />} />
+
       <Route
         path="/app"
         element={
@@ -76,6 +82,7 @@ function App() {
         <Route path="payments" element={<Payments />} />
         <Route path="accounting" element={<AccountingPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="about" element={<AboutPage />} />
         <Route 
           path="super" 
           element={

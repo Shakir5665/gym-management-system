@@ -21,6 +21,7 @@ export default function SuperAdminDashboard() {
   });
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ open: false, gymId: null, gymName: "" });
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -62,6 +63,11 @@ export default function SuperAdminDashboard() {
       return;
     }
 
+    if (!acceptedTerms) {
+      setRegisterError("Please confirm acceptance of the Terms and Conditions");
+      return;
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(registerForm.email)) {
       setRegisterError("Please enter a valid email address");
@@ -79,6 +85,7 @@ export default function SuperAdminDashboard() {
       await API.post("/super/register-gym", registerForm);
       setRegisterOpen(false);
       setRegisterForm({ name: "", email: "", password: "", gymName: "" });
+      setAcceptedTerms(false);
       loadData();
     } catch (err) {
       setRegisterError(err.response?.data?.message || "Failed to register gym");
@@ -310,12 +317,33 @@ export default function SuperAdminDashboard() {
             required
             left={<Building2 className="h-4 w-4" />}
           />
+
+          <div className="flex items-start gap-2 px-1">
+            <input
+              id="reg-terms"
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 text-brand-500 focus:ring-brand-500 accent-brand-500"
+            />
+            <label htmlFor="reg-terms" className="text-[11px] leading-tight text-[color:var(--muted)]">
+              The Client has reviewed and accepted the{" "}
+              <a 
+                href="/terms" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-brand-400 hover:underline font-medium"
+              >
+                Terms and Conditions
+              </a>.
+            </label>
+          </div>
           
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setRegisterOpen(false)} disabled={registerLoading}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={registerLoading}>
+            <Button type="submit" variant="primary" disabled={registerLoading || !acceptedTerms}>
               {registerLoading ? "Registering..." : "Create Account"}
             </Button>
           </div>

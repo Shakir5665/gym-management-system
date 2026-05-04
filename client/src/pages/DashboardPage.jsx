@@ -195,7 +195,7 @@ export default function DashboardPage() {
         <StatCard
           icon={Wallet}
           iconColor="text-amber-500"
-          label="Revenue this month"
+          label="Revenue of this month"
           value={formatMoneyLKR(summary?.revenueThisMonth ?? 0)}
         />
       </div>
@@ -283,9 +283,9 @@ export default function DashboardPage() {
         </div>
       </Card>
 
-      <Modal 
-        open={activeListOpen} 
-        onClose={() => setActiveListOpen(false)} 
+      <Modal
+        open={activeListOpen}
+        onClose={() => setActiveListOpen(false)}
         title="Active Members Now"
         className="max-w-md"
       >
@@ -326,9 +326,9 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => navigate(`/app/member/${m.memberId}`)}
                     className="shrink-0 text-xs px-3 py-1.5"
                   >

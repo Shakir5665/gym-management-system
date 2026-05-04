@@ -14,9 +14,17 @@ export default function Login({ onForgotPassword }) {
   const [loading, setLoading] = useState(false);
   const [messageType, setMessageType] = useState("error");
 
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
   const handleLogin = async () => {
     if (!email || !password) {
       setMessage("Email and password are required");
+      setMessageType("error");
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setMessage("Please accept the Terms and Conditions to continue");
       setMessageType("error");
       return;
     }
@@ -41,7 +49,7 @@ export default function Login({ onForgotPassword }) {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") handleLogin();
+    if (e.key === "Enter" && acceptedTerms) handleLogin();
   };
 
   return (
@@ -91,11 +99,33 @@ export default function Login({ onForgotPassword }) {
         left={<Lock className="h-4 w-4" />}
       />
 
+      <div className="flex items-start gap-2 px-1 py-1">
+        <input
+          id="terms"
+          type="checkbox"
+          checked={acceptedTerms}
+          onChange={(e) => setAcceptedTerms(e.target.checked)}
+          className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 text-brand-500 focus:ring-brand-500 accent-brand-500"
+        />
+        <label htmlFor="terms" className="text-[11px] leading-tight text-[color:var(--muted)]">
+          I accept the{" "}
+          <a 
+            href="/terms" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-brand-400 hover:underline font-medium"
+          >
+            Terms and Conditions
+          </a>{" "}
+          of the Smart Gym System.
+        </label>
+      </div>
+
       <Button
         onClick={handleLogin}
-        disabled={loading}
+        disabled={loading || !acceptedTerms}
         variant="primary"
-        className="w-full mt-1"
+        className={`w-full mt-1 ${!acceptedTerms ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
       >
         {loading ? "Signing in…" : "Sign in"}
       </Button>
