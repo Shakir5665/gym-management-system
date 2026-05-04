@@ -116,8 +116,8 @@ gym-management-system/
 **Mohamed Shakir**
 *BSc IT Undergraduate | Future Software Engineer*
 
-- [LinkedIn](https://www.linkedin.com/in/mohamed-shakir-6b0a8a1b4/)
-- [Portfolio](https://shakir-portfolio.vercel.app/)
+- [LinkedIn](www.linkedin.com/in/mohamedshakir5665)
+- [Portfolio](https://shakir-portfolio-one-amber-87.vercel.app)
 
 ---
 
