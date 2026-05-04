@@ -205,18 +205,18 @@ export default function Scanner() {
 
   return (
     <div className="grid gap-4 md:gap-6">
-      <Card className="p-0 overflow-hidden border-white/5">
-        <div className="bg-white/[0.02] p-5 border-b border-white/5">
+      <Card className="p-0 overflow-hidden border-[color:var(--glass-border)]">
+        <div className="bg-[color:var(--control-bg)] p-5 border-b border-[color:var(--glass-border)]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-black text-white tracking-tight">Check-in Terminal</h2>
+              <h2 className="text-lg font-black text-[color:var(--text)] tracking-tight">Check-in Terminal</h2>
               <div className="flex items-center gap-2 mt-2">
                 <button
                   onClick={() => { stop(); setMode("camera"); }}
                   className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border transition-all ${
                     mode === "camera" 
-                      ? "bg-brand-500 text-white border-brand-500 shadow-lg shadow-brand-500/20" 
-                      : "bg-white/5 text-white/30 border-white/10 hover:bg-white/10"
+                      ? "bg-[color:var(--brand-soft-bg)] text-[color:var(--brand-ink)] border-[color:var(--brand-soft-border)] shadow-sm" 
+                      : "bg-[color:var(--control-bg)] text-[color:var(--muted)] border-[color:var(--control-border)] hover:bg-[color:var(--control-bg-hover)]"
                   }`}
                 >
                   Lens Mode
@@ -225,8 +225,8 @@ export default function Scanner() {
                   onClick={() => { stop(); setMode("usb"); }}
                   className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border transition-all ${
                     mode === "usb" 
-                      ? "bg-brand-500 text-white border-brand-500 shadow-lg shadow-brand-500/20" 
-                      : "bg-white/5 text-white/30 border-white/10 hover:bg-white/10"
+                      ? "bg-[color:var(--brand-soft-bg)] text-[color:var(--brand-ink)] border-[color:var(--brand-soft-border)] shadow-sm" 
+                      : "bg-[color:var(--control-bg)] text-[color:var(--muted)] border-[color:var(--control-border)] hover:bg-[color:var(--control-bg-hover)]"
                   }`}
                 >
                   Scanner Mode
@@ -236,17 +236,17 @@ export default function Scanner() {
 
             <div className="flex items-center gap-3">
               {mode === "camera" && (
-                <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/5 w-full sm:w-auto">
+                <div className="flex items-center gap-2 bg-[color:var(--control-bg)] p-1.5 rounded-2xl border border-[color:var(--control-border)] w-full sm:w-auto">
                   <select
                     value={selectedCam}
                     onChange={(e) => { setSelectedCam(e.target.value); if(running) { stop(); } }}
-                    className="flex-1 sm:w-64 text-[12px] font-black bg-[#1a1a1a] text-white px-4 py-2 outline-none cursor-pointer rounded-xl appearance-none"
+                    className="flex-1 sm:w-64 text-[12px] font-black bg-[color:var(--bg)] text-[color:var(--text)] px-4 py-2 outline-none cursor-pointer rounded-xl appearance-none"
                   >
                     {cameras.length === 0 ? (
-                      <option className="text-white/30">Searching for lenses...</option>
+                      <option className="text-[color:var(--muted)]">Searching for lenses...</option>
                     ) : (
                       cameras.map(cam => (
-                        <option key={cam.id} value={cam.id} className="bg-[#1a1a1a] text-white">
+                        <option key={cam.id} value={cam.id} className="bg-[color:var(--bg)] text-[color:var(--text)]">
                           {cam.label || `Camera ${cam.id.slice(0, 5)}`}
                         </option>
                       ))
@@ -264,8 +264,8 @@ export default function Scanner() {
                 </div>
               )}
               {mode === "usb" && (
-                <div className="flex items-center gap-2 text-[10px] font-black text-brand-500 bg-brand-500/10 px-4 py-2.5 rounded-2xl border border-brand-500/20 uppercase tracking-widest">
-                  <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                <div className="flex items-center gap-2 text-[10px] font-black text-[color:var(--brand-ink)] bg-[color:var(--brand-soft-bg)] px-4 py-2.5 rounded-2xl border border-[color:var(--brand-soft-border)] uppercase tracking-widest">
+                  <div className="w-1.5 h-1.5 bg-[color:var(--brand-ink)] rounded-full animate-pulse shadow-[0_0_8px_rgba(29,78,216,0.4)]" />
                   Ready to Receive
                 </div>
               )}
