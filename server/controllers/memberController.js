@@ -39,7 +39,18 @@ export const createMember = async (req, res) => {
     const { fullLegalName, phone } = data;
 
     if (!fullLegalName || !phone) {
-      return res.status(400).json({ message: "Full legal name and primary phone are required" });
+      return res.status(400).json({ message: "Full Name and primary phone are required" });
+    }
+
+    // ❌ STRICT GLOBAL EMAIL UNIQUE CHECK (User Request)
+    if (data.email) {
+      const [existingEmail, userExists] = await Promise.all([
+        Member.findOne({ email: data.email }),
+        User.findOne({ email: data.email })
+      ]);
+      if (existingEmail || userExists) {
+        return res.status(400).json({ message: "E-mail is already used by another member" });
+      }
     }
 
     // ❌ CHECK IF USER HAS GYM
@@ -91,7 +102,7 @@ export const getMembers = async (req, res) => {
 
     let query = Member.find(filter)
       .lean();
-    
+
     if (limit) query = query.limit(limit);
     const data = await query;
     res.json(data);
@@ -124,7 +135,18 @@ export const updateMember = async (req, res) => {
 
     const data = normalizeMemberPayload(req.body);
     if (!data.fullLegalName || !data.phone) {
-      return res.status(400).json({ message: "Full legal name and primary phone are required" });
+      return res.status(400).json({ message: "Full Name and primary phone are required" });
+    }
+
+    // ❌ STRICT GLOBAL EMAIL UNIQUE CHECK (User Request)
+    if (data.email && data.email !== existing.email) {
+      const [emailTaken, userExists] = await Promise.all([
+        Member.findOne({ email: data.email, _id: { $ne: req.params.id } }),
+        User.findOne({ email: data.email })
+      ]);
+      if (emailTaken || userExists) {
+        return res.status(400).json({ message: "E-mail is already used by another member" });
+      }
     }
 
     existing.name = data.name;
@@ -258,7 +280,7 @@ export const setMemberCredentials = async (req, res) => {
 
     // 1. Check if user already exists
     let user = await User.findOne({ email: email.toLowerCase() });
-    
+
     if (user && user.role !== "MEMBER") {
       return res.status(400).json({ message: "This email is already associated with an Admin account" });
     }
@@ -313,18 +335,18 @@ export const getFullMemberProfile = async (req, res) => {
       Member.findOne({ _id: id, gymId }).lean(),
       Gamification.findOne({ memberId: id, gymId }).lean(),
       Attendance.aggregate([
-        { 
-          $match: { 
-            memberId: new mongoose.Types.ObjectId(id), 
-            status: "SUCCESS", 
-            checkInTime: { $exists: true, $ne: null, $gte: start } 
-          } 
+        {
+          $match: {
+            memberId: new mongoose.Types.ObjectId(id),
+            status: "SUCCESS",
+            checkInTime: { $exists: true, $ne: null, $gte: start }
+          }
         },
-        { 
-          $group: { 
-            _id: { $dateToString: { format: "%Y-%m-%d", date: "$checkInTime", timezone: "+05:30" } }, 
-            count: { $sum: 1 } 
-          } 
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$checkInTime", timezone: "+05:30" } },
+            count: { $sum: 1 }
+          }
         }
       ]).exec(),
       Attendance.find({ memberId: id, gymId }).sort({ checkInTime: -1 }).limit(20).lean(),
@@ -348,7 +370,7 @@ export const getFullMemberProfile = async (req, res) => {
       game: game || { points: 0, streak: 0 },
       churn: { probability },
       trend: { series: (attendanceRows || []).map(r => ({ date: r._id, count: r.count })) },
-      activity: { 
+      activity: {
         items: [
           ...(activity || []).map(a => ({ type: "CHECKIN", at: a.checkInTime, status: a.status })),
           ...(payments || []).map(p => ({ type: "PAYMENT", at: p.createdAt, amount: p.amount }))

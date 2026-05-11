@@ -201,7 +201,8 @@ export default function MembersPage() {
       setAddOpen(false);
       await fetchMembers();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to add member");
+      const msg = err.response?.data?.message || "Failed to add member";
+      setFormErrors([msg]);
     } finally {
       setAdding(false);
     }

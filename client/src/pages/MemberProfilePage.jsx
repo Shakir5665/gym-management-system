@@ -63,6 +63,8 @@ export default function MemberProfilePage() {
   const [portalForm, setPortalForm] = useState({ email: "", password: "" });
   const [portalMessage, setPortalMessage] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [portalError, setPortalError] = useState("");
 
   const downloadQrCode = () => {
     if (!qrCodeUrl) return;
@@ -181,7 +183,7 @@ export default function MemberProfilePage() {
       setEditOpen(false);
       await fetchAll();
     } catch (e) {
-      setError(e?.response?.data?.message || "Failed to update member");
+      setEditError(e?.response?.data?.message || "Failed to update member");
     } finally {
       setSaving(false);
     }
@@ -259,7 +261,7 @@ export default function MemberProfilePage() {
       await fetchAll();
       setTimeout(() => setPortalMessage(""), 5000);
     } catch (e) {
-      setError(e?.response?.data?.message || "Failed to set portal credentials");
+      setPortalError(e?.response?.data?.message || "Failed to set portal credentials");
     } finally {
       setSaving(false);
     }
@@ -691,7 +693,12 @@ export default function MemberProfilePage() {
         </div>
       </Card>
 
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit member details">
+      <Modal open={editOpen} onClose={() => { setEditOpen(false); setEditError(""); }} title="Edit member details">
+        {editError && (
+          <div className="mb-4 rounded-xl border border-danger-500/20 bg-danger-500/5 px-4 py-3 text-xs font-bold text-danger-500">
+            {editError}
+          </div>
+        )}
         <div className="grid gap-3">
           <Input
             label="Full legal name"
@@ -793,7 +800,12 @@ export default function MemberProfilePage() {
       </Modal>
 
 
-      <Modal open={portalOpen} onClose={() => setPortalOpen(false)} title="Manage Portal Access">
+      <Modal open={portalOpen} onClose={() => { setPortalOpen(false); setPortalError(""); }} title="Manage Portal Access">
+        {portalError && (
+          <div className="mb-4 rounded-xl border border-danger-500/20 bg-danger-500/5 px-4 py-3 text-xs font-bold text-danger-500">
+            {portalError}
+          </div>
+        )}
         <div className="grid gap-4">
           <p className="text-xs text-[color:var(--muted)]">
             Set the login credentials for <strong>{member?.fullLegalName || member?.name}</strong>. 
