@@ -25,10 +25,6 @@ export default function AboutPage() {
             <span className="px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-[9px] md:text-[10px] font-black tracking-widest text-brand-400 uppercase">
               Powerd by
             </span>
-            <span className="px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-[9px] md:text-[10px] font-black tracking-widest text-green-500 uppercase flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-              Status: Active
-            </span>
           </div>
           <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[color:var(--text)] mb-2">
             Shakir Tech Solutions

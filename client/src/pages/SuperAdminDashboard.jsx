@@ -12,7 +12,7 @@ export default function SuperAdminDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Register Modal State
   const [registerOpen, setRegisterOpen] = useState(false);
   const [registerForm, setRegisterForm] = useState({
@@ -71,7 +71,7 @@ export default function SuperAdminDashboard() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    
+
     if (!registerForm.name || !registerForm.email || !registerForm.password || !registerForm.gymName) {
       setRegisterError("All fields are required");
       return;
@@ -125,7 +125,7 @@ export default function SuperAdminDashboard() {
     try {
       setEditLoading(true);
       setEditError("");
-      
+
       const payload = { ...editForm };
       if (!payload.password) delete payload.password; // Don't send empty password
 
@@ -164,8 +164,8 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  const filteredGyms = gyms.filter(g => 
-    g.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredGyms = gyms.filter(g =>
+    g.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     g.owner?.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -175,15 +175,15 @@ export default function SuperAdminDashboard() {
     <div className="grid gap-6 p-4 md:p-6 max-w-7xl mx-auto">
       {/* 🚀 Header Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-        <StatCard 
-          icon={<Building2 className="text-brand-500" />} 
-          title="Total Gyms" 
-          value={stats?.totalGyms || 0} 
+        <StatCard
+          icon={<Building2 className="text-brand-500" />}
+          title="Total Gyms"
+          value={stats?.totalGyms || 0}
         />
-        <StatCard 
-          icon={<Users className="text-blue-500" />} 
-          title="Total Members" 
-          value={stats?.totalMembers || 0} 
+        <StatCard
+          icon={<Users className="text-blue-500" />}
+          title="Total Members"
+          value={stats?.totalMembers || 0}
         />
       </div>
 
@@ -194,13 +194,13 @@ export default function SuperAdminDashboard() {
             <h2 className="text-lg font-bold text-[color:var(--text)]">Gym Directory</h2>
             <p className="text-xs text-[color:var(--muted)]">Manage all businesses using your platform.</p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
             <div className="relative max-w-xs w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[color:var(--muted)]" />
-              <input 
-                type="text" 
-                placeholder="Search by gym or email..." 
+              <input
+                type="text"
+                placeholder="Search by gym or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-[color:var(--control-bg)] border border-[color:var(--control-border)] rounded-xl py-2 pl-10 pr-4 text-sm outline-none"
@@ -243,83 +243,83 @@ export default function SuperAdminDashboard() {
                       <span className="flex items-center gap-1.5 text-yellow-500 font-medium">
                         <Activity className="h-4 w-4" /> Pending Approval
                       </span>
-                      ) : gym.isActive ? (
-                        <span className="flex items-center gap-1.5 text-green-500 font-medium">
-                          <ShieldCheck className="h-4 w-4" /> Active
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1.5 text-red-500 font-medium">
-                          <ShieldAlert className="h-4 w-4" /> Deactivated
-                        </span>
-                      )}
-                      {gym.scheduledDeletionAt && (
-                        <div className="mt-1 text-[10px] text-red-400 font-bold">
-                          🗑️ Deletion on {new Date(gym.scheduledDeletionAt).toLocaleDateString()}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button 
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenEdit(gym)}
-                          className="text-brand-400 hover:bg-brand-500/10 p-1.5"
-                          disabled={actionLoading}
-                          title="Edit Gym & Owner"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                    ) : gym.isActive ? (
+                      <span className="flex items-center gap-1.5 text-green-500 font-medium">
+                        <ShieldCheck className="h-4 w-4" /> Active
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-red-500 font-medium">
+                        <ShieldAlert className="h-4 w-4" /> Deactivated
+                      </span>
+                    )}
+                    {gym.scheduledDeletionAt && (
+                      <div className="mt-1 text-[10px] text-red-400 font-bold">
+                        🗑️ Deletion on {new Date(gym.scheduledDeletionAt).toLocaleDateString()}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenEdit(gym)}
+                        className="text-brand-400 hover:bg-brand-500/10 p-1.5"
+                        disabled={actionLoading}
+                        title="Edit Gym & Owner"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
 
-                        {gym.scheduledDeletionAt ? (
-                          <Button 
-                            variant="primary"
-                            size="sm"
-                            onClick={() => handleRevokeDeletion(gym._id)}
-                            className="text-[10px] py-1 px-3 bg-blue-600 hover:bg-blue-700 border-none flex items-center gap-1"
-                            disabled={actionLoading}
-                          >
-                            <RotateCcw className="h-3 w-3" /> Revoke Deletion
-                          </Button>
-                        ) : (
-                          <>
-                            {!gym.isApproved && (
-                              <Button 
-                                variant="primary"
+                      {gym.scheduledDeletionAt ? (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleRevokeDeletion(gym._id)}
+                          className="text-[10px] py-1 px-3 bg-blue-600 hover:bg-blue-700 border-none flex items-center gap-1"
+                          disabled={actionLoading}
+                        >
+                          <RotateCcw className="h-3 w-3" /> Revoke Deletion
+                        </Button>
+                      ) : (
+                        <>
+                          {!gym.isApproved && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => updateStatus(gym._id, { isApproved: true, isActive: true })}
+                              className="text-[10px] py-1 px-3 bg-green-600 hover:bg-green-700 border-none"
+                              disabled={actionLoading}
+                            >
+                              Approve Gym
+                            </Button>
+                          )}
+                          {gym.isApproved && (
+                            <>
+                              <Button
+                                variant={gym.isActive ? "danger" : "primary"}
                                 size="sm"
-                                onClick={() => updateStatus(gym._id, { isApproved: true, isActive: true })}
-                                className="text-[10px] py-1 px-3 bg-green-600 hover:bg-green-700 border-none"
+                                onClick={() => updateStatus(gym._id, { isActive: !gym.isActive })}
+                                className="text-[10px] py-1 px-3"
                                 disabled={actionLoading}
                               >
-                                Approve Gym
+                                {gym.isActive ? "Deactivate" : "Activate"}
                               </Button>
-                            )}
-                            {gym.isApproved && (
-                              <>
-                                <Button 
-                                  variant={gym.isActive ? "danger" : "primary"}
-                                  size="sm"
-                                  onClick={() => updateStatus(gym._id, { isActive: !gym.isActive })}
-                                  className="text-[10px] py-1 px-3"
-                                  disabled={actionLoading}
-                                >
-                                  {gym.isActive ? "Deactivate" : "Activate"}
-                                </Button>
-                                <Button 
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setDeleteModal({ open: true, gymId: gym._id, gymName: gym.name })}
-                                  className="text-red-500 hover:bg-red-500/10 p-1"
-                                  disabled={actionLoading}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </td>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleteModal({ open: true, gymId: gym._id, gymName: gym.name })}
+                                className="text-red-500 hover:bg-red-500/10 p-1"
+                                disabled={actionLoading}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -340,37 +340,37 @@ export default function SuperAdminDashboard() {
               {registerError}
             </div>
           )}
-          <Input 
+          <Input
             label="Owner Full Name"
             placeholder="Mohamed"
             value={registerForm.name}
-            onChange={(e) => setRegisterForm({...registerForm, name: e.target.value})}
+            onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
             required
             left={<User className="h-4 w-4" />}
           />
-          <Input 
+          <Input
             label="Owner Email"
             type="email"
             placeholder="owner@gym.com"
             value={registerForm.email}
-            onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})}
+            onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
             required
             left={<Mail className="h-4 w-4" />}
           />
-          <Input 
+          <Input
             label="Initial Password"
             type="password"
             placeholder="Min 8 chars, 1 num, 1 special"
             value={registerForm.password}
-            onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})}
+            onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
             required
             left={<Lock className="h-4 w-4" />}
           />
-          <Input 
+          <Input
             label="Gym Name"
             placeholder="Elite Fitness Center"
             value={registerForm.gymName}
-            onChange={(e) => setRegisterForm({...registerForm, gymName: e.target.value})}
+            onChange={(e) => setRegisterForm({ ...registerForm, gymName: e.target.value })}
             required
             left={<Building2 className="h-4 w-4" />}
           />
@@ -385,9 +385,9 @@ export default function SuperAdminDashboard() {
             />
             <label htmlFor="reg-terms" className="text-[11px] leading-tight text-[color:var(--muted)]">
               The Client has reviewed and accepted the{" "}
-              <a 
-                href="/terms" 
-                target="_blank" 
+              <a
+                href="/terms"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-brand-400 hover:underline font-medium"
               >
@@ -395,7 +395,7 @@ export default function SuperAdminDashboard() {
               </a>.
             </label>
           </div>
-          
+
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button variant="ghost" onClick={() => setRegisterOpen(false)} disabled={registerLoading}>
               Cancel
@@ -415,34 +415,34 @@ export default function SuperAdminDashboard() {
               {editError}
             </div>
           )}
-          <Input 
+          <Input
             label="Owner Name"
             value={editForm.name}
-            onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
             required
             left={<User className="h-4 w-4" />}
           />
-          <Input 
+          <Input
             label="Owner Email"
             type="email"
             value={editForm.email}
-            onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
             required
             left={<Mail className="h-4 w-4" />}
           />
-          <Input 
+          <Input
             label="Gym Name"
             value={editForm.gymName}
-            onChange={(e) => setEditForm({...editForm, gymName: e.target.value})}
+            onChange={(e) => setEditForm({ ...editForm, gymName: e.target.value })}
             required
             left={<Building2 className="h-4 w-4" />}
           />
-          <Input 
+          <Input
             label="Change Password"
             type="password"
             placeholder="Leave blank to keep current"
             value={editForm.password}
-            onChange={(e) => setEditForm({...editForm, password: e.target.value})}
+            onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
             left={<Lock className="h-4 w-4" />}
           />
 
@@ -458,9 +458,9 @@ export default function SuperAdminDashboard() {
       </Modal>
 
       {/* DELETION MODAL */}
-      <Modal 
-        open={deleteModal.open} 
-        onClose={() => setDeleteModal({ open: false, gymId: null, gymName: "" })} 
+      <Modal
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, gymId: null, gymName: "" })}
         title="Schedule Gym Deletion"
       >
         <div className="space-y-4">
@@ -492,15 +492,15 @@ export default function SuperAdminDashboard() {
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => setDeleteModal({ open: false, gymId: null, gymName: "" })}
               disabled={actionLoading}
             >
               Cancel
             </Button>
-            <Button 
-              variant="danger" 
+            <Button
+              variant="danger"
               onClick={handleScheduleDeletion}
               disabled={actionLoading}
               className="px-6"

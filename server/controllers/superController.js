@@ -8,7 +8,7 @@ import bcrypt from "bcryptjs";
 export const getGyms = async (req, res) => {
   try {
     const gyms = await Gym.find().sort({ createdAt: -1 }).lean();
-    
+
     // 🚀 BATCH ENRICHMENT (Avoids N+1 queries)
     const gymIds = gyms.map(g => g._id);
     const ownerIds = gyms.map(g => g.ownerId).filter(Boolean);
@@ -80,7 +80,7 @@ export const updateGym = async (req, res) => {
       if (existing) return res.status(400).json({ message: "Email is already in use by another user" });
       user.email = emailLower;
     }
-    
+
     if (password && password.trim() !== "") {
       const hashed = await bcrypt.hash(password, 10);
       user.password = hashed;
@@ -157,9 +157,9 @@ export const scheduleGymDeletion = async (req, res) => {
     const deletionDate = new Date();
     deletionDate.setDate(deletionDate.getDate() + 15);
 
-    const gym = await Gym.findByIdAndUpdate(id, { 
+    const gym = await Gym.findByIdAndUpdate(id, {
       scheduledDeletionAt: deletionDate,
-      isActive: false 
+      isActive: false
     }, { new: true });
 
     if (!gym) return res.status(404).json({ message: "Gym not found" });
@@ -174,9 +174,9 @@ export const revokeGymDeletion = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const gym = await Gym.findByIdAndUpdate(id, { 
+    const gym = await Gym.findByIdAndUpdate(id, {
       scheduledDeletionAt: null,
-      isActive: true 
+      isActive: true
     }, { new: true });
 
     if (!gym) return res.status(404).json({ message: "Gym not found" });
