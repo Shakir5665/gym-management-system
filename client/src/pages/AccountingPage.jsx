@@ -72,9 +72,9 @@ function buildPrintableHtml({ gymName, report, generatedAt }) {
       <h3>KEY METRICS</h3>
       <table>
         <tr><td>New Members</td><td>${report.metrics.newMembers}</td></tr>
-        <tr><td>Monthly Fees (Month End)</td><td>${money(report.metrics.monthlyFeesMonthEnd)}</td></tr>
-        <tr><td>Total Expenses</td><td>${money(report.metrics.totalExpenses)}</td></tr>
-        <tr><td>Net Profit</td><td>${money(report.metrics.netProfit)}</td></tr>
+        <tr><td>Total Collected Revenue</td><td>${money(report.metrics.totalCollectedRevenue)}</td></tr>
+        <tr><td>Total Expenses</td><td>(${money(report.metrics.totalExpenses)})</td></tr>
+        <tr><th>NET PROFIT</th><th>${money(report.metrics.netProfit)}</th></tr>
       </table>
     </div>
     <div class="section">
@@ -86,7 +86,6 @@ function buildPrintableHtml({ gymName, report, generatedAt }) {
       </table>
     </div>
     <div class="section">
-      <h3>REVENUE CALCULATION</h3>
       <table>
         <tr><td>Total Collected Revenue</td><td>${money(report.metrics.totalCollectedRevenue)}</td></tr>
         <tr><td>Total Expenses</td><td>(${money(report.metrics.totalExpenses)})</td></tr>
@@ -220,7 +219,8 @@ export default function AccountingPage() {
   };
 
   const cancelEdit = () => {
-    setEditingId(null);
+    setEditingExpense(null);
+    setEditModalOpen(false);
     setReason("");
     setAmount("");
     setSpentAt(toDateInput(new Date()));
@@ -393,24 +393,20 @@ export default function AccountingPage() {
           Matches the printable monthly revenue format.
         </div>
         {report ? (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             <div className="rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-2">
               <div className="text-[11px] text-[color:var(--muted)]">New members</div>
               <div className="text-lg font-black text-[color:var(--text)]">{report.metrics.newMembers}</div>
             </div>
             <div className="rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-2">
-              <div className="text-[11px] text-[color:var(--muted)]">Monthly fees (month end)</div>
-              <div className="text-lg font-black text-[color:var(--text)]">{money(report.metrics.monthlyFeesMonthEnd)}</div>
+              <div className="text-[11px] text-[color:var(--muted)]">Collected revenue</div>
+              <div className="text-lg font-black text-[color:var(--brand-main)]">{money(report.metrics.totalCollectedRevenue)}</div>
             </div>
             <div className="rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-2">
               <div className="text-[11px] text-[color:var(--muted)]">Total expenses</div>
-              <div className="text-lg font-black text-[color:var(--text)]">{money(report.metrics.totalExpenses)}</div>
+              <div className="text-lg font-black text-danger-500">{money(report.metrics.totalExpenses)}</div>
             </div>
-            <div className="rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-2">
-              <div className="text-[11px] text-[color:var(--muted)]">Collected revenue</div>
-              <div className="text-lg font-black text-[color:var(--text)]">{money(report.metrics.totalCollectedRevenue)}</div>
-            </div>
-            <div className="rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-2">
+            <div className="rounded-xl border border-[color:var(--control-border)] bg-[color:var(--control-bg)] px-3 py-2 shadow-lg shadow-brand-500/5">
               <div className="text-[11px] text-[color:var(--muted)]">Net profit</div>
               <div className="text-lg font-black text-[color:var(--text)]">{money(report.metrics.netProfit)}</div>
             </div>

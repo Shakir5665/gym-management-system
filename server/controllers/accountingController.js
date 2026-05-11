@@ -10,7 +10,13 @@ function parseDateRange(req) {
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
   const from = req.query.from ? new Date(String(req.query.from)) : monthStart;
-  const to = req.query.to ? new Date(String(req.query.to)) : monthEnd;
+  let to = req.query.to ? new Date(String(req.query.to)) : monthEnd;
+
+  // 🕒 Ensure 'to' date covers the entire day
+  if (req.query.to) {
+    to.setHours(23, 59, 59, 999);
+  }
+
   return {
     from: Number.isNaN(from.getTime()) ? monthStart : from,
     to: Number.isNaN(to.getTime()) ? monthEnd : to,
@@ -137,6 +143,7 @@ export async function getAccountingReport(req, res) {
 
     const { from, to } = parseDateRange(req);
 
+    const now = new Date();
     const ninetyDaysAgo = new Date(now);
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
@@ -171,9 +178,6 @@ export async function getAccountingReport(req, res) {
     const totalExpenses = money(expensesAgg?.[0]?.total || 0);
     const netProfit = money(totalRevenue - totalExpenses);
 
-    const avgMonthlyFee = Number(avgPaymentAgg?.[0]?.avgAmount || 0);
-    const monthlyFeesMonthEnd = money(activeMembersCount * avgMonthlyFee);
-
     const expenseBreakdown = expenseBreakdownAgg.map((r) => ({
       category: r._id || "Miscellaneous",
       amount: money(r.amount),
@@ -188,7 +192,6 @@ export async function getAccountingReport(req, res) {
       },
       metrics: {
         newMembers,
-        monthlyFeesMonthEnd,
         totalExpenses,
         totalCollectedRevenue: totalRevenue,
         netProfit,

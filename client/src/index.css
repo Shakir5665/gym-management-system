@@ -27,18 +27,22 @@
     --elev-shadow-strong: 0 18px 65px rgba(0, 0, 0, 0.60);
 
     --brand-ink: rgba(186, 230, 253, 0.95);
+    --brand-hsl: 188 95% 43%;
     --brand-soft-bg: rgba(34, 211, 238, 0.12);
     --brand-soft-border: rgba(34, 211, 238, 0.22);
 
     --success-ink: rgba(187, 247, 208, 0.95);
+    --success-hsl: 142 71% 45%;
     --success-soft-bg: rgba(34, 197, 94, 0.14);
     --success-soft-border: rgba(34, 197, 94, 0.22);
 
     --warning-ink: rgba(254, 240, 138, 0.95);
+    --warning-hsl: 38 92% 50%;
     --warning-soft-bg: rgba(234, 179, 8, 0.14);
     --warning-soft-border: rgba(234, 179, 8, 0.22);
 
     --danger-ink: rgba(254, 202, 202, 0.95);
+    --danger-hsl: 0 84% 60%;
     --danger-soft-bg: rgba(239, 68, 68, 0.14);
     --danger-soft-border: rgba(239, 68, 68, 0.22);
   }
@@ -74,18 +78,22 @@
     --elev-shadow-strong: 0 22px 70px rgba(2, 6, 23, 0.14);
 
     --brand-ink: #1d4ed8;
+    --brand-hsl: 221 83% 53%;
     --brand-soft-bg: rgba(37, 99, 235, 0.10);
     --brand-soft-border: rgba(37, 99, 235, 0.20);
 
     --success-ink: #166534;
+    --success-hsl: 142 76% 36%;
     --success-soft-bg: rgba(22, 163, 74, 0.10);
     --success-soft-border: rgba(22, 163, 74, 0.20);
 
     --warning-ink: #92400e;
+    --warning-hsl: 38 92% 50%;
     --warning-soft-bg: rgba(234, 179, 8, 0.12);
     --warning-soft-border: rgba(234, 179, 8, 0.22);
 
     --danger-ink: #b91c1c;
+    --danger-hsl: 0 72% 51%;
     --danger-soft-bg: rgba(239, 68, 68, 0.10);
     --danger-soft-border: rgba(239, 68, 68, 0.20);
   }

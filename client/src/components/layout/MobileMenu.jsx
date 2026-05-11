@@ -8,7 +8,8 @@ import {
   X,
   LogOut,
   Settings,
-  LayoutGrid
+  LayoutGrid,
+  Info
 } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { useAuth } from "../../context/AuthContext";
@@ -25,6 +26,7 @@ export default function MobileMenu({ open, onClose }) {
     { to: "/app/payments", label: "Payments", icon: CreditCard },
     { to: "/app/accounting", label: "Accounting", icon: ReceiptText },
     { to: "/app/profile", label: "Profile", icon: Settings },
+    { to: "/app/about", label: "About", icon: Info },
   ];
 
   if (role === "SUPER_ADMIN") {

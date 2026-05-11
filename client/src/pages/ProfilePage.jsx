@@ -132,7 +132,7 @@ export default function ProfilePage() {
         {/* LOGO SECTION */}
         <section>
           <div className="flex items-center gap-2 mb-4">
-            <Building className="h-4 w-4 text-[color:var(--brand)]" />
+            <Building className="h-4 w-4 text-[color:var(--brand-main)]" />
             <h2 className="text-sm font-black uppercase tracking-widest text-[color:var(--text)]">Branding</h2>
           </div>
           <div className="flex items-center gap-6">
@@ -160,7 +160,7 @@ export default function ProfilePage() {
         {/* ACCOUNT DETAILS */}
         <section className="border-t border-[color:var(--glass-border)] pt-8">
           <div className="flex items-center gap-2 mb-6">
-            <UserIcon className="h-4 w-4 text-[color:var(--brand)]" />
+            <UserIcon className="h-4 w-4 text-[color:var(--brand-main)]" />
             <h2 className="text-sm font-black uppercase tracking-widest text-[color:var(--text)]">Account Identity</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

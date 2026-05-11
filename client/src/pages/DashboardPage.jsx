@@ -19,7 +19,7 @@ function StatCard({ icon: Icon, label, value, sub, className, iconColor, onClick
     <Card
       className={
         "p-5 md:p-6 border border-[color:var(--glass-border)] transition-all " +
-        (onClick ? "cursor-pointer hover:border-[color:var(--brand)] hover:shadow-xl active:scale-[0.98] " : "") +
+        (onClick ? "cursor-pointer hover:border-[color:var(--brand-main)] hover:shadow-xl active:scale-[0.98] " : "") +
         (className || "")
       }
       onClick={onClick}
@@ -304,7 +304,7 @@ export default function DashboardPage() {
             <div className="divide-y divide-[color:var(--glass-border)]">
               {activeMembers.map((m) => (
                 <div key={m.attendanceId} className="py-4 first:pt-0 last:pb-0 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-[color:var(--brand)] overflow-hidden shadow-lg shrink-0 flex items-center justify-center font-black text-white">
+                  <div className="h-12 w-12 rounded-2xl bg-[color:var(--brand-main)] overflow-hidden shadow-lg shrink-0 flex items-center justify-center font-black text-white">
                     {m.profilePicture ? (
                       <img src={m.profilePicture} alt={m.name} className="h-full w-full object-cover" />
                     ) : (

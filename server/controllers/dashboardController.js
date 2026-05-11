@@ -80,20 +80,9 @@ export async function getDashboardSummary(req, res) {
           {
             $match: {
               gymId: gymObjectId || gymId,
-              $or: [
-                { createdAt: { $gte: monthStart } },
-                { createdAt: { $exists: false } },
-              ],
+              createdAt: { $gte: monthStart }
             },
           },
-          {
-            $addFields: {
-              createdAtSafe: {
-                $ifNull: ["$createdAt", { $toDate: "$_id" }],
-              },
-            },
-          },
-          { $match: { createdAtSafe: { $gte: monthStart } } },
           { $group: { _id: null, total: { $sum: "$amount" } } },
         ]),
         Member.countDocuments({ gymId, createdAt: { $gte: addDays(todayStart, -7) } }),
