@@ -9,7 +9,6 @@ import {
   fineMember,
   unfineMember,
   getExpiringMembers,
-  sendMemberReminder,
   setMemberCredentials,
   getFullMemberProfile,
   deleteMember,
@@ -22,7 +21,6 @@ const router = express.Router();
 router.post("/", auth, createMember);
 router.get("/", auth, getMembers);
 router.get("/expiring-tomorrow", auth, getExpiringMembers);
-router.post("/:id/send-reminder", auth, sendMemberReminder);
 router.get("/:id", auth, getMemberById);
 router.put("/:id", auth, updateMember);
 router.put("/:id/ban", auth, banMember);

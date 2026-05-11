@@ -3,7 +3,7 @@ import API from "../api/api";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
-import { Building2, Users, CreditCard, Activity, Search, ShieldCheck, ShieldAlert, Plus, Mail, Lock, User, Trash2, RotateCcw } from "lucide-react";
+import { Building2, Users, CreditCard, Activity, Search, ShieldCheck, ShieldAlert, Plus, Mail, Lock, User, Trash2, RotateCcw, Edit } from "lucide-react";
 import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
 
@@ -12,6 +12,8 @@ export default function SuperAdminDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Register Modal State
   const [registerOpen, setRegisterOpen] = useState(false);
   const [registerForm, setRegisterForm] = useState({
     name: "",
@@ -22,6 +24,19 @@ export default function SuperAdminDashboard() {
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  // Edit Modal State
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    id: "",
+    name: "",
+    email: "",
+    password: "",
+    gymName: ""
+  });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState("");
+
   const [deleteModal, setDeleteModal] = useState({ open: false, gymId: null, gymName: "" });
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -57,7 +72,6 @@ export default function SuperAdminDashboard() {
   const handleRegister = async (e) => {
     e.preventDefault();
     
-    // 🛡️ Client-side Validations
     if (!registerForm.name || !registerForm.email || !registerForm.password || !registerForm.gymName) {
       setRegisterError("All fields are required");
       return;
@@ -91,6 +105,37 @@ export default function SuperAdminDashboard() {
       setRegisterError(err.response?.data?.message || "Failed to register gym");
     } finally {
       setRegisterLoading(false);
+    }
+  };
+
+  const handleOpenEdit = (gym) => {
+    setEditForm({
+      id: gym._id,
+      name: gym.owner?.name || "",
+      email: gym.owner?.email || "",
+      gymName: gym.name || "",
+      password: "" // Keep empty unless updating
+    });
+    setEditError("");
+    setEditOpen(true);
+  };
+
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    try {
+      setEditLoading(true);
+      setEditError("");
+      
+      const payload = { ...editForm };
+      if (!payload.password) delete payload.password; // Don't send empty password
+
+      await API.put(`/super/gyms/${editForm.id}`, payload);
+      setEditOpen(false);
+      loadData();
+    } catch (err) {
+      setEditError(err.response?.data?.message || "Failed to update gym");
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -215,6 +260,17 @@ export default function SuperAdminDashboard() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <Button 
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenEdit(gym)}
+                          className="text-brand-400 hover:bg-brand-500/10 p-1.5"
+                          disabled={actionLoading}
+                          title="Edit Gym & Owner"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+
                         {gym.scheduledDeletionAt ? (
                           <Button 
                             variant="primary"
@@ -276,6 +332,7 @@ export default function SuperAdminDashboard() {
         </div>
       </Card>
 
+      {/* REGISTER MODAL */}
       <Modal open={registerOpen} onClose={() => setRegisterOpen(false)} title="Register New Gym">
         <form onSubmit={handleRegister} className="grid gap-4">
           {registerError && (
@@ -350,6 +407,57 @@ export default function SuperAdminDashboard() {
         </form>
       </Modal>
 
+      {/* EDIT MODAL */}
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Gym & Owner">
+        <form onSubmit={handleEdit} className="grid gap-4">
+          {editError && (
+            <div className="p-3 rounded-xl bg-danger-500/10 border border-danger-500/20 text-danger-500 text-xs font-bold">
+              {editError}
+            </div>
+          )}
+          <Input 
+            label="Owner Name"
+            value={editForm.name}
+            onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+            required
+            left={<User className="h-4 w-4" />}
+          />
+          <Input 
+            label="Owner Email"
+            type="email"
+            value={editForm.email}
+            onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+            required
+            left={<Mail className="h-4 w-4" />}
+          />
+          <Input 
+            label="Gym Name"
+            value={editForm.gymName}
+            onChange={(e) => setEditForm({...editForm, gymName: e.target.value})}
+            required
+            left={<Building2 className="h-4 w-4" />}
+          />
+          <Input 
+            label="Change Password"
+            type="password"
+            placeholder="Leave blank to keep current"
+            value={editForm.password}
+            onChange={(e) => setEditForm({...editForm, password: e.target.value})}
+            left={<Lock className="h-4 w-4" />}
+          />
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setEditOpen(false)} disabled={editLoading}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" disabled={editLoading}>
+              {editLoading ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* DELETION MODAL */}
       <Modal 
         open={deleteModal.open} 
         onClose={() => setDeleteModal({ open: false, gymId: null, gymName: "" })} 

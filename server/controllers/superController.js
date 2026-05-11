@@ -55,6 +55,45 @@ export const toggleGymStatus = async (req, res) => {
   }
 };
 
+export const updateGym = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, gymName } = req.body;
+
+    const gym = await Gym.findById(id);
+    if (!gym) return res.status(404).json({ message: "Gym not found" });
+
+    const user = await User.findById(gym.ownerId);
+    if (!user) return res.status(404).json({ message: "Owner not found" });
+
+    // 1. Update Gym Name
+    if (gymName) {
+      gym.name = gymName.trim();
+    }
+
+    // 2. Update Owner Details
+    if (name) user.name = name.trim();
+    if (email) {
+      const emailLower = email.toLowerCase();
+      // Check if email is already taken by someone else
+      const existing = await User.findOne({ email: emailLower, _id: { $ne: user._id } });
+      if (existing) return res.status(400).json({ message: "Email is already in use by another user" });
+      user.email = emailLower;
+    }
+    
+    if (password && password.trim() !== "") {
+      const hashed = await bcrypt.hash(password, 10);
+      user.password = hashed;
+    }
+
+    await Promise.all([gym.save(), user.save()]);
+
+    res.json({ message: "Gym and owner details updated successfully", gym });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export const getGlobalStats = async (req, res) => {
   try {
     const [totalGyms, totalMembers] = await Promise.all([

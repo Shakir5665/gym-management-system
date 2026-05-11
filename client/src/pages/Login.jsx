@@ -5,7 +5,7 @@ import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import { Mail, Lock } from "lucide-react";
 
-export default function Login({ onForgotPassword }) {
+export default function Login() {
   const { login } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -79,17 +79,6 @@ export default function Login({ onForgotPassword }) {
 
       <Input
         label="Password"
-        hint={
-          onForgotPassword ? (
-            <button 
-              type="button" 
-              onClick={onForgotPassword}
-              className="text-[11px] font-bold tracking-wide text-brand-400 hover:text-brand-300 hover:underline transition-all"
-            >
-              Forgot password?
-            </button>
-          ) : null
-        }
         placeholder="••••••••"
         type="password"
         value={password}

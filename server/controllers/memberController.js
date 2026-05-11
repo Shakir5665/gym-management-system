@@ -7,7 +7,6 @@ import Gamification from "../models/Gamification.js";
 import bcrypt from "bcryptjs";
 import QRCode from "qrcode";
 import mongoose from "mongoose";
-import { sendPaymentReminder } from "../services/mailService.js";
 import { uploadToCloudinary } from "../services/cloudinaryService.js";
 import cloudinary from "../services/cloudinaryService.js";
 
@@ -52,7 +51,6 @@ export const createMember = async (req, res) => {
     const tempId = new mongoose.Types.ObjectId();
     const qrBase64 = await QRCode.toDataURL(tempId.toString());
     const qrUrl = await uploadToCloudinary(qrBase64, 'gym-system/qr-codes');
-
     const member = await Member.create({
       _id: tempId,
       ...data,
@@ -246,44 +244,6 @@ export const getExpiringMembers = async (req, res) => {
   }
 };
 
-export const sendMemberReminder = async (req, res) => {
-  try {
-    if (!req.user.gymId) {
-      return res.status(403).json({ message: "You must create a gym first" });
-    }
-
-    const member = await Member.findOne({ _id: req.params.id, gymId: req.user.gymId });
-    if (!member) return res.status(404).json({ message: "Member not found" });
-
-    if (!member.email) {
-      return res.status(400).json({ message: "Member does not have an email address" });
-    }
-
-    // Get last payment
-    const lastPayment = await Payment.findOne({ memberId: member._id, gymId: req.user.gymId }).sort({ createdAt: -1 });
-
-    if (!lastPayment) {
-      return res.status(400).json({ message: "No payment history found for this member" });
-    }
-
-    // Get Gym Name
-    const gym = await Gym.findById(req.user.gymId);
-    const gymName = gym?.name || "Our Gym";
-
-    await sendPaymentReminder(member.email, {
-      memberName: member.fullLegalName || member.name,
-      lastPaidAt: lastPayment.createdAt,
-      endAt: member.subscriptionEnd,
-      amount: lastPayment.amount,
-      gymName,
-    });
-
-    res.json({ message: "Reminder sent successfully" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
 export const setMemberCredentials = async (req, res) => {
   try {
     const { id } = req.params;
@@ -445,4 +405,3 @@ export const deleteMember = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-

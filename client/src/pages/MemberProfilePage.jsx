@@ -58,8 +58,6 @@ export default function MemberProfilePage() {
   const [fineOpen, setFineOpen] = useState(false);
   const [fineForm, setFineForm] = useState({ amount: "", reason: "" });
   const [qrModalOpen, setQrModalOpen] = useState(false);
-  const [reminderOpen, setReminderOpen] = useState(false);
-  const [reminderSuccess, setReminderSuccess] = useState("");
 
   const [portalOpen, setPortalOpen] = useState(false);
   const [portalForm, setPortalForm] = useState({ email: "", password: "" });
@@ -246,22 +244,6 @@ export default function MemberProfilePage() {
     }
   }
 
-  async function handleSendReminder() {
-    try {
-      setSaving(true);
-      setError("");
-      setReminderSuccess("");
-      await API.post(`/members/${id}/send-reminder`);
-      setReminderSuccess("Payment reminder email sent successfully!");
-      setReminderOpen(false);
-      // Auto hide success message after 5 seconds
-      setTimeout(() => setReminderSuccess(""), 5000);
-    } catch (e) {
-      setError(e?.response?.data?.message || "Failed to send reminder");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function handleSetPortal() {
     if (!portalForm.email || !portalForm.password) {
@@ -328,15 +310,9 @@ export default function MemberProfilePage() {
 
   return (
     <div className="grid gap-4 md:gap-6">
-      {(member?.isBanned || member?.hasFine || isPaymentExpired || reminderSuccess) && (
+      {(member?.isBanned || member?.hasFine || isPaymentExpired) && (
         <Card className="p-5 md:p-6 bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/20 shadow-lg">
           <div className="flex flex-col gap-4">
-            {reminderSuccess && (
-              <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 p-4 rounded-xl animate-in fade-in slide-in-from-top-2">
-                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                <span className="text-sm font-semibold text-green-700 dark:text-green-300">{reminderSuccess}</span>
-              </div>
-            )}
             {member?.isBanned && (
               <div className="flex items-center gap-4 bg-white/60 dark:bg-black/20 p-4 rounded-xl border border-red-500/30">
                 <div className="p-3 bg-red-500/20 rounded-full shadow-inner">
@@ -482,16 +458,6 @@ export default function MemberProfilePage() {
               <Button variant="brand" onClick={() => setEditOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5 transition-all">
                 <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                 <span className="text-[11px] sm:text-sm font-semibold">Edit</span>
-              </Button>
-              <Button
-                variant="brand"
-                onClick={() => setReminderOpen(true)}
-                disabled={saving || !member?.email}
-                className="flex-1 sm:flex-none flex items-center justify-center px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl gap-1.5"
-                title={!member?.email ? "No email address" : "Send email reminder"}
-              >
-                <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                <span className="text-[11px] sm:text-sm font-semibold">Reminder</span>
               </Button>
               <Button
                 variant="danger"
@@ -826,33 +792,6 @@ export default function MemberProfilePage() {
         </div>
       </Modal>
 
-      <Modal open={reminderOpen} onClose={() => setReminderOpen(false)} title="Email Reminder Preview">
-        <div className="grid gap-4">
-          <div className="rounded-xl border border-[color:var(--control-border)] bg-[color:var(--bg2)] p-4">
-            <div className="text-[11px] text-[color:var(--muted)] uppercase font-bold tracking-wider mb-3">Message Preview</div>
-            <div className="space-y-3 text-xs text-[color:var(--text)] leading-relaxed">
-              <p>Hi <strong>{member?.fullLegalName || member?.name}</strong>,</p>
-              <p>This is a formal reminder regarding your gym payment.</p>
-              <div className="bg-[color:var(--control-bg)] p-3 rounded-lg border border-[color:var(--control-border)] space-y-1">
-                <p>• <strong>Last Payment:</strong> {latestPayment ? new Date(latestPayment.createdAt).toLocaleDateString() : "N/A"}</p>
-                <p>• <strong>Expiration:</strong> <span className="text-danger-500">{member?.subscriptionEnd ? new Date(member.subscriptionEnd).toLocaleDateString() : "N/A"}</span></p>
-                <p>• <strong>Amount:</strong> {latestPayment ? formatMoneyLKR(latestPayment.amount) : "N/A"}</p>
-              </div>
-              <p>Please ensure your subscription is renewed to continue enjoying our facilities.</p>
-              <p className="pt-2">Best regards,<br /><strong>{gymName || "Our Gym"}</strong></p>
-            </div>
-          </div>
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setReminderOpen(false)} disabled={saving}>
-              Cancel
-            </Button>
-            <Button variant="brand" onClick={handleSendReminder} disabled={saving} className="gap-2">
-              <Mail className="h-4 w-4" />
-              {saving ? "Sending..." : "Confirm & Send"}
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       <Modal open={portalOpen} onClose={() => setPortalOpen(false)} title="Manage Portal Access">
         <div className="grid gap-4">

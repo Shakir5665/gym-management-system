@@ -5,9 +5,7 @@ const REQUIRED_VARS = [
   'JWT_SECRET',
   'CLOUDINARY_CLOUD_NAME',
   'CLOUDINARY_API_KEY',
-  'CLOUDINARY_API_SECRET',
-  'EMAIL_USER',
-  'EMAIL_PASS'
+  'CLOUDINARY_API_SECRET'
 ];
 
 export const validateConfig = () => {

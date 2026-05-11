@@ -1,6 +1,6 @@
 import express from "express";
 import auth from "../middleware/auth.js";
-import { getGyms, toggleGymStatus, getGlobalStats, registerGym, scheduleGymDeletion, revokeGymDeletion } from "../controllers/superController.js";
+import { getGyms, toggleGymStatus, getGlobalStats, registerGym, scheduleGymDeletion, revokeGymDeletion, updateGym } from "../controllers/superController.js";
 
 const router = express.Router();
 
@@ -16,6 +16,7 @@ const superOnly = (req, res, next) => {
 router.get("/gyms", auth, superOnly, getGyms);
 router.post("/register-gym", auth, superOnly, registerGym);
 router.put("/gyms/:id/status", auth, superOnly, toggleGymStatus);
+router.put("/gyms/:id", auth, superOnly, updateGym);
 router.post("/gyms/:id/schedule-deletion", auth, superOnly, scheduleGymDeletion);
 router.post("/gyms/:id/revoke-deletion", auth, superOnly, revokeGymDeletion);
 router.get("/stats", auth, superOnly, getGlobalStats);
