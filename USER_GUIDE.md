@@ -1,5 +1,5 @@
 # 📘 Smart Gym Management System - Complete User Guide
-**Version 1.1.0 Enterprise Edition**
+**Version 1.1.0 PRO**
 
 Welcome to the official User Guide for the **Smart Gym Management System**. This document provides step-by-step instructions for Gym Owners, Staff, and Administrators to efficiently manage operations, retain members, and track financial growth.
 
@@ -72,8 +72,10 @@ The scanner is designed to be used at the gym entrance.
 - You can filter payments by date, member, or status (Paid/Pending).
 - Generate PDF receipts for members directly from the payment detail view.
 
-### 📊 Accounting
-- Use the **Accounting** tab to view financial growth charts.
+### 📊 Accounting & Expenses
+- Use the **Accounting** tab to view financial growth and revenue trends.
+- **Expense Tracking:** Log gym overheads (rent, electricity, equipment) to calculate accurate profitability.
+- **ROI Analysis:** Compare revenue vs. expenses to understand your gym's financial health.
 - Export financial data as CSV for tax or external accounting purposes.
 
 ---
