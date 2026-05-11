@@ -4,12 +4,20 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // Use STARTTLS
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false
+  }
 });
+
+// DEBUG: Confirm which email is being used
+console.log(`📧 Mail service initialized for: ${process.env.EMAIL_USER || "NOT CONFIGURED"}`);
 
 export const sendPaymentReminder = async (to, { memberName, lastPaidAt, endAt, amount, gymName }) => {
   const mailOptions = {
