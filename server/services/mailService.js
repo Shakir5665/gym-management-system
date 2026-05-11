@@ -16,8 +16,14 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// DEBUG: Confirm which email is being used
-console.log(`📧 Mail service initialized for: ${process.env.EMAIL_USER || "NOT CONFIGURED"}`);
+// Verify connection configuration
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("📧 Mail Server Error:", error.message);
+  } else {
+    console.log("📧 Mail Server is ready to send messages");
+  }
+});
 
 export const sendPaymentReminder = async (to, { memberName, lastPaidAt, endAt, amount, gymName }) => {
   const mailOptions = {
@@ -89,6 +95,29 @@ The ${gymName} Team`,
         <p>Come by today for a workout! We'd love to see you again.</p>
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
         <p style="font-size: 12px; color: #777; text-align: center;">Best regards,<br>The ${gymName} Team</p>
+      </div>
+    `,
+  };
+
+  return transporter.sendMail(mailOptions);
+};
+
+export const sendPasswordReset = async (to, { otp }) => {
+  const mailOptions = {
+    from: `"Gym Management System" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: "Password Reset OTP",
+    text: `Your password reset OTP is: ${otp}\n\nIt is valid for 10 minutes.`,
+    html: `
+      <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+        <h2 style="color: #007bff; text-align: center;">Password Reset</h2>
+        <p>You have requested to reset your password. Use the OTP below to proceed:</p>
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+          <h1 style="margin: 0; letter-spacing: 5px; color: #333;">${otp}</h1>
+        </div>
+        <p>This OTP is valid for <strong>10 minutes</strong>. If you did not request this, please ignore this email.</p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #777; text-align: center;">Gym Management System</p>
       </div>
     `,
   };

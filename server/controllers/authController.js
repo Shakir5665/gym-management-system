@@ -2,7 +2,7 @@ import User from "../models/User.js";
 import Gym from "../models/Gym.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
+import { sendPasswordReset } from "../services/mailService.js";
 
 // 🔐 Strong Password Regex: At least 8 chars, 1 number, 1 special character
 const strongPasswordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$/;
@@ -98,32 +98,26 @@ export const forgotPassword = async (req, res) => {
     user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    console.log(`\n========================================`);
-    console.log(`🔐 PASSWORD RESET OTP FOR ${email}: ${otp}`);
-    console.log(`========================================\n`);
-
-    try {
-      if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-          }
-        });
-
-        await transporter.sendMail({
-          from: `"Gym Management System" <${process.env.EMAIL_USER}>`,
-          to: email,
-          subject: "Password Reset OTP",
-          text: `Your password reset OTP is: ${otp}\n\nIt is valid for 10 minutes.`
-        });
-      }
-    } catch (mailErr) {
-      console.log("Failed to send email, but OTP generated in console:", mailErr.message);
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.log(`\n========================================`);
+      console.log(`🔐 PASSWORD RESET OTP FOR ${email}: ${otp}`);
+      console.log(`⚠️  EMAIL NOT CONFIGURED IN ENV`);
+      console.log(`========================================\n`);
+      return res.json({ 
+        message: "OTP generated successfully, but email service is not configured on this server. Check backend console." 
+      });
     }
 
-    res.json({ message: "OTP generated successfully. If email is not configured, check the backend terminal." });
+    try {
+      await sendPasswordReset(email, { otp });
+      res.json({ message: "OTP sent to your email successfully." });
+    } catch (mailErr) {
+      console.error("❌ FAILED TO SEND EMAIL:", mailErr);
+      res.status(500).json({ 
+        message: `Mail Error: ${mailErr.message}. Ensure your Gmail App Password is correct.`
+      });
+    }
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
