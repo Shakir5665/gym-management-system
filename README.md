@@ -7,11 +7,21 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.2-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
 [![Status](https://img.shields.io/badge/Status-Production--Ready-success.svg)]()
 [![Clients](https://img.shields.io/badge/Clients-1%20Active-brightgreen.svg)]()
+[![Live Demo](https://img.shields.io/badge/Live-Demo-red.svg?logo=render&logoColor=white)](https://gym-management-system-client.onrender.com/)
 
 A high-performance, real-time, SaaS-ready gym management platform designed to automate operations and maximize member retention through behavioral intelligence.
 
 > [!IMPORTANT]
 > **Project Status:** This system is officially **Production-Ready** (v1.1.0 PRO) and has been successfully deployed and sold to its first commercial client. It is no longer just a project; it is a live business solution.
+
+---
+
+## 🔗 Live Demo
+Experience the system in action: **[Gym Management Live Demo](https://gym-management-system-client.onrender.com/)**
+
+**Demo Credentials:**
+- 📧 **Email:** `demoapp@samrtgym.com`
+- 🔑 **Password:** `demo@1234`
 
 ---
 

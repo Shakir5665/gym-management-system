@@ -21,8 +21,8 @@ Welcome to the official User Guide for the **Smart Gym Management System**. This
 ### 🔑 Login
 - Navigate to the system URL.
 - Enter your registered email and password.
-- Default Email: [demoapp@samrtgym.com]`
-- Default Password: `[demo@1234]`
+- Default Email: demoapp@samrtgym.com
+- Default Password: demo@1234
 - You must **Accept the Terms & Conditions** to proceed to the dashboard.
 
 ### ⚙️ Initial Setup
